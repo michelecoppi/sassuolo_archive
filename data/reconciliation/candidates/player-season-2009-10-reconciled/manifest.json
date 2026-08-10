@@ -1,0 +1,106 @@
+{
+  "area": "player_seasons",
+  "season": "2009/10",
+  "competition": "Serie B",
+  "source_provider": "WorldFootball.net + StatsCrew",
+  "source_url": "https://www.worldfootball.net/teams/te13744/sassuolo-calcio/statistics-matches/co113/italy-serie-b/se1558/2009-2010/",
+  "verified_at": "2026-08-10",
+  "file": "data.csv",
+  "sha256": "c314388d4d05a938508b7399d9a2baac06b909f754d91cae5672e05e09fb7a19",
+  "records_total": 27,
+  "records_discarded": 0,
+  "discard_reasons": [],
+  "fields_covered": [
+    "player_name",
+    "season",
+    "competition",
+    "appearances",
+    "starts",
+    "minutes",
+    "goals",
+    "assists",
+    "yellow_cards",
+    "yellow_red_cards",
+    "red_cards",
+    "position",
+    "source_provider",
+    "source_url",
+    "last_verified_at"
+  ],
+  "validation": {
+    "status": "reconciled",
+    "checks": [
+      {
+        "name": "worldfootball_complete_extract",
+        "status": "passed",
+        "note": "27/27 rows extracted after explicitly selecting Serie B 2009/2010."
+      },
+      {
+        "name": "statscrew_complete_extract",
+        "status": "passed",
+        "note": "27/27 scoring rows supplied in the external package."
+      },
+      {
+        "name": "field_by_field_comparison",
+        "status": "passed",
+        "note": "32 differences documented and resolved by field policy."
+      },
+      {
+        "name": "player_goals_sum",
+        "status": "passed",
+        "note": "59 player goals in both sources."
+      },
+      {
+        "name": "team_goals_cross_check",
+        "status": "passed",
+        "note": "60 team goals."
+      },
+      {
+        "name": "own_goals_reconciled",
+        "status": "passed",
+        "note": "59 player goals + 1 opponent own goal (Iacopo Balestri, Salernitana) = 60 team goals."
+      },
+      {
+        "name": "starts_total",
+        "status": "passed",
+        "note": "462 starts = 42 matches × 11."
+      },
+      {
+        "name": "identities_reviewed",
+        "status": "passed",
+        "note": "All 27 identities reviewed; Milan Jirásek resolved to existing canonical name Milan Jirasek."
+      }
+    ],
+    "unresolved_conflicts": []
+  },
+  "field_source_policy": {
+    "worldfootball": [
+      "appearances",
+      "starts",
+      "minutes",
+      "goals",
+      "yellow_cards",
+      "yellow_red_cards",
+      "red_cards",
+      "position"
+    ],
+    "statscrew": [
+      "assists"
+    ],
+    "official_match_reports": [
+      "opponent_own_goal"
+    ]
+  },
+  "related_files": {
+    "worldfootball_csv_sha256": "c4db3cc56a1047ad4dcd67deaf1d2f0fa2d3ca213c5280af1836d76d7a2254a1",
+    "statscrew_csv_sha256": "15a7bc31b3af695303a7776b44e4c2b2193cf099979ca24192c34e464ce9660c",
+    "roster_zero_appearances_csv_sha256": "556d30962f75ded438e275d29814585a57ef5c71578999091bcafa8a08bb4fa8",
+    "discrepancies_csv_sha256": "4496ba7e6e349819c530cf586fd188a6f60bc122a3a8483eda3b7bba2ff04245",
+    "goal_resolution_csv_sha256": "c4f1629263c5c699f52a40f47bda98b9eb29390bbcd695cfd21af6aefe48612e"
+  },
+  "notes": [
+    "Regular-season Serie B only; Coppa Italia and playoffs excluded.",
+    "Opponent own goals are documented separately and are not attributed to Sassuolo players.",
+    "Approvato dal Data Manager dopo revisione manuale."
+  ]
+}

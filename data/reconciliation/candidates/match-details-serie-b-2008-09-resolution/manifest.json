@@ -1,0 +1,57 @@
+{
+  "package_type": "match_details_resolution",
+  "area": "match_details",
+  "season": "2008/09",
+  "competition": "Serie B",
+  "source_provider": "User-provided research workbook + Transfermarkt match sheets + fixture cross-checks",
+  "source_url": "https://www.transfermarkt.com/us-sassuolo/spielplan/verein/6574/saison_id/2008",
+  "verified_at": "2026-08-10",
+  "file": "data.csv",
+  "row_count": 42,
+  "records_total": 42,
+  "records_discarded": 0,
+  "validation": {
+    "status": "reconciled",
+    "fixtures_matched": 42,
+    "duplicate_fixtures": 0,
+    "unresolved_conflicts": [],
+    "checks": {
+      "row_count": "passed",
+      "date_format": "passed",
+      "sassuolo_in_every_fixture": "passed",
+      "no_duplicate_fixtures": "passed",
+      "regular_season_only": "passed",
+      "team_aliases_documented": "passed",
+      "stadium_coverage": "passed",
+      "referee_coverage": "passed",
+      "stadium_normalization": "passed"
+    }
+  },
+  "coverage": {
+    "match_date": "42/42",
+    "home_team": "42/42",
+    "away_team": "42/42",
+    "stadium": "42/42",
+    "referee": "42/42"
+  },
+  "normalization_rules": {
+    "stadium_prefix": "All stadium values start with Stadio.",
+    "city_parentheses": "City names in parentheses were removed.",
+    "pisa_stadium": "Arena Garibaldi - R. Anconetani normalized to Stadio Arena Garibaldi.",
+    "fixture_identity": "match_date, home_team and away_team were not changed."
+  },
+  "files": {
+    "data.csv": {
+      "sha256": "03298d6460a16bdb500602aa2cbeab6d2913623440f964362983bdc552e4d66e"
+    },
+    "discrepancies.csv": {
+      "sha256": "38d2aed868161cbe44d8c93d85e1bfcb476a600998fd193bf9b07fe7f4247519"
+    },
+    "aliases.csv": {
+      "sha256": "d14984bf1e582f55ce15a2757f876de30336fe929fed9f964603fd383daa3385"
+    }
+  },
+  "notes": [
+    "Approvato dal Data Manager dopo revisione manuale."
+  ]
+}

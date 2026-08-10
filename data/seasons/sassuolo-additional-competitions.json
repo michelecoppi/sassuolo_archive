@@ -1,0 +1,6 @@
+[
+  {"season":"2016/17","competition":"Europa League","matches":10,"wins":5,"draws":2,"losses":3,"goals_for":20,"goals_against":12,"points":17,"home_record":"3-1-1","away_record":"2-1-2","source_provider":"FBref","source_url":"https://fbref.com/en/squads/e2befd26/2016-2017/matchlogs/c19/schedule/Sassuolo-Scores-and-Fixtures-Europa-League"},
+  {"season":"2020/21","competition":"Coppa Italia","matches":1,"wins":0,"draws":0,"losses":1,"goals_for":0,"goals_against":2,"points":0,"home_record":"0-0-1","away_record":"0-0-0","source_provider":"openfootball/italy","source_url":"https://github.com/openfootball/italy/blob/master/2020-21/cup.txt"},
+  {"season":"2021/22","competition":"Coppa Italia","matches":2,"wins":1,"draws":0,"losses":1,"goals_for":2,"goals_against":2,"points":3,"home_record":"1-0-0","away_record":"0-0-1","source_provider":"openfootball/italy","source_url":"https://github.com/openfootball/italy/blob/master/2021-22/cup.txt"},
+  {"season":"2022/23","competition":"Coppa Italia","matches":1,"wins":0,"draws":0,"losses":1,"goals_for":2,"goals_against":3,"points":0,"home_record":"0-0-0","away_record":"0-0-1","source_provider":"openfootball/italy","source_url":"https://github.com/openfootball/italy/blob/master/2022-23/cup.txt"}
+]

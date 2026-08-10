@@ -1,0 +1,16 @@
+{
+  "area": "player_seasons",
+  "season": "2011/12",
+  "competition": "Serie B",
+  "source_provider": "StatsCrew",
+  "source_url": "https://www.statscrew.com/worldfootball/stats/t-SASCA963/y-2011",
+  "verified_at": "2026-08-09",
+  "file": "data.csv",
+  "sha256": "1CCA5806BD66B31A1FAF7067AE625071FB02B8C8A47D1D7F102F482BEF4A4374",
+  "records_total": 27,
+  "records_discarded": 0,
+  "discard_reasons": [],
+  "fields_covered": ["player_name", "position", "appearances", "starts", "minutes", "goals", "assists", "yellow_cards", "red_cards"],
+  "validation": {"source_goals": 57, "season_summary_goals": 57, "status": "reconciled"},
+  "notes": ["Blank minutes are preserved where StatsCrew does not publish a value."]
+}

@@ -1,0 +1,6 @@
+import { useEffect, useState } from 'react';
+import { Trophy } from 'lucide-react';
+import { api } from '../services/api';
+import { Empty, Loading, PageTitle } from '../components/Ui';
+type Event={season:string;type:string;title:string;detail:string};
+export default function Timeline(){const[data,setData]=useState<Event[]|null>(null);useEffect(()=>{api<Event[]>('/timeline').then(setData)},[]);if(!data)return <Loading/>;return <><PageTitle title="Timeline storica" subtitle="Passaggi di categoria, Europa, trofei e cambi di allenatore ricavati dai record disponibili."/>{!data.length?<Empty text="La timeline apparirà quando saranno disponibili più stagioni verificate."/>:<ol className="relative ml-3 border-l border-neroverde-400/30 pl-6">{data.map((event,i)=><li className="relative mb-6" key={`${event.season}-${event.type}-${i}`}><span className="absolute -left-[2.05rem] grid h-5 w-5 place-items-center rounded-full border border-neroverde-400 bg-zinc-950"><Trophy className="h-3 w-3 text-neroverde-300"/></span><div className="text-xs font-black uppercase tracking-wider text-neroverde-300">{event.season}</div><h2 className="mt-1 font-bold">{event.title}</h2><p className="mt-1 text-sm text-zinc-400">{event.detail}</p></li>)}</ol>}</>}

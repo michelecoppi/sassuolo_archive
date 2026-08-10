@@ -1,0 +1,17 @@
+{
+  "area": "player_seasons",
+  "season": "2012/13",
+  "competition": "Serie B",
+  "source_provider": "StatsCrew",
+  "source_url": "https://www.statscrew.com/worldfootball/stats/t-SASCA963/y-2012",
+  "cross_check_url": "https://fbref.com/en/squads/e2befd26/2012-2013/Sassuolo-Stats",
+  "verified_at": "2026-08-09",
+  "file": "data.csv",
+  "sha256": "F14F27A1C688FC6AA2A7DAE703B81CEEDF758A9EAAB59DCE48ECAED7062F7E85",
+  "records_total": 23,
+  "records_discarded": 0,
+  "discard_reasons": [],
+  "fields_covered": ["player_name", "position", "appearances", "starts", "minutes", "goals", "assists", "yellow_cards", "red_cards"],
+  "validation": {"source_table_goals": 76, "source_summary_goals": 78, "status": "conflict_review_required"},
+  "notes": ["Do not import as reconciled until the two-goal discrepancy is resolved against a second season-level source.", "Blank minutes are preserved where StatsCrew does not publish a value."]
+}

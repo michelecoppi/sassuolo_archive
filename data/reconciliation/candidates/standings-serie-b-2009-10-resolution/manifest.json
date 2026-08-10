@@ -1,0 +1,61 @@
+{
+  "package_type": "season_standings_resolution",
+  "area": "season_standings",
+  "season": "2009/10",
+  "competition": "Serie B",
+  "source_provider": "RSSSF + calcio-seriea.net + Wikipedia cross-check",
+  "source_url": "https://www.rsssf.org/tablesi/ital2010.html",
+  "row_count": 22,
+  "records_total": 22,
+  "records_discarded": 0,
+  "fields_covered": [
+    "rank",
+    "points",
+    "played",
+    "wins",
+    "draws",
+    "losses",
+    "goals_for",
+    "goals_against",
+    "goals_diff",
+    "status",
+    "description"
+  ],
+  "generated_at": "2026-08-10",
+  "validation": {
+    "status": "reconciled",
+    "checks": {
+      "row_count": "passed",
+      "rank_sequence": "passed",
+      "played_per_team": "passed",
+      "record_identity": "passed",
+      "goal_difference_identity": "passed",
+      "league_win_loss_balance": "passed",
+      "league_goal_balance": "passed",
+      "draw_balance": "passed",
+      "points_reconciliation": "passed",
+      "source_crosscheck": "passed",
+      "administrative_outcomes": "passed"
+    },
+    "unresolved_conflicts": []
+  },
+  "math_totals": {
+    "played_total": 924,
+    "wins_total": 325,
+    "draws_total": 274,
+    "losses_total": 325,
+    "goals_for_total": 1146,
+    "goals_against_total": 1146,
+    "points_reconciliation_notes": [
+      "Crotone: sporting 62, official 60, deduction 2",
+      "Ancona: sporting 54, official 52, deduction 2",
+      "Salernitana: sporting 23, official 17, deduction 6",
+      "Gallipoli: initial deduction cancelled, official points equal sporting points"
+    ]
+  },
+  "notes": [
+    "Classifica finale della stagione regolare; esiti sportivi e amministrativi successivi sono annotati senza alterare rank.",
+    "Checksum e quadrature del file esterno verificati localmente prima della registrazione.",
+    "Approvato dal Data Manager dopo revisione manuale."
+  ]
+}

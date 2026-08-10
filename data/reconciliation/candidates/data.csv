@@ -1,0 +1,12 @@
+source_name,selected_team_name,source_provider,notes
+Sassuolo Calcio,Sassuolo,WorldFootball.net,Nome completo normalizzato a nome canonico progetto.
+US Sassuolo Calcio,Sassuolo,RSSSF/Transfermarkt,Ragione sociale normalizzata.
+US Sassuolo,Sassuolo,Transfermarkt,Nome fonte normalizzato.
+AC Pisa 1909,Pisa,Transfermarkt,Nome fonte normalizzato.
+US Grosseto FC,Grosseto,Transfermarkt,Nome fonte normalizzato.
+UC AlbinoLeffe,AlbinoLeffe,Transfermarkt,Nome fonte normalizzato.
+Treviso FBC 1993,Treviso,Transfermarkt,Nome fonte normalizzato.
+Salernitana Calcio 1919,Salernitana,Transfermarkt,Nome fonte normalizzato.
+AS Bari,Bari,Transfermarkt,Nome fonte normalizzato.
+Arena Garibaldi - R. Anconetani,Stadio Arena Garibaldi,User normalization,Rimosso suffisso dedicazione e città tra parentesi come richiesto.
+Alberto Braglia (Modena),Stadio Alberto Braglia,User normalization,Rimossa città tra parentesi e aggiunto prefisso Stadio.

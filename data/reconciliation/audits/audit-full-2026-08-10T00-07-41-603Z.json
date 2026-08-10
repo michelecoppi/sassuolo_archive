@@ -1,0 +1,1090 @@
+{
+  "generatedAt": "2026-08-10T00:07:41.603Z",
+  "readOnly": true,
+  "tableCounts": {
+    "teams": 1,
+    "team_aliases": 4,
+    "seasons": 26,
+    "matches": 726,
+    "players": 469,
+    "player_source_ids": 491,
+    "player_seasons": 808,
+    "season_standings": 148,
+    "team_season_stats": 4,
+    "transfers": 837,
+    "match_details": 44,
+    "match_events": 261,
+    "match_lineups": 28,
+    "match_team_stats": 28,
+    "match_player_stats": 648,
+    "match_injuries": 84,
+    "news_articles": 104,
+    "sync_state": 19,
+    "data_conflicts": 1,
+    "app_settings": 8,
+    "source_references": 601,
+    "change_log": 35,
+    "backup_runs": 25,
+    "import_runs": 16,
+    "audit_runs": 11,
+    "research_candidates": 12
+  },
+  "coverage": {
+    "seasons": [
+      {
+        "season": "2008/09",
+        "competition": "Serie B",
+        "expected_matches": 42,
+        "found_matches": 42,
+        "completed_matches": 42,
+        "incomplete_matches": 0,
+        "player_seasons": 38,
+        "player_seasons_with_appearances": 25,
+        "standing_rows": 22,
+        "team_stat_rows": 0
+      },
+      {
+        "season": "2009/10",
+        "competition": "Serie B",
+        "expected_matches": 42,
+        "found_matches": 42,
+        "completed_matches": 42,
+        "incomplete_matches": 0,
+        "player_seasons": 36,
+        "player_seasons_with_appearances": 27,
+        "standing_rows": 22,
+        "team_stat_rows": 0
+      },
+      {
+        "season": "2010/11",
+        "competition": "Serie B",
+        "expected_matches": 42,
+        "found_matches": 42,
+        "completed_matches": 42,
+        "incomplete_matches": 0,
+        "player_seasons": 41,
+        "player_seasons_with_appearances": 33,
+        "standing_rows": 22,
+        "team_stat_rows": 0
+      },
+      {
+        "season": "2011/12",
+        "competition": "Serie B",
+        "expected_matches": 42,
+        "found_matches": 42,
+        "completed_matches": 42,
+        "incomplete_matches": 0,
+        "player_seasons": 41,
+        "player_seasons_with_appearances": 27,
+        "standing_rows": 22,
+        "team_stat_rows": 0
+      },
+      {
+        "season": "2012/13",
+        "competition": "Serie B",
+        "expected_matches": 42,
+        "found_matches": 42,
+        "completed_matches": 42,
+        "incomplete_matches": 0,
+        "player_seasons": 34,
+        "player_seasons_with_appearances": 23,
+        "standing_rows": 0,
+        "team_stat_rows": 0
+      },
+      {
+        "season": "2013/14",
+        "competition": "Serie A",
+        "expected_matches": 38,
+        "found_matches": 38,
+        "completed_matches": 38,
+        "incomplete_matches": 0,
+        "player_seasons": 38,
+        "player_seasons_with_appearances": 38,
+        "standing_rows": 0,
+        "team_stat_rows": 0
+      },
+      {
+        "season": "2014/15",
+        "competition": "Serie A",
+        "expected_matches": 38,
+        "found_matches": 38,
+        "completed_matches": 38,
+        "incomplete_matches": 0,
+        "player_seasons": 27,
+        "player_seasons_with_appearances": 27,
+        "standing_rows": 0,
+        "team_stat_rows": 0
+      },
+      {
+        "season": "2015/16",
+        "competition": "Serie A",
+        "expected_matches": 38,
+        "found_matches": 38,
+        "completed_matches": 38,
+        "incomplete_matches": 0,
+        "player_seasons": 26,
+        "player_seasons_with_appearances": 26,
+        "standing_rows": 0,
+        "team_stat_rows": 0
+      },
+      {
+        "season": "2016/17",
+        "competition": "Europa League",
+        "expected_matches": 10,
+        "found_matches": 10,
+        "completed_matches": 10,
+        "incomplete_matches": 0,
+        "player_seasons": 28,
+        "player_seasons_with_appearances": 28,
+        "standing_rows": 0,
+        "team_stat_rows": 0
+      },
+      {
+        "season": "2016/17",
+        "competition": "Serie A",
+        "expected_matches": 38,
+        "found_matches": 38,
+        "completed_matches": 38,
+        "incomplete_matches": 0,
+        "player_seasons": 28,
+        "player_seasons_with_appearances": 28,
+        "standing_rows": 0,
+        "team_stat_rows": 0
+      },
+      {
+        "season": "2017/18",
+        "competition": "Serie A",
+        "expected_matches": 38,
+        "found_matches": 38,
+        "completed_matches": 38,
+        "incomplete_matches": 0,
+        "player_seasons": 29,
+        "player_seasons_with_appearances": 29,
+        "standing_rows": 0,
+        "team_stat_rows": 0
+      },
+      {
+        "season": "2018/19",
+        "competition": "Serie A",
+        "expected_matches": 38,
+        "found_matches": 38,
+        "completed_matches": 38,
+        "incomplete_matches": 0,
+        "player_seasons": 29,
+        "player_seasons_with_appearances": 29,
+        "standing_rows": 0,
+        "team_stat_rows": 0
+      },
+      {
+        "season": "2019/20",
+        "competition": "Serie A",
+        "expected_matches": 38,
+        "found_matches": 38,
+        "completed_matches": 38,
+        "incomplete_matches": 0,
+        "player_seasons": 31,
+        "player_seasons_with_appearances": 31,
+        "standing_rows": 0,
+        "team_stat_rows": 0
+      },
+      {
+        "season": "2020/21",
+        "competition": "Coppa Italia",
+        "expected_matches": 1,
+        "found_matches": 1,
+        "completed_matches": 1,
+        "incomplete_matches": 0,
+        "player_seasons": 15,
+        "player_seasons_with_appearances": 15,
+        "standing_rows": 0,
+        "team_stat_rows": 0
+      },
+      {
+        "season": "2020/21",
+        "competition": "Serie A",
+        "expected_matches": 38,
+        "found_matches": 38,
+        "completed_matches": 38,
+        "incomplete_matches": 0,
+        "player_seasons": 28,
+        "player_seasons_with_appearances": 28,
+        "standing_rows": 0,
+        "team_stat_rows": 0
+      },
+      {
+        "season": "2021/22",
+        "competition": "Coppa Italia",
+        "expected_matches": 2,
+        "found_matches": 2,
+        "completed_matches": 2,
+        "incomplete_matches": 0,
+        "player_seasons": 19,
+        "player_seasons_with_appearances": 19,
+        "standing_rows": 0,
+        "team_stat_rows": 0
+      },
+      {
+        "season": "2021/22",
+        "competition": "Serie A",
+        "expected_matches": 38,
+        "found_matches": 38,
+        "completed_matches": 38,
+        "incomplete_matches": 0,
+        "player_seasons": 29,
+        "player_seasons_with_appearances": 29,
+        "standing_rows": 0,
+        "team_stat_rows": 0
+      },
+      {
+        "season": "2022/23",
+        "competition": "Coppa Italia",
+        "expected_matches": 1,
+        "found_matches": 1,
+        "completed_matches": 1,
+        "incomplete_matches": 0,
+        "player_seasons": 16,
+        "player_seasons_with_appearances": 16,
+        "standing_rows": 0,
+        "team_stat_rows": 0
+      },
+      {
+        "season": "2022/23",
+        "competition": "Serie A",
+        "expected_matches": 38,
+        "found_matches": 38,
+        "completed_matches": 38,
+        "incomplete_matches": 0,
+        "player_seasons": 46,
+        "player_seasons_with_appearances": 43,
+        "standing_rows": 20,
+        "team_stat_rows": 1
+      },
+      {
+        "season": "2023/24",
+        "competition": "Coppa Italia",
+        "expected_matches": 3,
+        "found_matches": 3,
+        "completed_matches": 3,
+        "incomplete_matches": 0,
+        "player_seasons": 37,
+        "player_seasons_with_appearances": 37,
+        "standing_rows": 0,
+        "team_stat_rows": 1
+      },
+      {
+        "season": "2023/24",
+        "competition": "Serie A",
+        "expected_matches": 38,
+        "found_matches": 38,
+        "completed_matches": 38,
+        "incomplete_matches": 0,
+        "player_seasons": 60,
+        "player_seasons_with_appearances": 39,
+        "standing_rows": 20,
+        "team_stat_rows": 1
+      },
+      {
+        "season": "2024/25",
+        "competition": "Coppa Italia",
+        "expected_matches": 3,
+        "found_matches": 3,
+        "completed_matches": 3,
+        "incomplete_matches": 0,
+        "player_seasons": 28,
+        "player_seasons_with_appearances": 28,
+        "standing_rows": 0,
+        "team_stat_rows": 0
+      },
+      {
+        "season": "2024/25",
+        "competition": "Serie B",
+        "expected_matches": 38,
+        "found_matches": 38,
+        "completed_matches": 38,
+        "incomplete_matches": 0,
+        "player_seasons": 53,
+        "player_seasons_with_appearances": 41,
+        "standing_rows": 20,
+        "team_stat_rows": 1
+      },
+      {
+        "season": "2025/26",
+        "competition": "Coppa Italia",
+        "expected_matches": 2,
+        "found_matches": 2,
+        "completed_matches": 2,
+        "incomplete_matches": 0,
+        "player_seasons": 23,
+        "player_seasons_with_appearances": 23,
+        "standing_rows": 0,
+        "team_stat_rows": 0
+      },
+      {
+        "season": "2025/26",
+        "competition": "Serie A",
+        "expected_matches": 38,
+        "found_matches": 38,
+        "completed_matches": 38,
+        "incomplete_matches": 0,
+        "player_seasons": 28,
+        "player_seasons_with_appearances": 28,
+        "standing_rows": 0,
+        "team_stat_rows": 0
+      },
+      {
+        "season": "2026/27",
+        "competition": "Serie A",
+        "expected_matches": null,
+        "found_matches": 0,
+        "completed_matches": 0,
+        "incomplete_matches": 0,
+        "player_seasons": 0,
+        "player_seasons_with_appearances": 0,
+        "standing_rows": 0,
+        "team_stat_rows": 0
+      }
+    ],
+    "detailedMatches": [
+      {
+        "season": "2008/09",
+        "competition": "Serie B",
+        "matches": 42,
+        "details": 0,
+        "event_matches": 0,
+        "lineup_matches": 0,
+        "team_stat_matches": 0,
+        "player_stat_matches": 0,
+        "injury_matches": 0
+      },
+      {
+        "season": "2009/10",
+        "competition": "Serie B",
+        "matches": 42,
+        "details": 0,
+        "event_matches": 0,
+        "lineup_matches": 0,
+        "team_stat_matches": 0,
+        "player_stat_matches": 0,
+        "injury_matches": 0
+      },
+      {
+        "season": "2010/11",
+        "competition": "Serie B",
+        "matches": 42,
+        "details": 0,
+        "event_matches": 0,
+        "lineup_matches": 0,
+        "team_stat_matches": 0,
+        "player_stat_matches": 0,
+        "injury_matches": 0
+      },
+      {
+        "season": "2011/12",
+        "competition": "Serie B",
+        "matches": 42,
+        "details": 0,
+        "event_matches": 0,
+        "lineup_matches": 0,
+        "team_stat_matches": 0,
+        "player_stat_matches": 0,
+        "injury_matches": 0
+      },
+      {
+        "season": "2012/13",
+        "competition": "Serie B",
+        "matches": 42,
+        "details": 0,
+        "event_matches": 0,
+        "lineup_matches": 0,
+        "team_stat_matches": 0,
+        "player_stat_matches": 0,
+        "injury_matches": 0
+      },
+      {
+        "season": "2013/14",
+        "competition": "Serie A",
+        "matches": 38,
+        "details": 0,
+        "event_matches": 4,
+        "lineup_matches": 0,
+        "team_stat_matches": 0,
+        "player_stat_matches": 0,
+        "injury_matches": 0
+      },
+      {
+        "season": "2014/15",
+        "competition": "Serie A",
+        "matches": 38,
+        "details": 0,
+        "event_matches": 2,
+        "lineup_matches": 0,
+        "team_stat_matches": 0,
+        "player_stat_matches": 0,
+        "injury_matches": 0
+      },
+      {
+        "season": "2015/16",
+        "competition": "Serie A",
+        "matches": 38,
+        "details": 0,
+        "event_matches": 1,
+        "lineup_matches": 0,
+        "team_stat_matches": 0,
+        "player_stat_matches": 0,
+        "injury_matches": 0
+      },
+      {
+        "season": "2016/17",
+        "competition": "Europa League",
+        "matches": 10,
+        "details": 0,
+        "event_matches": 0,
+        "lineup_matches": 0,
+        "team_stat_matches": 0,
+        "player_stat_matches": 0,
+        "injury_matches": 0
+      },
+      {
+        "season": "2016/17",
+        "competition": "Serie A",
+        "matches": 38,
+        "details": 0,
+        "event_matches": 1,
+        "lineup_matches": 0,
+        "team_stat_matches": 0,
+        "player_stat_matches": 0,
+        "injury_matches": 0
+      },
+      {
+        "season": "2017/18",
+        "competition": "Serie A",
+        "matches": 38,
+        "details": 0,
+        "event_matches": 2,
+        "lineup_matches": 0,
+        "team_stat_matches": 0,
+        "player_stat_matches": 0,
+        "injury_matches": 0
+      },
+      {
+        "season": "2018/19",
+        "competition": "Serie A",
+        "matches": 38,
+        "details": 0,
+        "event_matches": 5,
+        "lineup_matches": 0,
+        "team_stat_matches": 0,
+        "player_stat_matches": 0,
+        "injury_matches": 0
+      },
+      {
+        "season": "2019/20",
+        "competition": "Serie A",
+        "matches": 38,
+        "details": 0,
+        "event_matches": 2,
+        "lineup_matches": 0,
+        "team_stat_matches": 0,
+        "player_stat_matches": 0,
+        "injury_matches": 0
+      },
+      {
+        "season": "2020/21",
+        "competition": "Coppa Italia",
+        "matches": 1,
+        "details": 0,
+        "event_matches": 0,
+        "lineup_matches": 0,
+        "team_stat_matches": 0,
+        "player_stat_matches": 0,
+        "injury_matches": 0
+      },
+      {
+        "season": "2020/21",
+        "competition": "Serie A",
+        "matches": 38,
+        "details": 0,
+        "event_matches": 2,
+        "lineup_matches": 0,
+        "team_stat_matches": 0,
+        "player_stat_matches": 0,
+        "injury_matches": 0
+      },
+      {
+        "season": "2021/22",
+        "competition": "Coppa Italia",
+        "matches": 2,
+        "details": 0,
+        "event_matches": 0,
+        "lineup_matches": 0,
+        "team_stat_matches": 0,
+        "player_stat_matches": 0,
+        "injury_matches": 0
+      },
+      {
+        "season": "2021/22",
+        "competition": "Serie A",
+        "matches": 38,
+        "details": 0,
+        "event_matches": 1,
+        "lineup_matches": 0,
+        "team_stat_matches": 0,
+        "player_stat_matches": 0,
+        "injury_matches": 0
+      },
+      {
+        "season": "2022/23",
+        "competition": "Coppa Italia",
+        "matches": 1,
+        "details": 0,
+        "event_matches": 0,
+        "lineup_matches": 0,
+        "team_stat_matches": 0,
+        "player_stat_matches": 0,
+        "injury_matches": 0
+      },
+      {
+        "season": "2022/23",
+        "competition": "Serie A",
+        "matches": 38,
+        "details": 0,
+        "event_matches": 2,
+        "lineup_matches": 0,
+        "team_stat_matches": 0,
+        "player_stat_matches": 0,
+        "injury_matches": 0
+      },
+      {
+        "season": "2023/24",
+        "competition": "Coppa Italia",
+        "matches": 3,
+        "details": 0,
+        "event_matches": 0,
+        "lineup_matches": 0,
+        "team_stat_matches": 0,
+        "player_stat_matches": 0,
+        "injury_matches": 0
+      },
+      {
+        "season": "2023/24",
+        "competition": "Serie A",
+        "matches": 38,
+        "details": 0,
+        "event_matches": 2,
+        "lineup_matches": 0,
+        "team_stat_matches": 0,
+        "player_stat_matches": 0,
+        "injury_matches": 0
+      },
+      {
+        "season": "2024/25",
+        "competition": "Coppa Italia",
+        "matches": 3,
+        "details": 3,
+        "event_matches": 3,
+        "lineup_matches": 3,
+        "team_stat_matches": 3,
+        "player_stat_matches": 3,
+        "injury_matches": 0
+      },
+      {
+        "season": "2024/25",
+        "competition": "Serie B",
+        "matches": 38,
+        "details": 1,
+        "event_matches": 2,
+        "lineup_matches": 1,
+        "team_stat_matches": 1,
+        "player_stat_matches": 1,
+        "injury_matches": 0
+      },
+      {
+        "season": "2025/26",
+        "competition": "Coppa Italia",
+        "matches": 2,
+        "details": 2,
+        "event_matches": 2,
+        "lineup_matches": 2,
+        "team_stat_matches": 2,
+        "player_stat_matches": 2,
+        "injury_matches": 0
+      },
+      {
+        "season": "2025/26",
+        "competition": "Serie A",
+        "matches": 38,
+        "details": 38,
+        "event_matches": 10,
+        "lineup_matches": 8,
+        "team_stat_matches": 8,
+        "player_stat_matches": 8,
+        "injury_matches": 7
+      }
+    ]
+  },
+  "provenance": {
+    "byEntity": [
+      {
+        "entity": "matches",
+        "provider": "FBref",
+        "records": 10,
+        "source_urls": 10,
+        "verified": 10
+      },
+      {
+        "entity": "matches",
+        "provider": "football-data.co.uk",
+        "records": 665,
+        "source_urls": 665,
+        "verified": 665
+      },
+      {
+        "entity": "matches",
+        "provider": "kickoff",
+        "records": 44,
+        "source_urls": 6,
+        "verified": 44
+      },
+      {
+        "entity": "matches",
+        "provider": "openfootball/italy",
+        "records": 7,
+        "source_urls": 7,
+        "verified": 7
+      },
+      {
+        "entity": "player_seasons",
+        "provider": "FBref",
+        "records": 1,
+        "source_urls": 1,
+        "verified": 1
+      },
+      {
+        "entity": "player_seasons",
+        "provider": "StatBunker",
+        "records": 265,
+        "source_urls": 265,
+        "verified": 265
+      },
+      {
+        "entity": "player_seasons",
+        "provider": "StatBunker + match reports",
+        "records": 28,
+        "source_urls": 28,
+        "verified": 28
+      },
+      {
+        "entity": "player_seasons",
+        "provider": "StatsCrew",
+        "records": 23,
+        "source_urls": 23,
+        "verified": 23
+      },
+      {
+        "entity": "player_seasons",
+        "provider": "Transfermarkt",
+        "records": 55,
+        "source_urls": 0,
+        "verified": 55
+      },
+      {
+        "entity": "player_seasons",
+        "provider": "WorldFootball.net + StatsCrew",
+        "records": 87,
+        "source_urls": 87,
+        "verified": 87
+      },
+      {
+        "entity": "player_seasons",
+        "provider": "api-football",
+        "records": 195,
+        "source_urls": 0,
+        "verified": 195
+      },
+      {
+        "entity": "player_seasons",
+        "provider": "calcio-seriea.net",
+        "records": 25,
+        "source_urls": 25,
+        "verified": 25
+      },
+      {
+        "entity": "player_seasons",
+        "provider": "kickoff-derived",
+        "records": 51,
+        "source_urls": 0,
+        "verified": 51
+      },
+      {
+        "entity": "player_seasons",
+        "provider": "kickoff-derived (partial 8/38)",
+        "records": 28,
+        "source_urls": 0,
+        "verified": 28
+      },
+      {
+        "entity": "player_seasons",
+        "provider": "verified match reports",
+        "records": 50,
+        "source_urls": 50,
+        "verified": 50
+      },
+      {
+        "entity": "players",
+        "provider": "FBref",
+        "records": 17,
+        "source_urls": 17,
+        "verified": 17
+      },
+      {
+        "entity": "players",
+        "provider": "StatBunker",
+        "records": 82,
+        "source_urls": 82,
+        "verified": 82
+      },
+      {
+        "entity": "players",
+        "provider": "StatBunker + match reports",
+        "records": 4,
+        "source_urls": 4,
+        "verified": 4
+      },
+      {
+        "entity": "players",
+        "provider": "Transfermarkt",
+        "records": 91,
+        "source_urls": 91,
+        "verified": 91
+      },
+      {
+        "entity": "players",
+        "provider": "api-football",
+        "records": 272,
+        "source_urls": 15,
+        "verified": 272
+      },
+      {
+        "entity": "players",
+        "provider": "kickoff",
+        "records": 1,
+        "source_urls": 0,
+        "verified": 1
+      },
+      {
+        "entity": "players",
+        "provider": "verified match reports",
+        "records": 2,
+        "source_urls": 2,
+        "verified": 2
+      },
+      {
+        "entity": "seasons",
+        "provider": "FBref",
+        "records": 19,
+        "source_urls": 19,
+        "verified": 19
+      },
+      {
+        "entity": "seasons",
+        "provider": "Lega Serie A",
+        "records": 1,
+        "source_urls": 1,
+        "verified": 1
+      },
+      {
+        "entity": "seasons",
+        "provider": "U.S. Sassuolo Calcio",
+        "records": 1,
+        "source_urls": 1,
+        "verified": 1
+      },
+      {
+        "entity": "seasons",
+        "provider": "openfootball/italy",
+        "records": 5,
+        "source_urls": 5,
+        "verified": 5
+      },
+      {
+        "entity": "transfers",
+        "provider": "api-football",
+        "records": 837,
+        "source_urls": 0,
+        "verified": 837
+      }
+    ],
+    "manualRecords": [
+      {
+        "entity": "seasons",
+        "records": 0
+      },
+      {
+        "entity": "matches",
+        "records": 0
+      },
+      {
+        "entity": "players",
+        "records": 0
+      },
+      {
+        "entity": "player_seasons",
+        "records": 0
+      },
+      {
+        "entity": "transfers",
+        "records": 0
+      },
+      {
+        "entity": "match_events",
+        "records": 1
+      }
+    ],
+    "playerIdentity": {
+      "players": 469,
+      "without_source_id": 19,
+      "with_multiple_source_ids": 38
+    }
+  },
+  "nulls": {
+    "matches": {
+      "total": 726,
+      "no_halftime": 11,
+      "no_referee": 716,
+      "no_stadium": 702,
+      "no_attendance": 726,
+      "no_shots": 257,
+      "no_shots_on_target": 257,
+      "no_corners": 257,
+      "no_fouls": 257,
+      "no_xg": 718,
+      "no_scorers": 713,
+      "no_assists": 714,
+      "no_cards": 49
+    },
+    "players": {
+      "total": 469,
+      "no_nationality": 254,
+      "no_birth_date": 376,
+      "no_position": 233,
+      "no_photo": 354,
+      "no_api_football_id": 195,
+      "no_source_url": 258
+    },
+    "news": {
+      "total": 104,
+      "no_image": 104,
+      "no_description": 0,
+      "oldest_published_at": "2026-03-23T07:00:00.000Z",
+      "newest_published_at": "2026-08-08T16:38:20.000Z",
+      "last_cached_at": "2026-08-08T19:07:19.006Z"
+    }
+  },
+  "integrity": {
+    "foreignKeyViolations": [],
+    "duplicateFixtures": [],
+    "nearDuplicatePlayers": [],
+    "teamNameVariants": [],
+    "invalidMatches": [],
+    "invalidPlayerSeasons": [],
+    "invalidEvents": [],
+    "eventsWithoutMinute": [],
+    "duplicateEvents": [],
+    "duplicateTransfers": [],
+    "duplicateNewsTitles": [
+      {
+        "normalized_title": "le ultime operazioni di mercato del sassuolo calcio u s sassuolo calcio",
+        "duplicates": 3,
+        "urls": "https://news.google.com/rss/articles/CBMimgFBVV95cUxPb3RDSXI0ektBa3ZUWlJOTU5OZ09IRkg0WE05ZFpXZE9xMTBneUNJME9KX3RfcWhoQjdpY3ZtOF9paGRUeG0zREVMTmFvZFM5REpoZDFTUWdDY3RsXzE3bHN3eXp5d1F2dG1MUHczSzlUT2pnYWZsVlEwQ3BNMWVJeWI3NGdRRUFNTC1uOVNXSDNPU3dvWHFJdnVB?oc=5 | https://news.google.com/rss/articles/CBMimgFBVV95cUxObzdNM3R1VmY4V2NWOGp1YUx4YlJ2NS1rNzROLVBaVURuZUdoWWh0Tk5TM1ZsSE5IWmgtNk1pUEo4blZlMEJpLWJKMVF4anR6U2V6WVh2MWZYOFdPNS1QdmpXS21taExpdTloSWJiRC11VllZWUVGRG4zdGZrWW1SQUVmbFdBM0daN05ETUZVYTRQSWZERnZqM3ZB?oc=5 | https://news.google.com/rss/articles/CBMimgFBVV95cUxPZ3ZsQzFITlZTN1ozcURGbFR4T0JZNVZTOHdFWEE3QTBrOUFyYV8wOHJFQk9OZEFyNGtWWkF4cUwwVEIyTDZSQ05KVEV0NUhwZW1nY0JkYVBoNE9GdzFScXY4dnUtWkt3VkhJV0dRdDZ6VDhMRkxnVlBuRmthX0UwSXVybTF6SlYwMkFlZUYtNHM2TmNWNHRkbDJB?oc=5"
+      }
+    ]
+  },
+  "sync": [
+    {
+      "provider": "api-football",
+      "resource": "coach",
+      "requests_used": 3,
+      "estimated_remaining": 60,
+      "last_request": "2026-08-09T03:24:15.590Z",
+      "last_successful_sync": "2026-08-08T22:54:45.478Z",
+      "last_error": "TypeError: fetch failed"
+    },
+    {
+      "provider": "api-football",
+      "resource": "leagues",
+      "requests_used": 32,
+      "estimated_remaining": 94,
+      "last_request": "2026-08-09T12:59:27.020Z",
+      "last_successful_sync": "2026-08-09T12:59:15.426Z",
+      "last_error": "HTTP 429: {\"get\":\"\",\"parameters\":[],\"errors\":{\"rateLimit\":\"Too many requests. You have reached your per-minute request limit. Please wait a few seconds before retrying or upgrade your plan for higher limits.\"},\"results\":0,\"paging\":{\"current\":1,\"total\":1},\"response\":[]}"
+    },
+    {
+      "provider": "api-football",
+      "resource": "players",
+      "requests_used": 28,
+      "estimated_remaining": 91,
+      "last_request": "2026-08-09T12:59:26.978Z",
+      "last_successful_sync": "2026-08-09T12:59:15.721Z",
+      "last_error": "HTTP 429: {\"get\":\"\",\"parameters\":[],\"errors\":{\"rateLimit\":\"Too many requests. You have reached your per-minute request limit. Please wait a few seconds before retrying or upgrade your plan for higher limits.\"},\"results\":0,\"paging\":{\"current\":1,\"total\":1},\"response\":[]}"
+    },
+    {
+      "provider": "api-football",
+      "resource": "squad",
+      "requests_used": 3,
+      "estimated_remaining": 62,
+      "last_request": "2026-08-09T03:24:15.579Z",
+      "last_successful_sync": "2026-08-08T22:54:45.113Z",
+      "last_error": "TypeError: fetch failed"
+    },
+    {
+      "provider": "api-football",
+      "resource": "standings",
+      "requests_used": 10,
+      "estimated_remaining": 90,
+      "last_request": "2026-08-09T12:59:26.920Z",
+      "last_successful_sync": "2026-08-09T12:59:26.920Z",
+      "last_error": null
+    },
+    {
+      "provider": "api-football",
+      "resource": "team",
+      "requests_used": 1,
+      "estimated_remaining": 99,
+      "last_request": "2026-08-08T17:55:37.321Z",
+      "last_successful_sync": "2026-08-08T17:55:37.321Z",
+      "last_error": null
+    },
+    {
+      "provider": "api-football",
+      "resource": "team-stats",
+      "requests_used": 11,
+      "estimated_remaining": 93,
+      "last_request": "2026-08-09T12:59:26.936Z",
+      "last_successful_sync": "2026-08-09T12:59:15.490Z",
+      "last_error": "HTTP 429: {\"get\":\"\",\"parameters\":[],\"errors\":{\"rateLimit\":\"Too many requests. You have reached your per-minute request limit. Please wait a few seconds before retrying or upgrade your plan for higher limits.\"},\"results\":0,\"paging\":{\"current\":1,\"total\":1},\"response\":[]}"
+    },
+    {
+      "provider": "api-football",
+      "resource": "transfers",
+      "requests_used": 4,
+      "estimated_remaining": 61,
+      "last_request": "2026-08-09T03:27:10.593Z",
+      "last_successful_sync": "2026-08-08T22:54:45.355Z",
+      "last_error": "TypeError: fetch failed"
+    },
+    {
+      "provider": "kickoff",
+      "resource": "coach",
+      "requests_used": 30,
+      "estimated_remaining": 24,
+      "last_request": "2026-08-09T19:49:47.325Z",
+      "last_successful_sync": "2026-08-09T19:49:47.325Z",
+      "last_error": null
+    },
+    {
+      "provider": "kickoff",
+      "resource": "fixture-events",
+      "requests_used": 16,
+      "estimated_remaining": 27,
+      "last_request": "2026-08-09T19:49:46.668Z",
+      "last_successful_sync": "2026-08-09T19:49:46.668Z",
+      "last_error": null
+    },
+    {
+      "provider": "kickoff",
+      "resource": "fixture-injuries",
+      "requests_used": 14,
+      "estimated_remaining": 21,
+      "last_request": "2026-08-09T19:49:50.624Z",
+      "last_successful_sync": "2026-08-09T19:49:50.624Z",
+      "last_error": null
+    },
+    {
+      "provider": "kickoff",
+      "resource": "fixture-lineups",
+      "requests_used": 16,
+      "estimated_remaining": 26,
+      "last_request": "2026-08-09T19:49:46.806Z",
+      "last_successful_sync": "2026-08-09T19:49:46.806Z",
+      "last_error": null
+    },
+    {
+      "provider": "kickoff",
+      "resource": "fixture-players",
+      "requests_used": 16,
+      "estimated_remaining": 22,
+      "last_request": "2026-08-09T19:49:47.956Z",
+      "last_successful_sync": "2026-08-09T19:49:47.956Z",
+      "last_error": null
+    },
+    {
+      "provider": "kickoff",
+      "resource": "fixture-statistics",
+      "requests_used": 16,
+      "estimated_remaining": 23,
+      "last_request": "2026-08-09T19:49:47.579Z",
+      "last_successful_sync": "2026-08-09T19:49:47.579Z",
+      "last_error": null
+    },
+    {
+      "provider": "kickoff",
+      "resource": "fixtures",
+      "requests_used": 16,
+      "estimated_remaining": 29,
+      "last_request": "2026-08-09T19:49:30.751Z",
+      "last_successful_sync": "2026-08-09T19:49:30.751Z",
+      "last_error": null
+    },
+    {
+      "provider": "kickoff",
+      "resource": "leagues",
+      "requests_used": 2,
+      "estimated_remaining": 29,
+      "last_request": "2026-08-09T18:24:32.434Z",
+      "last_successful_sync": "2026-08-09T12:55:34.452Z",
+      "last_error": "KickoffAPI non raggiungibile: controlla connessione Internet/DNS e firewall."
+    },
+    {
+      "provider": "kickoff",
+      "resource": "test",
+      "requests_used": 2,
+      "estimated_remaining": 29,
+      "last_request": "2026-08-09T12:53:33.524Z",
+      "last_successful_sync": "2026-08-09T12:53:33.524Z",
+      "last_error": null
+    },
+    {
+      "provider": "kickoff",
+      "resource": "venue",
+      "requests_used": 4,
+      "estimated_remaining": 28,
+      "last_request": "2026-08-09T19:49:30.889Z",
+      "last_successful_sync": "2026-08-09T19:49:30.889Z",
+      "last_error": null
+    },
+    {
+      "provider": "rss",
+      "resource": "news",
+      "requests_used": 2,
+      "estimated_remaining": null,
+      "last_request": "2026-08-08T19:07:19.006Z",
+      "last_successful_sync": "2026-08-08T19:07:19.006Z",
+      "last_error": null
+    }
+  ],
+  "conflicts": [
+    {
+      "id": 1,
+      "entity_type": "match_event",
+      "entity_key": "134",
+      "field": "minute",
+      "old_value": "-5",
+      "new_value": null,
+      "provider": "kickoff",
+      "created_at": "2026-08-09T11:23:35.630Z",
+      "status": "resolved",
+      "resolved_value": "47",
+      "resolved_at": "2026-08-09T15:21:19.608Z"
+    }
+  ]
+}

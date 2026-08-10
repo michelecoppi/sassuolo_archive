@@ -1,0 +1,95 @@
+{
+  "area": "player_seasons",
+  "season": "2010/11",
+  "competition": "Serie B",
+  "source_provider": "WorldFootball.net + StatsCrew",
+  "source_url": "https://www.worldfootball.net/teams/te13744/sassuolo-calcio/se4311/2010-2011/statistics-matches/",
+  "verified_at": "2026-08-10",
+  "file": "data.csv",
+  "sha256": "ced9f446b901ac1898c349c23a15304c4714b607ab7b53c20420c9d79a2c8be0",
+  "records_total": 33,
+  "records_discarded": 0,
+  "discard_reasons": [],
+  "fields_covered": [
+    "player_name",
+    "season",
+    "competition",
+    "appearances",
+    "starts",
+    "minutes",
+    "goals",
+    "assists",
+    "yellow_cards",
+    "yellow_red_cards",
+    "red_cards",
+    "position",
+    "source_provider",
+    "source_url",
+    "last_verified_at"
+  ],
+  "validation": {
+    "status": "reconciled",
+    "checks": [
+      {
+        "name": "worldfootball_complete_extract",
+        "status": "passed",
+        "note": "33/33 rows extracted from the visible Serie B 2010/2011 table."
+      },
+      {
+        "name": "field_by_field_comparison",
+        "status": "passed",
+        "note": "35 differences documented and resolved by field policy."
+      },
+      {
+        "name": "player_goals_sum",
+        "status": "passed",
+        "note": "41 player goals."
+      },
+      {
+        "name": "own_goals_reconciled",
+        "status": "passed",
+        "note": "41 player goals + 1 opponent own goal (Claiton dos Santos, Varese) = 42 team goals."
+      },
+      {
+        "name": "starts_total",
+        "status": "passed",
+        "note": "462 starts = 42 matches × 11."
+      },
+      {
+        "name": "identities_reviewed",
+        "status": "passed",
+        "note": "All 33 names matched between the two extracts."
+      }
+    ],
+    "unresolved_conflicts": []
+  },
+  "field_source_policy": {
+    "worldfootball": [
+      "appearances",
+      "starts",
+      "minutes",
+      "goals",
+      "yellow_cards",
+      "yellow_red_cards",
+      "red_cards",
+      "position"
+    ],
+    "statscrew": [
+      "assists"
+    ],
+    "contemporary_match_report": [
+      "opponent_own_goal"
+    ]
+  },
+  "related_files": {
+    "worldfootball_csv_sha256": "ff6f4785f84ffa3a417746fc8e9ed49e1034d04e32272333567338bd581d6e09",
+    "statscrew_csv_sha256": "e78cfc4bebe81ed4ee63ed59717585e2e95eb5e33ec0f7c0390a4e7e940db6de",
+    "discrepancies_csv_sha256": "96de5347f18c8d8c227cfed2f4f754095f726853c4376f89d0b855f38d7cf15f",
+    "goal_resolution_csv_sha256": "da5def810f76fc19716ba69a8ba994e0ccc10e56e5be29d0359c3af57330b429"
+  },
+  "notes": [
+    "Regular-season Serie B only.",
+    "Opponent own goals are evidence records and are not attributed to Sassuolo players.",
+    "Approvato dal Data Manager dopo revisione manuale."
+  ]
+}

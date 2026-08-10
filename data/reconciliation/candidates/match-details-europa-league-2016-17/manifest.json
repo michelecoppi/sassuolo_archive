@@ -1,0 +1,35 @@
+{
+  "area": "match_details",
+  "season": "2016/17",
+  "competition": "Europa League",
+  "source_provider": "UEFA",
+  "source_url": "https://www.uefa.com/uefaeuropaleague/history/clubs/2600632--sassuolo/",
+  "verified_at": "2026-08-09",
+  "file": "data.csv",
+  "sha256": "a69cec336722f2ac4242db4d8fc6e9320f22a152e1373e73c32cdaac125233c0",
+  "records_total": 10,
+  "records_discarded": 0,
+  "discard_reasons": [],
+  "fields_covered": [
+    "match_date",
+    "home_team",
+    "away_team",
+    "stadium",
+    "referee",
+    "source_url"
+  ],
+  "validation": {
+    "status": "reconciled",
+    "fixtures_matched": 10,
+    "match_pages": 10,
+    "referees_known": 8
+  },
+  "notes": [
+    "Events, lineups and numeric match statistics are intentionally not inferred from the dynamic UEFA pages.",
+    "Riga modificata dal Data Manager: richiede nuova revisione.",
+    "Riga modificata dal Data Manager: richiede nuova revisione.",
+    "Riga modificata dal Data Manager: richiede nuova revisione.",
+    "Approvato dal Data Manager dopo revisione manuale.",
+    "Approvato dal Data Manager dopo revisione manuale."
+  ]
+}

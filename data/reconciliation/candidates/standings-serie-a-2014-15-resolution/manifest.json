@@ -1,0 +1,60 @@
+{
+  "package_type": "season_standings_resolution",
+  "area": "season_standings",
+  "season": "2014/15",
+  "competition": "Serie A",
+  "source_provider": "RSSSF + Soccerway cross-check",
+  "source_url": "https://www.rsssf.org/tablesi/ital2015.html",
+  "row_count": 20,
+  "records_total": 20,
+  "records_discarded": 0,
+  "fields_covered": [
+    "rank",
+    "points",
+    "played",
+    "wins",
+    "draws",
+    "losses",
+    "goals_for",
+    "goals_against",
+    "goals_diff",
+    "status",
+    "description"
+  ],
+  "generated_at": "2026-08-10",
+  "validation": {
+    "status": "reconciled",
+    "checks": {
+      "row_count": "passed",
+      "rank_sequence": "passed",
+      "played_per_team": "passed",
+      "record_identity": "passed",
+      "goal_difference_identity": "passed",
+      "league_win_loss_balance": "passed",
+      "league_goal_balance": "passed",
+      "draw_balance": "passed",
+      "points_reconciliation": "passed",
+      "source_crosscheck": "passed",
+      "uefa_qualification_verified": "passed",
+      "administrative_outcomes": "passed"
+    },
+    "unresolved_conflicts": []
+  },
+  "math_totals": {
+    "played_total": 760,
+    "wins_total": 260,
+    "draws_total": 240,
+    "losses_total": 260,
+    "goals_for_total": 1024,
+    "goals_against_total": 1024,
+    "points_reconciliation_notes": [
+      "Parma: sporting 26, official 19, deduction 7"
+    ]
+  },
+  "notes": [
+    "Genoa resta sesto con europa_league_denied; Sampdoria resta settima con europa_league.",
+    "Fallimento e mancata ammissione del Parma annotati separatamente dal rank.",
+    "Checksum e quadrature del file esterno verificati localmente prima della registrazione.",
+    "Approvato dal Data Manager dopo revisione manuale."
+  ]
+}

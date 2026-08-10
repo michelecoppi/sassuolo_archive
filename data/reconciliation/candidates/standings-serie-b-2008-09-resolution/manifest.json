@@ -1,0 +1,60 @@
+{
+  "package_type": "season_standings_resolution",
+  "area": "season_standings",
+  "season": "2008/09",
+  "competition": "Serie B",
+  "source_provider": "calcio-seriea.net + Soccerway/Wikipedia cross-check",
+  "source_url": "http://calcio-seriea.net/risultati/2008/6346/",
+  "row_count": 22,
+  "records_total": 22,
+  "records_discarded": 0,
+  "fields_covered": [
+    "rank",
+    "points",
+    "played",
+    "wins",
+    "draws",
+    "losses",
+    "goals_for",
+    "goals_against",
+    "goals_diff",
+    "status",
+    "description"
+  ],
+  "generated_at": "2026-08-10",
+  "validation": {
+    "status": "reconciled",
+    "checks": {
+      "row_count": "passed",
+      "rank_sequence": "passed",
+      "played_per_team": "passed",
+      "record_identity": "passed",
+      "goal_difference_identity": "passed",
+      "league_win_loss_balance": "passed",
+      "league_goal_balance": "passed",
+      "draw_balance": "passed",
+      "points_reconciliation": "passed",
+      "source_crosscheck": "passed",
+      "administrative_outcomes": "passed"
+    },
+    "unresolved_conflicts": []
+  },
+  "math_totals": {
+    "played_total": 924,
+    "wins_total": 316,
+    "draws_total": 292,
+    "losses_total": 316,
+    "goals_for_total": 1103,
+    "goals_against_total": 1103,
+    "points_reconciliation_notes": [
+      "Ascoli: sporting 52, official 51, deduction 1",
+      "Avellino: sporting 42, official 40, deduction 2",
+      "Treviso: sporting 36, official 35, deduction 1"
+    ]
+  },
+  "notes": [
+    "Classifica finale della stagione regolare; gli esiti di playoff e playout sono conservati in status e description.",
+    "Pacchetto adattato al formato candidato del Data Manager senza modificare i valori forniti dalla ricerca esterna.",
+    "Approvato dal Data Manager dopo revisione manuale."
+  ]
+}

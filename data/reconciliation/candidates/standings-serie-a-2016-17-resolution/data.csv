@@ -1,0 +1,21 @@
+season,competition,team_name,rank,points,played,wins,draws,losses,goals_for,goals_against,goals_diff,status,description,source_provider,source_url,last_verified_at
+2016/17,Serie A,Juventus,1,91,38,29,4,5,77,27,50,champion|champions_league,Campione d Italia 2016/17 e qualificata alla fase a gironi di Champions League; vinse anche la Coppa Italia.,RSSSF + WorldFootball cross-check,https://www.rsssf.org/tablesi/ital2017.html,2026-08-10
+2016/17,Serie A,Roma,2,87,38,28,3,7,90,38,52,champions_league,Qualificata alla fase a gironi di Champions League.,RSSSF + WorldFootball cross-check,https://www.rsssf.org/tablesi/ital2017.html,2026-08-10
+2016/17,Serie A,Napoli,3,86,38,26,8,4,94,39,55,champions_league_qualifying,Qualificata al turno preliminare/play-off di Champions League.,RSSSF + WorldFootball cross-check,https://www.rsssf.org/tablesi/ital2017.html,2026-08-10
+2016/17,Serie A,Atalanta,4,72,38,21,9,8,62,41,21,europa_league,Qualificata all Europa League tramite piazzamento in campionato.,RSSSF + WorldFootball cross-check,https://www.rsssf.org/tablesi/ital2017.html,2026-08-10
+2016/17,Serie A,Lazio,5,70,38,21,7,10,74,51,23,europa_league,Qualificata all Europa League tramite piazzamento in campionato; finalista di Coppa Italia contro Juventus.,RSSSF + WorldFootball cross-check,https://www.rsssf.org/tablesi/ital2017.html,2026-08-10
+2016/17,Serie A,Milan,6,63,38,18,9,11,57,45,12,europa_league_qualifying,"Qualificato all Europa League qualifying come sesta classificata: Juventus vinse la Coppa Italia ed era gia qualificata in Champions League, quindi il posto di coppa scorse alla miglior squadra non gia qualificata senza modificare il rank sportivo.",RSSSF + WorldFootball cross-check,https://www.rsssf.org/tablesi/ital2017.html,2026-08-10
+2016/17,Serie A,Inter,7,62,38,19,5,14,72,49,23,none,,RSSSF + WorldFootball cross-check,https://www.rsssf.org/tablesi/ital2017.html,2026-08-10
+2016/17,Serie A,Fiorentina,8,60,38,16,12,10,63,57,6,none,,RSSSF + WorldFootball cross-check,https://www.rsssf.org/tablesi/ital2017.html,2026-08-10
+2016/17,Serie A,Torino,9,53,38,13,14,11,71,66,5,none,,RSSSF + WorldFootball cross-check,https://www.rsssf.org/tablesi/ital2017.html,2026-08-10
+2016/17,Serie A,Sampdoria,10,48,38,12,12,14,49,55,-6,none,,RSSSF + WorldFootball cross-check,https://www.rsssf.org/tablesi/ital2017.html,2026-08-10
+2016/17,Serie A,Cagliari,11,47,38,14,5,19,55,76,-21,none,,RSSSF + WorldFootball cross-check,https://www.rsssf.org/tablesi/ital2017.html,2026-08-10
+2016/17,Serie A,Sassuolo,12,46,38,13,7,18,58,63,-5,none,"Dodicesimo posto nella stagione in cui il Sassuolo disputo anche l Europa League 2016/17: 46 punti, 13 vittorie, 7 pareggi, 18 sconfitte, 58 gol fatti e 63 subiti.",RSSSF + WorldFootball cross-check,https://www.rsssf.org/tablesi/ital2017.html,2026-08-10
+2016/17,Serie A,Udinese,13,45,38,12,9,17,47,56,-9,none,,RSSSF + WorldFootball cross-check,https://www.rsssf.org/tablesi/ital2017.html,2026-08-10
+2016/17,Serie A,Chievo Verona,14,43,38,12,7,19,43,61,-18,none,,RSSSF + WorldFootball cross-check,https://www.rsssf.org/tablesi/ital2017.html,2026-08-10
+2016/17,Serie A,Bologna,15,41,38,11,8,19,40,58,-18,none,,RSSSF + WorldFootball cross-check,https://www.rsssf.org/tablesi/ital2017.html,2026-08-10
+2016/17,Serie A,Genoa,16,36,38,9,9,20,38,64,-26,none,,RSSSF + WorldFootball cross-check,https://www.rsssf.org/tablesi/ital2017.html,2026-08-10
+2016/17,Serie A,Crotone,17,34,38,9,7,22,34,58,-24,none,,RSSSF + WorldFootball cross-check,https://www.rsssf.org/tablesi/ital2017.html,2026-08-10
+2016/17,Serie A,Empoli,18,32,38,8,8,22,29,61,-32,relegated,Retrocessa in Serie B.,RSSSF + WorldFootball cross-check,https://www.rsssf.org/tablesi/ital2017.html,2026-08-10
+2016/17,Serie A,Palermo,19,26,38,6,8,24,33,77,-44,relegated,Retrocessa in Serie B.,RSSSF + WorldFootball cross-check,https://www.rsssf.org/tablesi/ital2017.html,2026-08-10
+2016/17,Serie A,Pescara,20,18,38,3,9,26,37,81,-44,relegated,Retrocessa in Serie B.,RSSSF + WorldFootball cross-check,https://www.rsssf.org/tablesi/ital2017.html,2026-08-10

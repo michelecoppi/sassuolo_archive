@@ -1,0 +1,21 @@
+node_modules/
+dist/
+.env
+*.env.local
+*.env.*.local
+*.db
+*.db-shm
+*.db-wal
+server/db/backups/
+.tmp/
+coverage/
+.vite/
+.cache/
+*.log
+.DS_Store
+Thumbs.db
+
+# File temporanei/editor
+*.swp
+*.swo
+*.tmp

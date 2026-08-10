@@ -1,0 +1,82 @@
+{
+  "area": "player_seasons",
+  "season": "2011/12",
+  "competition": "Serie B",
+  "source_provider": "WorldFootball.net + StatsCrew",
+  "source_url": "https://www.worldfootball.net/teams/te13744/sassuolo-calcio/se7203/2011-2012/statistics-matches/",
+  "verified_at": "2026-08-10",
+  "file": "data.csv",
+  "sha256": "9389a2bd10924c2f2fbfd67e15c6c3171dee3c5b28fd39b9e5e9b3d102dc314c",
+  "records_total": 27,
+  "records_discarded": 0,
+  "discard_reasons": [],
+  "fields_covered": [
+    "player_name",
+    "season",
+    "competition",
+    "appearances",
+    "starts",
+    "minutes",
+    "goals",
+    "assists",
+    "yellow_cards",
+    "yellow_red_cards",
+    "red_cards",
+    "position"
+  ],
+  "validation": {
+    "status": "reconciled",
+    "checks": [
+      {
+        "name": "worldfootball_complete_extract",
+        "status": "passed",
+        "note": "27/27 rows extracted from the visible Serie B 2011/2012 table."
+      },
+      {
+        "name": "field_by_field_comparison",
+        "status": "passed",
+        "note": "33 differences documented and resolved by field policy."
+      },
+      {
+        "name": "player_goals_sum",
+        "status": "passed",
+        "note": "57 player goals equal 57 team goals."
+      },
+      {
+        "name": "starts_total",
+        "status": "passed",
+        "note": "462 starts = 42 matches × 11."
+      },
+      {
+        "name": "identities_reviewed",
+        "status": "passed",
+        "note": "All 27 names match existing player identities."
+      }
+    ],
+    "unresolved_conflicts": []
+  },
+  "field_source_policy": {
+    "worldfootball": [
+      "appearances",
+      "starts",
+      "minutes",
+      "goals",
+      "yellow_cards",
+      "yellow_red_cards",
+      "red_cards",
+      "position"
+    ],
+    "statscrew": [
+      "assists"
+    ]
+  },
+  "related_files": {
+    "worldfootball_csv_sha256": "b4c3549d6191613ee312579669de75cc5ed7c70f0a3e1802a228b16c01de7b25",
+    "discrepancies_csv_sha256": "98a9debec59c258cf725a2d4f2ff72e7bc064046040d3cd8d90c6f9b3e175139"
+  },
+  "notes": [
+    "Coppa Italia and playoffs excluded.",
+    "StatsCrew source for assists: https://www.statscrew.com/worldfootball/stats/t-SASCA963/y-2011",
+    "Approvato dal Data Manager dopo revisione manuale."
+  ]
+}

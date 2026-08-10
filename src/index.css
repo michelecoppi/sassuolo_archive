@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+body { margin:0; min-width:320px; min-height:100vh; background:#080a09; color:#f4f4f5; }
+* { box-sizing:border-box; }
+::selection { background:#20a95a; color:#06110a; }
+::-webkit-scrollbar { width:10px; height:10px; }
+::-webkit-scrollbar-track { background:#09090b; }
+::-webkit-scrollbar-thumb { background:#3f3f46; border-radius:999px; }
+.card { @apply relative overflow-hidden rounded-2xl border border-white/[0.08] bg-zinc-900/75 shadow-panel backdrop-blur-sm; }
+.card::before { content:""; @apply pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent; }
+.badge { @apply inline-flex items-center gap-1.5 rounded-full border border-zinc-700/90 bg-zinc-800/90 px-2.5 py-1 text-xs font-semibold leading-none text-zinc-200; }
+.btn { @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neroverde-300 focus-visible:ring-offset-2 focus-visible:ring-offset-zinc-950 disabled:cursor-not-allowed disabled:opacity-50; }
+.btn-primary { @apply btn bg-neroverde-400 text-zinc-950 shadow-glow hover:-translate-y-px hover:bg-neroverde-300 active:translate-y-0; }
+.btn-secondary { @apply btn border border-zinc-700/90 bg-zinc-900/80 text-zinc-200 hover:border-zinc-500 hover:bg-zinc-800 hover:text-white; }
+.input { @apply w-full rounded-xl border border-zinc-700/90 bg-zinc-950/80 px-3 py-2.5 text-sm text-zinc-100 outline-none transition placeholder:text-zinc-600 focus:border-neroverde-400 focus:ring-2 focus:ring-neroverde-400/15; }
+.table-wrap { @apply overflow-x-auto rounded-2xl border border-white/[0.08] bg-zinc-950/25; }
+table { @apply w-full min-w-[720px] border-collapse text-sm; }
+th { @apply sticky top-0 z-10 bg-zinc-900/95 px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-zinc-500 backdrop-blur; }
+td { @apply border-t border-white/[0.06] px-4 py-3.5 text-zinc-200; }
+tbody tr { @apply transition-colors hover:bg-white/[0.035]; }
+.reduce-motion *, .reduce-motion *::before, .reduce-motion *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; scroll-behavior:auto !important; transition-duration:.01ms !important; }
+@media (max-width: 640px) { .table-wrap table.mobile-cards { min-width:0; } .table-wrap table.mobile-cards thead { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); } .table-wrap table.mobile-cards, .table-wrap table.mobile-cards tbody, .table-wrap table.mobile-cards tr, .table-wrap table.mobile-cards td { display:block; width:100%; } .table-wrap table.mobile-cards tr { border-top:1px solid rgb(63 63 70); padding:.35rem 0; } .table-wrap table.mobile-cards td { border:0; display:flex; justify-content:space-between; gap:1rem; padding:.5rem 1rem; text-align:right; } .table-wrap table.mobile-cards td::before { content:attr(data-label); text-align:left; color:#a1a1aa; font-size:.75rem; font-weight:700; } }

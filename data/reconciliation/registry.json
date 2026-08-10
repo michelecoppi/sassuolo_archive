@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "updated_at": "2026-08-10",
+  "source_of_truth": "SQLite tables import_runs, audit_runs, research_candidates",
+  "checkpoint": {
+    "last_import": "standings-serie-a-2021-22-resolution",
+    "last_imported_at": "2026-08-10T01:47:00.839Z",
+    "last_audit_run": 22,
+    "last_audit_report": "data/reconciliation/audits/audit-full-2026-08-10T01-48-15-776Z.json",
+    "blocking_issues": 0
+  },
+  "workstreams": [
+    {"id":"serie-a-current","area":"matches_and_details","competition":"Serie A","channel":"kickoff","status":"operational","cadence":"daily"},
+    {"id":"player-season-serie-b-2008-2013","area":"player_seasons","seasons":"2008/09-2012/13","competition":"Serie B","channel":"candidate-package","status":"completed"},
+    {"id":"historical-standings-2008-2022","area":"season_standings","seasons":"2008/09-2021/22","channel":"candidate-package","status":"completed"},
+    {"id":"europa-league-2016-17","area":"match_details","season":"2016/17","competition":"Europa League","channel":"candidate-package","status":"imported"},
+    {"id":"historical-match-details","area":"match_details","seasons":"2008/09-2021/22","channel":"candidate-package","status":"next"},
+    {"id":"historical-coppa-italia","area":"matches_and_details","seasons":"2008/09-2019/20","competition":"Coppa Italia","channel":"candidate-package","status":"planned"}
+  ],
+  "rules": {
+    "unknown_is_null": true,
+    "competitions_are_separate": true,
+    "require_backup_before_write": true,
+    "require_audit_after_write": true
+  }
+}

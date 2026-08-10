@@ -1,0 +1,98 @@
+{
+  "area": "player_seasons",
+  "season": "2008/09",
+  "competition": "Serie B",
+  "source_provider": "calcio-seriea.net",
+  "source_url": "http://calcio-seriea.net/presenze/2008/3079/",
+  "verified_at": "2026-08-10",
+  "file": "data.csv",
+  "sha256": "fb8974e663fc340a68dd6655c2f0dec61bb7f4b747e8ccb91ffc857032c5fc37",
+  "records_total": 25,
+  "records_discarded": 0,
+  "discard_reasons": [],
+  "fields_covered": [
+    "player_name",
+    "season",
+    "competition",
+    "appearances",
+    "starts",
+    "minutes",
+    "goals",
+    "assists",
+    "yellow_cards",
+    "yellow_red_cards",
+    "red_cards",
+    "position",
+    "source_provider",
+    "source_url",
+    "last_verified_at"
+  ],
+  "validation": {
+    "status": "reconciled",
+    "checks": [
+      {
+        "name": "complete_player_extract",
+        "status": "passed",
+        "note": "25 players with at least one Serie B appearance."
+      },
+      {
+        "name": "appearances_and_starts",
+        "status": "passed",
+        "note": "588 appearances - 126 substitute entries = 462 starts = 42 × 11."
+      },
+      {
+        "name": "goal_reconciliation",
+        "status": "passed",
+        "note": "56 player goals + 1 opponent own goal = 57 team goals."
+      },
+      {
+        "name": "goalkeeper_reconciliation",
+        "status": "passed",
+        "note": "Walter Bressan 41 starts + Alberto Pomini 1 start = 42 goalkeeper starts."
+      },
+      {
+        "name": "field_by_field_comparison",
+        "status": "passed",
+        "note": "54 source differences documented and resolved."
+      },
+      {
+        "name": "nullable_unverified_fields",
+        "status": "passed",
+        "note": "Minutes, assists, and yellow-red split left NULL because the complete archive does not verify them."
+      },
+      {
+        "name": "identities_reviewed",
+        "status": "passed",
+        "note": "All 25 names match existing canonical player identities."
+      }
+    ],
+    "unresolved_conflicts": []
+  },
+  "field_source_policy": {
+    "calcio_seriea_net": [
+      "appearances",
+      "starts",
+      "goals",
+      "yellow_cards",
+      "red_cards",
+      "position"
+    ],
+    "left_null": [
+      "minutes",
+      "assists",
+      "yellow_red_cards"
+    ]
+  },
+  "related_files": {
+    "archive_presences_csv_sha256": "d979611ce50d84f0784a50ed0f0c74f431e84752383b964f93353c665fc861a1",
+    "statscrew_csv_sha256": "8e5ab59a8361b094619486ce328add87e2e478aab6d1434280fe8cabdba0ecd4",
+    "discrepancies_csv_sha256": "3354bd69cae788e370d302fd783387308b215821f097f1ed8b786c35f0c64708",
+    "goal_resolution_csv_sha256": "5beb7b61fc387fe14b0df78662973d906e7bf1f8b2b0247de1cdbc3586946061"
+  },
+  "notes": [
+    "WorldFootball (https://www.worldfootball.net/teams/te13744/sassuolo-calcio/statistics-matches/co113/italy-serie-b/se3373/2008-2009/) and StatsCrew were retained as comparison sources but not selected because their totals cover only 440 starts and 55 player goals.",
+    "Regular-season Serie B only; Coppa Italia excluded.",
+    "Unknown or source-conflicted fields remain NULL rather than inferred.",
+    "Approvato dal Data Manager dopo revisione manuale."
+  ]
+}

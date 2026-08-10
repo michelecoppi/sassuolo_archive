@@ -1,0 +1,60 @@
+{
+  "package_type": "season_standings_resolution",
+  "area": "season_standings",
+  "season": "2021/22",
+  "competition": "Serie A",
+  "source_provider": "RSSSF + WorldFootball cross-check",
+  "source_url": "https://www.rsssf.org/tablesi/ital2022.html",
+  "row_count": 20,
+  "records_total": 20,
+  "records_discarded": 0,
+  "fields_covered": [
+    "rank",
+    "points",
+    "played",
+    "wins",
+    "draws",
+    "losses",
+    "goals_for",
+    "goals_against",
+    "goals_diff",
+    "status",
+    "description"
+  ],
+  "generated_at": "2026-08-10",
+  "validation": {
+    "status": "reconciled",
+    "checks": {
+      "row_count": "passed",
+      "rank_sequence": "passed",
+      "played_per_team": "passed",
+      "record_identity": "passed",
+      "goal_difference_identity": "passed",
+      "league_win_loss_balance": "passed",
+      "league_goal_balance": "passed",
+      "draw_balance": "passed",
+      "points_reconciliation": "passed",
+      "source_crosscheck": "passed",
+      "tie_breaks_verified": "passed",
+      "uefa_qualification_verified": "passed",
+      "conference_league_verified": "passed",
+      "coppa_italia_effect_verified": "passed",
+      "administrative_outcomes": "passed"
+    },
+    "unresolved_conflicts": []
+  },
+  "math_totals": {
+    "played_total": 760,
+    "wins_total": 282,
+    "draws_total": 196,
+    "losses_total": 282,
+    "goals_for_total": 1089,
+    "goals_against_total": 1089
+  },
+  "notes": [
+    "Torino precede Sassuolo a pari punti grazie agli scontri diretti.",
+    "Il titolo Conference League della Roma e annotato senza alterare il rank di campionato.",
+    "Checksum SHA-256 e quadrature del file esterno verificati localmente prima della registrazione.",
+    "Approvato dal Data Manager dopo revisione manuale."
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "area": "player_seasons",
+  "season": "2012/13",
+  "competition": "Serie B",
+  "source_provider": "StatsCrew",
+  "source_url": "https://www.statscrew.com/worldfootball/stats/t-SASCA963/y-2012",
+  "verified_at": "2026-08-09",
+  "file": "data.csv",
+  "sha256": "e69d129c72bcca74bf447a183246abd197dd0b49300f4414ede1f6c35e0d437f",
+  "records_total": 23,
+  "records_discarded": 3,
+  "discard_reasons": [
+    "ESPN-only rows Simone Perilli, Raffaele Conforto and Davide Luppi excluded because the accessible source did not publish reliable Serie B player-season statistics for import."
+  ],
+  "fields_covered": [
+    "player_name",
+    "season",
+    "competition",
+    "appearances",
+    "starts",
+    "minutes",
+    "goals",
+    "assists",
+    "yellow_cards",
+    "red_cards",
+    "position",
+    "source_provider",
+    "source_url",
+    "last_verified_at"
+  ],
+  "validation": {
+    "status": "reconciled",
+    "checks": [
+      {
+        "name": "season_constant",
+        "status": "passed",
+        "note": "All rows use 2012/13."
+      },
+      {
+        "name": "competition_constant",
+        "status": "passed",
+        "note": "All rows use Serie B."
+      },
+      {
+        "name": "player_goals_sum",
+        "status": "source_conflict",
+        "note": "Player goals sum to 76 while team goals are reported as 78."
+      },
+      {
+        "name": "team_goals_cross_check",
+        "status": "passed",
+        "note": "StatsCrew and FBref both report 78 goals for Sassuolo."
+      },
+      {
+        "name": "own_goal_identified",
+        "status": "passed",
+        "note": "Carlo Alberto Ludi own goal in Novara-Sassuolo explains one of the two non-player goals."
+      },
+      {
+        "name": "own_goals_reconciled",
+        "status": "passed",
+        "note": "76 player goals + Alex Valentini and Carlo Alberto Ludi opponent own goals = 78 team goals."
+      },
+      {
+        "name": "csv_utf8_and_quoting",
+        "status": "passed",
+        "note": "CSV parsed successfully with Python csv module."
+      }
+    ],
+    "unresolved_conflicts": []
+  },
+  "notes": [
+    "The ESPN accessible squad table is retained only as a rejected cross-check because its appearance totals are incomplete; it is not an import conflict.",
+    "Opponent own goals remain match evidence and are not assigned to Sassuolo players.",
+    "Do not include Coppa Italia or playoff records in this tranche.",
+    "Approvato dal Data Manager dopo revisione manuale."
+  ]
+}

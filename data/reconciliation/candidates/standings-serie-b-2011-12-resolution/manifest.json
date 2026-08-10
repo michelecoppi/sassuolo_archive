@@ -1,0 +1,61 @@
+{
+  "package_type": "season_standings_resolution",
+  "area": "season_standings",
+  "season": "2011/12",
+  "competition": "Serie B",
+  "source_provider": "RSSSF + Wikipedia + calcio-seriea.net cross-check",
+  "source_url": "https://www.rsssf.org/tablesi/ital2012.html",
+  "row_count": 22,
+  "records_total": 22,
+  "records_discarded": 0,
+  "fields_covered": [
+    "rank",
+    "points",
+    "played",
+    "wins",
+    "draws",
+    "losses",
+    "goals_for",
+    "goals_against",
+    "goals_diff",
+    "status",
+    "description"
+  ],
+  "generated_at": "2026-08-10",
+  "validation": {
+    "status": "reconciled",
+    "checks": {
+      "row_count": "passed",
+      "rank_sequence": "passed",
+      "played_per_team": "passed",
+      "record_identity": "passed",
+      "goal_difference_identity": "passed",
+      "league_win_loss_balance": "passed",
+      "league_goal_balance": "passed",
+      "draw_balance": "passed",
+      "points_reconciliation": "passed",
+      "source_crosscheck": "passed",
+      "administrative_outcomes": "passed"
+    },
+    "unresolved_conflicts": []
+  },
+  "math_totals": {
+    "played_total": 924,
+    "wins_total": 330,
+    "draws_total": 264,
+    "losses_total": 330,
+    "goals_for_total": 1164,
+    "goals_against_total": 1164,
+    "points_reconciliation_notes": [
+      "Juve Stabia: sporting 61, official 57, deduction 4",
+      "Crotone: sporting 54, official 52, deduction 2",
+      "Bari: sporting 56, official 50, deduction 6",
+      "Ascoli: sporting 56, official 49, deduction 7"
+    ]
+  },
+  "notes": [
+    "La riammissione successiva del Vicenza è annotata senza modificare il rank della stagione regolare.",
+    "Checksum e quadrature del file esterno verificati localmente prima della registrazione.",
+    "Approvato dal Data Manager dopo revisione manuale."
+  ]
+}

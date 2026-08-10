@@ -1,0 +1,29 @@
+[
+  {
+    "competition": "Serie C1",
+    "season": "2007/08",
+    "coverage": "league-results-and-table",
+    "provider": "RSSSF",
+    "source_url": "https://www.rsssf.org/tablesi/ital3-08.html",
+    "status": "pending-verification",
+    "notes": "Tenere separata dalla Serie B: richiede un export locale con fixture e data di verifica prima dell'import."
+  },
+  {
+    "competition": "Coppa Italia",
+    "season": "all",
+    "coverage": "fixtures",
+    "provider": "FIGC / Lega Serie A archive",
+    "source_url": "https://www.legaseriea.it/en/coppa-italia",
+    "status": "pending-verification",
+    "notes": "Non usare le partite di coppa per completare la copertura del campionato."
+  },
+  {
+    "competition": "Europa League",
+    "season": "2016/17",
+    "coverage": "fixtures-and-match-reports",
+    "provider": "UEFA",
+    "source_url": "https://www.uefa.com/uefaeuropaleague/history/seasons/2017/clubs/2600168--sassuolo/",
+    "status": "pending-verification",
+    "notes": "Importare solamente fixture esportate con URL del match report UEFA."
+  }
+]
