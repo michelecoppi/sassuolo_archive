@@ -194,6 +194,7 @@ api.get('/players', (req,res)=>{
 });
 api.get('/players/:id', (req,res)=>{
   const p=db.prepare(`SELECT * FROM players WHERE id=?`).get(req.params.id);
+  const aggregate=db.prepare(`SELECT COUNT(DISTINCT season) AS seasons,COALESCE(SUM(appearances),0) AS appearances,COALESCE(SUM(starts),0) AS starts,COALESCE(SUM(minutes),0) AS minutes,COALESCE(SUM(goals),0) AS goals,COALESCE(SUM(assists),0) AS assists,COALESCE(SUM(yellow_cards),0) AS yellow_cards,COALESCE(SUM(red_cards),0) AS red_cards FROM player_seasons WHERE player_id=?`).get(req.params.id) as any;
   const seasons=db.prepare(`SELECT * FROM player_seasons WHERE player_id=? ORDER BY substr(season,1,4) DESC`).all(req.params.id);
   const cleanSheets=db.prepare(`SELECT m.season,m.competition,COUNT(*) AS clean_sheets
     FROM match_player_stats mps JOIN matches m ON m.id=mps.match_id
@@ -205,7 +206,7 @@ api.get('/players/:id', (req,res)=>{
     GROUP BY m.season,m.competition ORDER BY substr(m.season,1,4) DESC`).all(req.params.id) as any[];
   const derivedCleanSheets=cleanSheets.reduce((sum,row)=>sum+Number(row.clean_sheets||0),0);
   const transfers=db.prepare(`SELECT * FROM transfers WHERE player_id=? ORDER BY date DESC,id DESC`).all(req.params.id);
-  res.json({player:p?{...p,derived_clean_sheets:cleanSheets.length?derivedCleanSheets:null}:null,seasons,cleanSheets,transfers});
+  res.json({player:p?{...p,...aggregate,derived_clean_sheets:cleanSheets.length?derivedCleanSheets:null}:null,seasons,cleanSheets,transfers});
 });
 api.get('/squad/current', (_req,res)=>{
   const currentSeason = process.env.CURRENT_SEASON ?? (db.prepare(`SELECT season FROM seasons ORDER BY substr(season,1,4) DESC LIMIT 1`).get() as {season:string}|undefined)?.season;

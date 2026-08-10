@@ -34,6 +34,7 @@ export function dashboardStats(filters: Record<string,string|undefined> = {}) {
   const seasonWhere:string[]=[];const seasonParams:any[]=[];
   if(filters.competition){seasonWhere.push('competition=?');seasonParams.push(filters.competition);} if(filters.from){seasonWhere.push('substr(season,1,4)>=?');seasonParams.push(filters.from.slice(0,4));}if(filters.to){seasonWhere.push('substr(season,1,4)<=?');seasonParams.push(filters.to.slice(0,4));}
   const seasonRows = db.prepare(`SELECT * FROM seasons ${seasonWhere.length?'WHERE '+seasonWhere.join(' AND '):''} ORDER BY season, competition`).all(...seasonParams) as any[];
+  const seasonCount = (competition?: string) => new Set(seasonRows.filter(row => !competition || row.competition === competition).map(row => row.season).filter(Boolean)).size;
   // The dashboard has one x-axis point per season.  When no competition is
   // selected, collapse the competition rows into a single all-competitions
   // season; otherwise Coppa Italia and league rows share the same category
@@ -76,7 +77,7 @@ export function dashboardStats(filters: Record<string,string|undefined> = {}) {
   const lastSync = db.prepare(`SELECT max(last_successful_sync) AS value FROM sync_state`).get() as {value:string|null};
   return {
     totals: { matches: matches.length, wins, draws, losses, goalsFor: gf, goalsAgainst: ga, goalDifference: gf-ga, points },
-    serieASeasons: seasonRows.filter(s => s.competition === 'Serie A').length,
+    seasonCounts: { total: seasonCount(), serieA: seasonCount('Serie A'), serieB: seasonCount('Serie B'), coppaItalia: seasonCount('Coppa Italia'), europaLeague: seasonCount('Europa League') },
     bestLeagueFinish: best ?? null,
     highestPointsSeason: highPoints ?? null,
     biggestWin, biggestDefeat, recentMatches: latest, seasons, lastUpdate: lastSync.value
