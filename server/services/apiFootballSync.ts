@@ -1,5 +1,6 @@
 import { db, getSetting, normalizePlayerPosition, normalizeTeamName, nowIso, recordFixtureConflicts, setSetting } from '../db/database.js';
 import { recomputeDerivedPlayerStats } from './importer.js';
+import { resolvePlayer } from './playerResolver.js';
 
 const API_BASE = 'https://v3.football.api-sports.io';
 const PROVIDER = 'api-football';
@@ -124,9 +125,20 @@ export async function resolveLeagueForSeason(season: string, competition: string
 
 function upsertPlayer(player: any, extra: { position?: any; number?: any; currentSquad?: boolean } = {}) {
   const apiId = nInt(player?.id);
-  const name = String(player?.name ?? '').trim(); if (!name) return null;
+  const providerName = String(player?.name ?? '').trim();
+  const firstname = String(player?.firstname ?? '').trim();
+  const lastname = String(player?.lastname ?? '').trim();
+  // API-Football often exposes `name` as an initial plus surname. That value
+  // is an alias, never the canonical display name when the full fields exist.
+  const name = [firstname, lastname].filter(Boolean).join(' ').trim() || providerName;
+  if (!providerName && !name) return null;
   let existing: any = apiId ? db.prepare(`SELECT * FROM players WHERE api_football_id=?`).get(apiId) : null;
   if (!existing) existing = db.prepare(`SELECT * FROM players WHERE lower(name)=lower(?)`).get(name);
+  if (!existing) {
+    const resolution = resolvePlayer({ name: providerName || name, sourceProvider: PROVIDER, sourcePlayerId: apiId, context: `api-football:${apiId ?? name}`, allowCreate: true });
+    if (resolution.status === 'conflict') return null;
+    existing = db.prepare('SELECT * FROM players WHERE id=?').get(resolution.playerId);
+  }
   if (existing) {
     if (existing.source_provider === 'manual') {
       db.prepare(`UPDATE players SET api_football_id=COALESCE(api_football_id,?),photo_url=COALESCE(photo_url,?),source_external_id=COALESCE(source_external_id,?),last_verified_at=? WHERE id=?`)
@@ -134,8 +146,8 @@ function upsertPlayer(player: any, extra: { position?: any; number?: any; curren
       if (extra.currentSquad) db.prepare(`UPDATE players SET current_squad=1 WHERE id=?`).run(existing.id);
       return existing.id as number;
     }
-    db.prepare(`UPDATE players SET api_football_id=COALESCE(?,api_football_id),name=?,firstname=COALESCE(?,firstname),lastname=COALESCE(?,lastname),nationality=COALESCE(?,nationality),birth_date=COALESCE(?,birth_date),birth_place=COALESCE(?,birth_place),birth_country=COALESCE(?,birth_country),age=COALESCE(?,age),height=COALESCE(?,height),weight=COALESCE(?,weight),photo_url=COALESCE(?,photo_url),position=COALESCE(?,position),shirt_number=COALESCE(?,shirt_number),injured=COALESCE(?,injured),current_squad=CASE WHEN ?=1 THEN 1 ELSE current_squad END,source_provider=?,source_external_id=COALESCE(?,source_external_id),last_verified_at=? WHERE id=?`)
-      .run(apiId, name, player?.firstname ?? null, player?.lastname ?? null, player?.nationality ?? null, player?.birth?.date ?? player?.birth_date ?? null, player?.birth?.place ?? null, player?.birth?.country ?? null, nInt(player?.age), player?.height ?? null, player?.weight ?? null, player?.photo ?? null, normalizePlayerPosition(extra.position ?? player?.position), nInt(extra.number ?? player?.number), boolInt(player?.injured), extra.currentSquad ? 1 : 0, PROVIDER, apiId ? String(apiId) : null, nowIso(), existing.id);
+    db.prepare(`UPDATE players SET api_football_id=COALESCE(?,api_football_id),name=CASE WHEN ?<>'' THEN ? ELSE name END,firstname=COALESCE(?,firstname),lastname=COALESCE(?,lastname),nationality=COALESCE(?,nationality),birth_date=COALESCE(?,birth_date),birth_place=COALESCE(?,birth_place),birth_country=COALESCE(?,birth_country),age=COALESCE(?,age),height=COALESCE(?,height),weight=COALESCE(?,weight),photo_url=COALESCE(?,photo_url),position=COALESCE(?,position),shirt_number=COALESCE(?,shirt_number),injured=COALESCE(?,injured),current_squad=CASE WHEN ?=1 THEN 1 ELSE current_squad END,source_provider=?,source_external_id=COALESCE(?,source_external_id),last_verified_at=? WHERE id=?`)
+      .run(apiId, firstname && lastname ? name : '', firstname || null, lastname || null, player?.nationality ?? null, player?.birth?.date ?? player?.birth_date ?? null, player?.birth?.place ?? null, player?.birth?.country ?? null, nInt(player?.age), player?.height ?? null, player?.weight ?? null, player?.photo ?? null, normalizePlayerPosition(extra.position ?? player?.position), nInt(extra.number ?? player?.number), boolInt(player?.injured), extra.currentSquad ? 1 : 0, PROVIDER, apiId ? String(apiId) : null, nowIso(), existing.id);
     return existing.id as number;
   }
   const result = db.prepare(`INSERT INTO players(api_football_id,name,firstname,lastname,nationality,birth_date,birth_place,birth_country,age,height,weight,photo_url,position,shirt_number,injured,current_squad,source_provider,source_external_id,last_verified_at)
@@ -159,9 +171,17 @@ export async function syncApiFootballSquad() {
   const r = await apiRequest<any>('squad', '/players/squads', { team: t.teamId });
   if (!r.ok) return { stored: 0, requests: t.requests + r.meta.requests, errors: [r.error] };
   const players = r.data?.response?.[0]?.players ?? [];
-  db.prepare(`UPDATE players SET current_squad=0 WHERE source_provider<>'manual' OR source_provider IS NULL`).run();
   let stored = 0;
-  for (const p of players) { if (upsertPlayer(p, { position: p?.position, number: p?.number, currentSquad: true })) stored++; }
+  const activeIds = new Set<number>();
+  for (const p of players) {
+    const id = upsertPlayer(p, { position: p?.position, number: p?.number, currentSquad: true });
+    if (id) { activeIds.add(id); stored++; continue; }
+    const conflict = db.prepare(`SELECT candidates_json FROM player_match_conflicts WHERE status='open' AND source_provider=? AND source_player_id=? ORDER BY id DESC LIMIT 1`).get(PROVIDER, p?.id == null ? null : String(p.id)) as { candidates_json: string | null } | undefined;
+    for (const candidate of JSON.parse(conflict?.candidates_json ?? '[]') as Array<{ id: number }>) activeIds.add(candidate.id);
+  }
+  db.prepare(`UPDATE players SET current_squad=0 WHERE source_provider<>'manual' OR source_provider IS NULL`).run();
+  const markCurrent = db.prepare('UPDATE players SET current_squad=1 WHERE id=?');
+  for (const id of activeIds) markCurrent.run(id);
   return { stored, requests: t.requests + r.meta.requests, errors: [] };
 }
 

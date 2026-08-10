@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createBackupSnapshot, db, initDb, nowIso, recordChange, recordSourceReference } from '../server/db/database.js';
 import { recomputeDerivedPlayerStats } from '../server/services/importer.js';
+import { resolvePlayer, seedHistoricalPlayerAliases } from '../server/services/playerResolver.js';
 
 type Row = { player_name: string; season: string; competition: string; appearances: number; starts: number; goals: number; source_provider: string; source_url: string };
 type Expected = { appearances: number; starts: number; goals: number; matches: number };
@@ -38,14 +39,9 @@ function parseCsv(text: string): Row[] {
   });
 }
 
-function normalizedName(value: string) {
-  return value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/gi, '').toLowerCase();
-}
-
 initDb();
+seedHistoricalPlayerAliases();
 const rows = parseCsv(fs.readFileSync(sourceFile, 'utf8'));
-const existingPlayers = db.prepare('SELECT id,name FROM players').all() as Array<{ id: number; name: string }>;
-const playerByNormalizedName = new Map(existingPlayers.map(player => [normalizedName(player.name), player]));
 const validations = [...expected].map(([key, expectedValues]) => {
   const [season, competition] = key.split('|');
   const sourceRows = rows.filter(row => row.season === season && row.competition === competition);
@@ -56,14 +52,12 @@ const validations = [...expected].map(([key, expectedValues]) => {
 });
 
 if (!process.argv.includes('--apply')) {
-  const unresolvedPlayers = [...new Set(rows.filter(row => !playerByNormalizedName.has(normalizedName(row.player_name))).map(row => row.player_name))];
+  const unresolvedPlayers = [...new Set(rows.filter(row => resolvePlayer({ name: row.player_name, sourceProvider: row.source_provider, sourceUrl: row.source_url, context: `verified:${row.season}:${row.competition}`, allowCreate: false }).status === 'conflict').map(row => row.player_name))];
   console.log(JSON.stringify({ mode: 'dry-run', sourceFile, validations, unresolvedPlayers }, null, 2));
   process.exit(0);
 }
 
 const backup = createBackupSnapshot('before-verified-match-reports-player-seasons-import');
-const findPlayer = db.prepare('SELECT id,name FROM players WHERE lower(name)=lower(?)');
-const insertPlayer = db.prepare('INSERT INTO players(name,source_provider,source_url,last_verified_at) VALUES(?,?,?,?)');
 const saveSeason = db.prepare(`INSERT INTO player_seasons(player_id,season,competition,appearances,starts,minutes,goals,assists,yellow_cards,red_cards,source_provider,source_url,last_verified_at)
   VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)
   ON CONFLICT(player_id,season,competition) DO UPDATE SET appearances=excluded.appearances,starts=excluded.starts,goals=excluded.goals,source_provider=excluded.source_provider,source_url=excluded.source_url,last_verified_at=excluded.last_verified_at
@@ -72,16 +66,11 @@ const saved = db.transaction(() => {
   let createdPlayers = 0;
   let insertedOrUpdated = 0;
   for (const row of rows) {
-    let player = findPlayer.get(row.player_name) as { id: number; name: string } | undefined;
-    if (!player) player = playerByNormalizedName.get(normalizedName(row.player_name));
-    if (!player) {
-      const result = insertPlayer.run(row.player_name, row.source_provider, row.source_url, nowIso());
-      player = { id: Number(result.lastInsertRowid), name: row.player_name };
-      playerByNormalizedName.set(normalizedName(row.player_name), player);
-      createdPlayers++;
-    }
-    insertedOrUpdated += Number(saveSeason.run(player.id, row.season, row.competition, row.appearances, row.starts, null, row.goals, null, null, null, row.source_provider, row.source_url, nowIso()).changes);
-    const entity = db.prepare('SELECT id FROM player_seasons WHERE player_id=? AND season=? AND competition=?').get(player.id, row.season, row.competition) as { id: number };
+    const player = resolvePlayer({ name: row.player_name, sourceProvider: row.source_provider, sourceUrl: row.source_url, context: `verified:${row.season}:${row.competition}`, allowCreate: false });
+    if (player.status === 'conflict') continue;
+    if (player.status === 'created') createdPlayers++;
+    insertedOrUpdated += Number(saveSeason.run(player.playerId, row.season, row.competition, row.appearances, row.starts, null, row.goals, null, null, null, row.source_provider, row.source_url, nowIso()).changes);
+    const entity = db.prepare('SELECT id FROM player_seasons WHERE player_id=? AND season=? AND competition=?').get(player.playerId, row.season, row.competition) as { id: number };
     const key = `${row.season}|${row.competition}`;
     recordSourceReference({ entityType: 'player_seasons', entityId: entity.id, sourceUrl: row.source_url, note: 'Presenze, titolarità e gol aggregati da tabellini di tutte le partite della competizione. Minuti, assist e cartellini restano N/D.' });
     for (const source of additionalSources.get(key) ?? []) recordSourceReference({ entityType: 'player_seasons', entityId: entity.id, sourceUrl: source.url, note: source.note });

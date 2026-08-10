@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createBackupSnapshot, db, initDb, nowIso, recordChange, recordSourceReference } from '../server/db/database.js';
 import { recomputeDerivedPlayerStats } from '../server/services/importer.js';
+import { resolvePlayer, seedHistoricalPlayerAliases } from '../server/services/playerResolver.js';
 
 type Target = { season: string; competition: string; compId: number };
 type Row = { player_name: string; appearances: number; starts: number | null; goals: number | null; source_external_id: string; source_url: string; season: string; competition: string };
@@ -68,6 +69,7 @@ async function download(target: Target) {
 }
 
 initDb();
+seedHistoricalPlayerAliases();
 const args = new Set(process.argv.slice(2));
 const apply = args.has('--apply');
 const writeCsv = args.has('--write-csv') || apply;
@@ -98,9 +100,6 @@ if (!apply) {
 }
 
 const backup = createBackupSnapshot('before-statbunker-player-seasons-import');
-const findBySource = db.prepare(`SELECT player_id FROM player_source_ids WHERE source_provider='StatBunker' AND source_player_id=?`);
-const findByName = db.prepare(`SELECT id FROM players WHERE lower(name)=lower(?)`);
-const insertPlayer = db.prepare(`INSERT INTO players(name,source_provider,source_url,last_verified_at) VALUES(?,?,?,?)`);
 const saveSource = db.prepare(`INSERT INTO player_source_ids(player_id,source_provider,source_player_id,source_url,last_verified_at) VALUES(?,?,?,?,?) ON CONFLICT(source_provider,source_player_id) DO UPDATE SET player_id=excluded.player_id,source_url=excluded.source_url,last_verified_at=excluded.last_verified_at`);
 const saveSeason = db.prepare(`INSERT INTO player_seasons(player_id,season,competition,appearances,starts,minutes,goals,assists,yellow_cards,red_cards,source_provider,source_url,last_verified_at)
   VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)
@@ -109,16 +108,13 @@ const saveSeason = db.prepare(`INSERT INTO player_seasons(player_id,season,compe
 const saved = db.transaction(() => {
   let createdPlayers = 0, insertedOrUpdated = 0;
   for (const row of allRows) {
-    let player = findBySource.get(row.source_external_id) as { player_id: number } | undefined;
-    if (!player) {
-      const existing = findByName.get(row.player_name) as { id: number } | undefined;
-      if (existing) player = { player_id: existing.id };
-      else { const result = insertPlayer.run(row.player_name, 'StatBunker', row.source_url, nowIso()); player = { player_id: Number(result.lastInsertRowid) }; createdPlayers++; }
-      saveSource.run(player.player_id, 'StatBunker', row.source_external_id, row.source_url, nowIso());
-    }
-    const result = saveSeason.run(player.player_id, row.season, row.competition, row.appearances, row.starts, null, row.goals, null, null, null, 'StatBunker', row.source_url, nowIso());
+    const player = resolvePlayer({ name: row.player_name, sourceProvider: 'StatBunker', sourcePlayerId: row.source_external_id, sourceUrl: row.source_url, context: `statbunker:${row.season}:${row.competition}`, allowCreate: false });
+    if (player.status === 'conflict') continue;
+    if (player.status === 'created') createdPlayers++;
+    saveSource.run(player.playerId, 'StatBunker', row.source_external_id, row.source_url, nowIso());
+    const result = saveSeason.run(player.playerId, row.season, row.competition, row.appearances, row.starts, null, row.goals, null, null, null, 'StatBunker', row.source_url, nowIso());
     insertedOrUpdated += Number(result.changes);
-    const entity = db.prepare(`SELECT id FROM player_seasons WHERE player_id=? AND season=? AND competition=?`).get(player.player_id, row.season, row.competition) as { id: number };
+    const entity = db.prepare(`SELECT id FROM player_seasons WHERE player_id=? AND season=? AND competition=?`).get(player.playerId, row.season, row.competition) as { id: number };
     recordSourceReference({ entityType: 'player_seasons', entityId: entity.id, sourceUrl: row.source_url, note: 'StatBunker SeasonAppearances: appearances, starts and goals. Metrics not published by the source remain N/D.' });
   }
   return { createdPlayers, insertedOrUpdated };

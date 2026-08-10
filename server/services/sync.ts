@@ -4,6 +4,7 @@ import { theSportsDbProvider } from '../providers/theSportsDbProvider.js';
 import { fetchNews } from '../providers/rssProvider.js';
 import { apiFootballStatus, syncApiFootballCurrent, syncApiFootballSquad } from './apiFootballSync.js';
 import { kickoffStatus, syncKickoffCurrent } from './kickoffSync.js';
+import { resolvePlayer } from './playerResolver.js';
 
 function updateSync(provider:string,resource:string,requests:number,error?:string){
   const now=nowIso();
@@ -72,7 +73,14 @@ export async function syncSquad(){
       const stmt=db.prepare(`INSERT INTO players(name,nationality,birth_date,position,current_squad,source_provider,source_external_id,last_verified_at)
         VALUES(?,?,?,?,1,?,?,?) ON CONFLICT(name) DO UPDATE SET nationality=COALESCE(excluded.nationality,players.nationality),birth_date=COALESCE(excluded.birth_date,players.birth_date),position=COALESCE(excluded.position,players.position),current_squad=1,last_verified_at=excluded.last_verified_at`);
       db.prepare(`UPDATE players SET current_squad=0 WHERE COALESCE(source_provider,'') <> 'manual'`).run();
-      for(const p of r.data){ if(!p.strPlayer) continue; stmt.run(p.strPlayer,p.strNationality??null,p.dateBorn??null,normalizePlayerPosition(p.strPosition),'thesportsdb',String(p.idPlayer??''),nowIso());stored++; }
+      for(const p of r.data){
+        if(!p.strPlayer) continue;
+        const resolution=resolvePlayer({name:p.strPlayer,sourceProvider:'thesportsdb',sourcePlayerId:p.idPlayer,context:`thesportsdb:${p.idPlayer??p.strPlayer}`,allowCreate:true});
+        if(resolution.status==='conflict') continue;
+        if(resolution.status==='resolved') db.prepare('UPDATE players SET nationality=COALESCE(?,nationality),birth_date=COALESCE(?,birth_date),position=COALESCE(?,position),current_squad=1,last_verified_at=? WHERE id=?').run(p.strNationality??null,p.dateBorn??null,normalizePlayerPosition(p.strPosition),nowIso(),resolution.playerId);
+        else stmt.run(p.strPlayer,p.strNationality??null,p.dateBorn??null,normalizePlayerPosition(p.strPosition),'thesportsdb',String(p.idPlayer??''),nowIso());
+        stored++;
+      }
       updateSync('thesportsdb','squad',r.requests);
     } else { errors.push(r.error); updateSync('thesportsdb','squad',r.requests,r.error); }
   }

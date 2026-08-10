@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { Activity, ArrowLeft, Clock3, Edit3, MapPin, RefreshCw, Shield, Users } from 'lucide-react';
 import { api, post } from '../services/api';
 import { Empty, Loading, PageTitle, Score, fmt } from '../components/Ui';
+import MatchQuickEditor from '../components/MatchQuickEditor';
 import type { Match } from '../types';
 
 type EventRow = {
@@ -47,6 +48,7 @@ export default function MatchDetail(){
   const [data,setData]=useState<Payload|null>(null);
   const [busy,setBusy]=useState(false);
   const [msg,setMsg]=useState('');
+  const [showQuickEditor, setShowQuickEditor] = useState(false);
   const load=()=>api<Payload>(`/matches/${id}`).then(setData);
   useEffect(()=>{void load()},[id]);
 
@@ -76,12 +78,13 @@ export default function MatchDetail(){
 
   if(!data)return <Loading/>;
   const m=data.match,d=data.details;
-  return <><div className="mb-4 flex flex-wrap gap-2 text-xs text-zinc-500"><Link to="/matches" className="hover:text-neroverde-300">Partite</Link><span>/</span>{m.season&&<><Link to={`/seasons/${encodeURIComponent(m.season)}`} className="hover:text-neroverde-300">{m.season}</Link><span>/</span></>}<span>{m.home_team} – {m.away_team}</span></div>
+  return <>{showQuickEditor && <MatchQuickEditor match={m} onClose={() => setShowQuickEditor(false)} onRefresh={load} />}
+    <div className="mb-4 flex flex-wrap gap-2 text-xs text-zinc-500"><Link to="/matches" className="hover:text-neroverde-300">Partite</Link><span>/</span>{m.season&&<><Link to={`/seasons/${encodeURIComponent(m.season)}`} className="hover:text-neroverde-300">{m.season}</Link><span>/</span></>}<span>{m.home_team} – {m.away_team}</span></div>
     <div className="mb-4"><Link className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-white" to="/matches"><ArrowLeft className="h-4 w-4"/>Torna alle partite</Link></div>
     <PageTitle
       title={`${m.home_team} vs ${m.away_team}`}
       subtitle={`${m.competition??'Competizione N/D'} · ${m.season??'Stagione N/D'} · ${d?.league_round??m.round??'Giornata N/D'}${d?.source_provider?` · ${d.source_provider}`:''}`}
-      action={<div className="flex flex-wrap gap-2"><Link className="btn-secondary" to={`/data-manager/manual?entity=match-events&matchId=${id}`}><Edit3 className="h-4 w-4"/>Modifica eventi</Link><button className="btn-secondary" disabled={busy} onClick={sync}><RefreshCw className={`h-4 w-4 ${busy?'animate-spin':''}`}/>{busy?'Aggiornamento…':'Aggiorna dettagli KickoffAPI'}</button></div>}
+      action={<div className="flex flex-wrap gap-2"><button className="btn-primary" onClick={() => setShowQuickEditor(true)}><Edit3 className="h-4 w-4"/>Modifica Rapida</button><Link className="btn-secondary" to={`/data-manager/manual?entity=match-events&matchId=${id}`}><Edit3 className="h-4 w-4"/>Modifica eventi</Link><button className="btn-secondary" disabled={busy} onClick={sync}><RefreshCw className={`h-4 w-4 ${busy?'animate-spin':''}`}/>{busy?'Aggiornamento…':'Aggiorna dettagli KickoffAPI'}</button></div>}
     />
     <div className="mb-4 flex flex-wrap items-center gap-3"><span className={`badge ${m.completeness_level==='DETAILED'?'text-neroverde-300':m.completeness_level==='STANDARD'?'text-amber-200':'text-zinc-400'}`}>Copertura: {m.completeness_level||'BASIC'}</span>{m.source_url?<a className="text-xs text-neroverde-400 hover:underline" href={m.source_url} target="_blank" rel="noreferrer">Apri fonte {m.source_provider||'esterna'}</a>:m.source_provider&&<span className="text-xs text-zinc-500">Fonte: {m.source_provider}</span>}</div>
     {msg&&<div className="mb-5 rounded-xl border border-zinc-800 bg-zinc-900 p-3 text-sm text-zinc-300">{msg}</div>}

@@ -1,4 +1,4 @@
-import { db, getSetting, normalizePlayerPosition, normalizeTeamName, nowIso, recordFixtureConflicts, setSetting } from '../db/database.js';
+import { db, getSetting, normalizePlayerPosition, normalizeSearchText, normalizeTeamName, nowIso, recordFixtureConflicts, setSetting } from '../db/database.js';
 
 const API_BASE = 'https://api.kickoffapi.com';
 const PROVIDER = 'kickoff';
@@ -285,7 +285,7 @@ function normalizePlayerName(value: any) {
 }
 
 function playerNameParts(value: any) {
-  const normalized = normalizePlayerName(value);
+  const normalized = normalizeSearchText(value);
   const parts = normalized.split(' ').filter(Boolean);
   if (!parts.length) return null;
   return {

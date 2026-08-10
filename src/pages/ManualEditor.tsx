@@ -109,7 +109,41 @@ export default function ManualEditor(){
     <form onSubmit={save} className="card mb-6 p-5">
       <div className="mb-4 flex items-center justify-between"><div><h2 className="font-bold">{editing?'Modifica':'Nuovo'} · {cfg.label}</h2><p className="mt-1 text-xs text-zinc-500">Lascia vuoti i valori che non conosci: restano N/D, senza stime.</p></div>{editing&&<button type="button" onClick={reset} className="btn-secondary"><X className="h-4 w-4"/>Annulla</button>}</div>
       {entity==='match-events'&&<><datalist id="manual-match-options">{matches.map(m=><option key={m.id} value={m.id}>{String(m.date).slice(0,10)} · {m.home_team} – {m.away_team}</option>)}</datalist><div className="mb-4 rounded-xl border border-sky-500/30 bg-sky-500/5 p-4 text-sm text-sky-100"><b>Prima controlla la gara.</b>{selectedMatch?<span className="ml-1">{matchText}</span>:<span className="ml-1">Inserisci l’ID della partita per aprire contesto e fonti.</span>}{selectedMatch&&<div className="mt-3 flex flex-wrap gap-2"><Link className="btn-secondary !min-h-8 !px-3 !py-1 text-xs" to={`/matches/${selectedMatch.id}`} target="_blank"><ExternalLink className="h-3.5 w-3.5"/>Apri scheda partita</Link><a className="btn-secondary !min-h-8 !px-3 !py-1 text-xs" href={sourceSearch} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5"/>Cerca referto o video autorizzato</a></div>}</div></>}
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{cfg.fields.map(f=><label key={f.key} className="text-sm text-zinc-400"><span className="mb-1 block">{f.label}{f.required&&<b className="text-neroverde-400"> *</b>}</span>{f.type==='checkbox'?<input type="checkbox" checked={Boolean(form[f.key])} onChange={e=>setForm({...form,[f.key]:e.target.checked})} className="h-5 w-5 accent-emerald-500"/>:<input className="input" required={f.required} list={entity==='match-events'&&f.key==='match_id'?'manual-match-options':undefined} type={f.type??'text'} min={f.key==='minute'||f.key==='extra_minute'?0:undefined} max={f.key==='minute'?130:f.key==='extra_minute'?30:undefined} step={f.key.startsWith('xg_')||f.key.startsWith('possession_')?'0.01':undefined} placeholder={f.placeholder} value={form[f.key]??''} onChange={e=>setForm({...form,[f.key]:e.target.value})}/>}</label>)}</div>
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{cfg.fields.map(f=>{
+        if(entity==='match-events' && f.key==='type') return (
+              <label key={f.key} className="text-sm text-zinc-400">
+                <span className="mb-1 block">Tipo Evento<b className="text-neroverde-400"> *</b></span>
+                <select className="input" value={`${form.type||''}|${form.detail||''}`} onChange={e => {
+                  const [type, detail] = e.target.value.split('|');
+                  setForm({...form, type, detail});
+                }}>
+                  <option value="|">Seleziona tipo evento</option>
+                  <option value="Goal|Normal Goal">Goal</option>
+                  <option value="Card|Yellow Card">Yellow Card</option>
+                  <option value="Card|Red Card">Red Card</option>
+                  <option value="Substitution|Substitution">Substitution</option>
+                  <option value="VAR|VAR">VAR</option>
+                </select>
+              </label>
+            );
+        if(entity==='match-events' && f.key==='detail') return null;
+        if(entity==='match-events' && f.key==='team_name' && selectedMatch) return (
+              <label key={f.key} className="text-sm text-zinc-400">
+                <span className="mb-1 block">Squadra<b className="text-neroverde-400"> *</b></span>
+                <select className="input" value={form[f.key]??''} onChange={e=>setForm({...form,[f.key]:e.target.value})}>
+                  <option value="">Seleziona squadra</option>
+                  <option value={selectedMatch.home_team}>{selectedMatch.home_team}</option>
+                  <option value={selectedMatch.away_team}>{selectedMatch.away_team}</option>
+                </select>
+              </label>
+            );
+        return (
+              <label key={f.key} className="text-sm text-zinc-400">
+                <span className="mb-1 block">{f.label}{f.required&&<b className="text-neroverde-400"> *</b>}</span>
+                {f.type==='checkbox'?<input type="checkbox" checked={Boolean(form[f.key])} onChange={e=>setForm({...form,[f.key]:e.target.checked})} className="h-5 w-5 accent-emerald-500"/>:<input className="input" required={f.required} list={entity==='match-events'&&f.key==='match_id'?'manual-match-options':undefined} type={f.type??'text'} min={f.key==='minute'||f.key==='extra_minute'?0:undefined} max={f.key==='minute'?130:f.key==='extra_minute'?30:undefined} step={f.key.startsWith('xg_')||f.key.startsWith('possession_')?'0.01':undefined} placeholder={f.placeholder} value={form[f.key]??''} onChange={e=>setForm({...form,[f.key]:e.target.value})}/>}
+              </label>
+            );
+        })}</div>
       <div className="mt-5 flex items-center gap-3"><button className="btn-primary" disabled={busy}><Save className="h-4 w-4"/>{editing?'Salva modifiche':'Aggiungi'}</button>{status&&<span className="text-sm text-zinc-300">{status}</span>}</div>
     </form>
     <div className="card p-5">

@@ -2,8 +2,11 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { db, normalizeTeamName } from '../db/database.js';
+import { db, initDb, normalizeTeamName } from '../db/database.js';
 import { importAll } from './importer.js';
+import { resolvePlayer } from './playerResolver.js';
+
+initDb();
 
 export const importEntities = ['seasons', 'matches', 'players', 'player-seasons'] as const;
 export type ImportEntity = typeof importEntities[number];
@@ -56,7 +59,9 @@ function existingRecord(entity:ImportEntity, row:Record<string,unknown>) {
   if(entity==='seasons') return db.prepare(`SELECT id,source_provider FROM seasons WHERE season=? AND competition=?`).get(textOf(row,['season']),textOf(row,['competition'])) as any;
   if(entity==='matches') return db.prepare(`SELECT id,source_provider FROM matches WHERE substr(date,1,10)=substr(?,1,10) AND lower(home_team)=lower(?) AND lower(away_team)=lower(?)`).get(textOf(row,['date']),normalizeTeamName(textOf(row,['home_team','homeTeam'])),normalizeTeamName(textOf(row,['away_team','awayTeam']))) as any;
   if(entity==='players') return db.prepare(`SELECT id,source_provider FROM players WHERE lower(trim(name))=lower(trim(?))`).get(textOf(row,['name'])) as any;
-  return db.prepare(`SELECT ps.id,ps.source_provider FROM player_seasons ps JOIN players p ON p.id=ps.player_id WHERE lower(trim(p.name))=lower(trim(?)) AND ps.season=? AND ps.competition=?`).get(textOf(row,['player_name','playerName','name','Player']),textOf(row,['season']),textOf(row,['competition'])) as any;
+  const player = resolvePlayer({ name: textOf(row,['player_name','playerName','name','Player']), sourceProvider: textOf(row,['source_provider','sourceProvider']) || null, sourcePlayerId: valueOf(row,['source_external_id','sourceExternalId','player_id','playerId']) as string | number | null, sourceUrl: textOf(row,['source_url','sourceUrl']) || null, context: 'controlled-import-preview', allowCreate: false });
+  if (player.status === 'conflict') return null;
+  return db.prepare(`SELECT id,source_provider FROM player_seasons WHERE player_id=? AND season=? AND competition=?`).get(player.playerId,textOf(row,['season']),textOf(row,['competition'])) as any;
 }
 
 export function previewControlledImport(entity:ImportEntity, filename:string, content:string): ImportPreview {
@@ -74,6 +79,13 @@ export function previewControlledImport(entity:ImportEntity, filename:string, co
     if(!textOf(row,['source_url','sourceUrl'])&&!textOf(row,['source_provider','sourceProvider']))issues.push({row:rowNumber,field:'source_url',code:'missing_source',message:'Riga senza source_url o source_provider',critical:true});
     const key=entity==='seasons'?`${season}|${textOf(row,['competition'])}`:entity==='matches'?`${date.slice(0,10)}|${normalizeTeamName(textOf(row,['home_team','homeTeam']))}|${normalizeTeamName(textOf(row,['away_team','awayTeam']))}`:entity==='players'?textOf(row,['name']).toLowerCase():`${textOf(row,['player_name','playerName','name','Player']).toLowerCase()}|${season}|${textOf(row,['competition'])}`;
     if(seen.has(key)){issues.push({row:rowNumber,field:null,code:'duplicate_in_file',message:'Identità duplicata nello stesso file',critical:true});skipped++;return;}seen.add(key);
+    if(entity==='players') {
+      const playerName=textOf(row,['name']);
+      const normalized=playerName.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+      const surname=normalized.split(/\s+/).at(-1) ?? normalized;
+      const likelyDuplicate=/^\p{L}\.\s+/u.test(playerName) || (db.prepare('SELECT 1 FROM players WHERE lower(name) LIKE ? LIMIT 1').get(`% ${surname}`));
+      if(likelyDuplicate) { const identity=resolvePlayer({name:playerName,sourceProvider:textOf(row,['source_provider','sourceProvider'])||null,sourcePlayerId:valueOf(row,['source_external_id','sourceExternalId','api_football_id','apiFootballId']) as string|number|null,sourceUrl:textOf(row,['source_url','sourceUrl'])||null,context:`controlled-import:players:${rowNumber}`,allowCreate:false}); if(identity.status==='conflict') { issues.push({row:rowNumber,field:'name',code:'player_identity_conflict',message:`Identità giocatore sospetta: revisione richiesta nel Data Manager (conflitto #${identity.conflictId})`,critical:true}); conflicts++; return; } }
+    }
     const existing=existingRecord(entity,row);
     if(existing?.source_provider==='manual'){issues.push({row:rowNumber,field:null,code:'manual_conflict',message:'Il record esistente è manuale e non verrà sovrascritto',critical:true});conflicts++;return;}
     if(existing)updated++;else created++;

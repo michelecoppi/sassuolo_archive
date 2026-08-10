@@ -12,7 +12,26 @@ db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
 export function normalizePlayerName(value: unknown): string {
-  return String(value ?? '').replace(/&apos;|&#39;|&#x27;/gi, "'").trim();
+  const name = String(value ?? '').replace(/&apos;|&#39;|&#x27;/gi, "'").trim();
+  return name === 'A. Laurienté' ? 'Armand Laurienté' : name;
+}
+
+/**
+ * Normalizzazione robusta per il matching delle identità (Fase 1.2).
+ * Rimuove diacritici, normalizza apostrofi, rimuove entità HTML e collassa gli spazi.
+ */
+export function normalizeNameForMatch(raw: unknown): string {
+  if (raw == null) return '';
+  let s = String(raw).replace(/&apos;|&#39;|&#x27;/gi, "'");
+  s = s.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  s = s.toLowerCase();
+  s = s.replace(/[’`´]/g, "'");
+  s = s.replace(/\s+/g, ' ').trim();
+  return s;
+}
+
+export function normalizeSearchText(value: unknown): string {
+  return normalizeNameForMatch(value);
 }
 
 function columnNames(table: string) {
@@ -505,6 +524,35 @@ export function initDb() {
       last_error TEXT,
       PRIMARY KEY(provider, resource)
     );
+
+    CREATE TABLE IF NOT EXISTS player_name_aliases (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      player_id INTEGER NOT NULL REFERENCES players(id) ON DELETE CASCADE,
+      alias TEXT NOT NULL,
+      alias_normalized TEXT NOT NULL UNIQUE,
+      source_provider TEXT,
+      note TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_alias_normalized ON player_name_aliases(alias_normalized);
+    CREATE INDEX IF NOT EXISTS idx_alias_player ON player_name_aliases(player_id);
+
+    CREATE TABLE IF NOT EXISTS player_match_conflicts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      raw_name TEXT NOT NULL,
+      normalized_name TEXT NOT NULL,
+      source_provider TEXT,
+      source_player_id TEXT,
+      source_url TEXT,
+      context TEXT,
+      status TEXT NOT NULL DEFAULT 'open' CHECK(status IN ('open','resolved','ignored')),
+      candidates_json TEXT,
+      reason TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_player_match_conflicts_status ON player_match_conflicts(status, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_player_match_conflicts_name ON player_match_conflicts(normalized_name);
 
     CREATE TABLE IF NOT EXISTS app_settings (
       key TEXT PRIMARY KEY,

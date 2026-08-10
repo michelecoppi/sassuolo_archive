@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { db, normalizePlayerName, normalizeTeamName, nowIso, recordFixtureConflicts } from '../db/database.js';
+import { resolvePlayer as resolveCanonicalPlayer, seedHistoricalPlayerAliases } from './playerResolver.js';
 
 function scalar(v:any){ return v === '' || v === undefined ? null : v; }
 function int(v:any){ const n=Number(v); return v==null||v===''||Number.isNaN(n)?null:Math.trunc(n); }
@@ -96,21 +97,9 @@ export function importAll(options: { base?: string } = {}){
   const playerStmt=db.prepare(`INSERT INTO players(name,nationality,birth_date,position,shirt_number,first_appearance,last_appearance,appearances,starts,minutes,goals,assists,yellow_cards,red_cards,clean_sheets,current_squad,source_provider,source_external_id,source_url,last_verified_at)
     VALUES(@name,@nationality,@birth_date,@position,@shirt_number,@first_appearance,@last_appearance,@appearances,@starts,@minutes,@goals,@assists,@yellow_cards,@red_cards,@clean_sheets,@current_squad,@source_provider,@source_external_id,@source_url,@last_verified_at)
     ON CONFLICT(name) DO UPDATE SET nationality=COALESCE(excluded.nationality,players.nationality),birth_date=COALESCE(excluded.birth_date,players.birth_date),position=COALESCE(excluded.position,players.position),shirt_number=COALESCE(excluded.shirt_number,players.shirt_number),appearances=COALESCE(excluded.appearances,players.appearances),goals=COALESCE(excluded.goals,players.goals),assists=COALESCE(excluded.assists,players.assists),minutes=COALESCE(excluded.minutes,players.minutes),current_squad=MAX(players.current_squad,excluded.current_squad),source_url=COALESCE(excluded.source_url,players.source_url),last_verified_at=excluded.last_verified_at WHERE COALESCE(players.source_provider,'') <> 'manual'`);
-  const findPlayer=db.prepare(`SELECT id FROM players WHERE lower(name)=lower(?)`);
   const findPlayerBySource=db.prepare(`SELECT player_id AS id FROM player_source_ids WHERE source_provider=? AND source_player_id=?`);
   const savePlayerSource=db.prepare(`INSERT INTO player_source_ids(player_id,source_provider,source_player_id,source_url,last_verified_at) VALUES(?,?,?,?,?) ON CONFLICT(source_provider,source_player_id) DO UPDATE SET source_url=COALESCE(excluded.source_url,player_source_ids.source_url),last_verified_at=excluded.last_verified_at`);
-  const ensurePlayer=db.prepare(`INSERT OR IGNORE INTO players(name,source_provider,last_verified_at) VALUES (?, 'local-import', ?)`);
-  const resolvePlayer=(rawName:string,provider:string,sourceId:unknown,sourceUrl:unknown)=>{
-    const name=canonicalPlayerName(rawName);
-    const id=scalar(sourceId);
-    let player=id?findPlayerBySource.get(provider,String(id)) as {id:number}|undefined:undefined;
-    if(!player){
-      ensurePlayer.run(name,nowIso());
-      player=findPlayer.get(name) as {id:number}|undefined;
-      if(player&&id)savePlayerSource.run(player.id,provider,String(id),scalar(sourceUrl),nowIso());
-    }
-    return player;
-  };
+  const findPlayer=db.prepare(`SELECT id FROM players WHERE lower(name)=lower(?)`);
   for(const p of players) if(p.name){
     p.name=canonicalPlayerName(p.name);
     const provider=String(p.source_provider??p.sourceProvider??'local-import'); const sourceId=p.source_external_id??p.sourceExternalId??p.api_football_id??p.apiFootballId;
@@ -123,10 +112,11 @@ export function importAll(options: { base?: string } = {}){
     playerStmt.run({name:p.name,nationality:scalar(p.nationality),birth_date:scalar(p.birth_date??p.birthDate),position:scalar(p.position),shirt_number:int(p.shirt_number??p.shirtNumber),first_appearance:scalar(p.first_appearance??p.firstAppearance),last_appearance:scalar(p.last_appearance??p.lastAppearance),appearances:int(p.appearances),starts:int(p.starts),minutes:int(p.minutes),goals:int(p.goals),assists:int(p.assists),yellow_cards:int(p.yellow_cards??p.yellowCards),red_cards:int(p.red_cards??p.redCards),clean_sheets:int(p.clean_sheets??p.cleanSheets),current_squad:flag(p.current_squad??p.currentSquad),source_provider:provider,source_external_id:scalar(sourceId),source_url:scalar(p.source_url??p.sourceUrl),last_verified_at:nowIso()});
     const saved=findPlayer.get(p.name) as {id:number}|undefined; if(saved&&sourceId!=null)savePlayerSource.run(saved.id,provider,String(sourceId),scalar(p.source_url??p.sourceUrl),nowIso());
   }
+  seedHistoricalPlayerAliases();
   const psStmt=db.prepare(`INSERT INTO player_seasons(player_id,season,competition,appearances,starts,minutes,goals,assists,yellow_cards,red_cards,clean_sheets,source_provider,source_url,last_verified_at)
     VALUES(@player_id,@season,@competition,@appearances,@starts,@minutes,@goals,@assists,@yellow_cards,@red_cards,@clean_sheets,@source_provider,@source_url,@last_verified_at)
     ON CONFLICT(player_id,season,competition) DO UPDATE SET appearances=COALESCE(excluded.appearances,player_seasons.appearances),starts=COALESCE(excluded.starts,player_seasons.starts),minutes=COALESCE(excluded.minutes,player_seasons.minutes),goals=COALESCE(excluded.goals,player_seasons.goals),assists=COALESCE(excluded.assists,player_seasons.assists),yellow_cards=COALESCE(excluded.yellow_cards,player_seasons.yellow_cards),red_cards=COALESCE(excluded.red_cards,player_seasons.red_cards),clean_sheets=COALESCE(excluded.clean_sheets,player_seasons.clean_sheets),source_provider=COALESCE(excluded.source_provider,player_seasons.source_provider),source_url=COALESCE(excluded.source_url,player_seasons.source_url),last_verified_at=excluded.last_verified_at WHERE COALESCE(player_seasons.source_provider,'') <> 'manual'`);
-  for(const p of playerSeasons){const name=p.player_name??p.playerName??p.name??p.Player;if(!name||!p.season)continue;const provider=String(p.source_provider??p.sourceProvider??'local-import');const sourceUrl=scalar(p.source_url??p.sourceUrl);const player=resolvePlayer(name,provider,p.source_external_id??p.sourceExternalId??p.player_id??p.playerId,sourceUrl);if(!player)continue;psStmt.run({player_id:player.id,season:p.season,competition:p.competition||'Serie A',appearances:int(p.appearances??p.MP),starts:int(p.starts??p.Starts),minutes:int(String(p.minutes??p.Min??'').replace(/,/g,'')),goals:int(p.goals??p.Gls),assists:int(p.assists??p.Ast),yellow_cards:int(p.yellow_cards??p.CrdY),red_cards:int(p.red_cards??p.CrdR),clean_sheets:int(p.clean_sheets??p.CS),source_provider:provider,source_url:sourceUrl,last_verified_at:nowIso()});}
+  for(const p of playerSeasons){const name=p.player_name??p.playerName??p.name??p.Player;if(!name||!p.season)continue;const provider=String(p.source_provider??p.sourceProvider??'local-import');const sourceUrl=scalar(p.source_url??p.sourceUrl);const player=resolveCanonicalPlayer({name:canonicalPlayerName(name),sourceProvider:provider,sourcePlayerId:p.source_external_id??p.sourceExternalId??p.player_id??p.playerId,sourceUrl,context:`player-season:${p.season}:${p.competition||'Serie A'}`,allowCreate:false});if(player.status==='conflict')continue;psStmt.run({player_id:player.playerId,season:p.season,competition:p.competition||'Serie A',appearances:int(p.appearances??p.MP),starts:int(p.starts??p.Starts),minutes:int(String(p.minutes??p.Min??'').replace(/,/g,'')),goals:int(p.goals??p.Gls),assists:int(p.assists??p.Ast),yellow_cards:int(p.yellow_cards??p.CrdY),red_cards:int(p.red_cards??p.CrdR),clean_sheets:int(p.clean_sheets??p.CS),source_provider:provider,source_url:sourceUrl,last_verified_at:nowIso()});}
   if(playerSeasons.length)recomputeDerivedPlayerStats();
   return {seasons:seasons.length,matches:matches.length,players:players.length,playerSeasons:playerSeasons.length};
 }

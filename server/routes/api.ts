@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import fs from 'node:fs';
 import path from 'node:path';
-import { createBackupSnapshot, db, getSetting, normalizeTeamName, nowIso, recordChange, recordImportRun, recordSourceReference, setSetting } from '../db/database.js';
+import { createBackupSnapshot, db, getSetting, normalizeSearchText, normalizeTeamName, nowIso, recordChange, recordImportRun, recordSourceReference, setSetting } from '../db/database.js';
 import { dashboardStats, hallOfFame, headToHead, records } from '../services/stats.js';
 import { importAll, recomputeDerivedPlayerStats } from '../services/importer.js';
 import { smartUpdate, syncMatches, syncNews, syncSquad } from '../services/sync.js';
@@ -11,6 +11,7 @@ import { bootstrapHistoricalLeagueData } from '../services/historicalBootstrap.j
 import { execFileSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import { applyControlledImport, importEntities, previewControlledImport, type ImportEntity } from '../services/controlledImport.js';
+import { resolvePlayer, resolvePlayerIdentityConflict } from '../services/playerResolver.js';
 
 type CupMetadata={exit:string;topScorer:string|null;topScorerGoals:number};
 const cupMetadataPath=path.resolve('data/cup-brackets/coppa-italia-sassuolo-metadata.json');
@@ -50,6 +51,7 @@ function coppaItaliaBracket(season:string, sassuoloMatches:any[]) {
 }
 
 export const api = Router();
+api.get('/search', (req,res,next)=>{const q=String(req.query.q??'').trim();if(!q)return res.json({players:[],matches:[],seasons:[],opponents:[]});const needle=normalizeSearchText(q);const players=(db.prepare('SELECT id,name,position FROM players ORDER BY name').all() as any[]).filter(p=>normalizeSearchText(p.name).includes(needle)).slice(0,8);const like=`%${q}%`;res.json({players,matches:db.prepare('SELECT id,date,home_team,away_team,home_score,away_score FROM matches WHERE home_team LIKE ? OR away_team LIKE ? ORDER BY date DESC LIMIT 8').all(like,like),seasons:db.prepare('SELECT id,season,competition FROM seasons WHERE season LIKE ? OR competition LIKE ? ORDER BY season DESC LIMIT 8').all(like,like),opponents:[]});});
 
 async function trackedProviderRun(scope: { provider: string; area: string; season?: string; competition?: string }, task: () => Promise<any>) {
   const started = nowIso();
@@ -206,10 +208,10 @@ api.get('/players/:id', (req,res)=>{
   res.json({player:p?{...p,derived_clean_sheets:cleanSheets.length?derivedCleanSheets:null}:null,seasons,cleanSheets,transfers});
 });
 api.get('/squad/current', (_req,res)=>{
-  const latest=db.prepare(`SELECT season,competition FROM seasons ORDER BY substr(season,1,4) DESC LIMIT 1`).get() as {season:string;competition:string}|undefined;
-  if(!latest)return res.json({season:null,players:[]});
-  const players=db.prepare(`SELECT p.*,ps.appearances AS season_appearances,ps.starts AS season_starts,ps.minutes AS season_minutes,ps.goals AS season_goals,ps.assists AS season_assists,ps.rating AS season_rating,ps.yellow_cards AS season_yellow_cards,ps.red_cards AS season_red_cards FROM players p LEFT JOIN player_seasons ps ON ps.player_id=p.id AND ps.season=? AND ps.competition=? WHERE p.current_squad=1 ORDER BY CASE p.position WHEN 'Goalkeeper' THEN 1 WHEN 'Defender' THEN 2 WHEN 'Midfielder' THEN 3 WHEN 'Attacker' THEN 4 ELSE 5 END,p.shirt_number,p.name`).all(latest.season,latest.competition);
-  res.json({season:latest.season,competition:latest.competition,players});
+  const currentSeason = process.env.CURRENT_SEASON ?? (db.prepare(`SELECT season FROM seasons ORDER BY substr(season,1,4) DESC LIMIT 1`).get() as {season:string}|undefined)?.season;
+  if(!currentSeason)return res.json({season:null,players:[]});
+  const players=db.prepare(`SELECT p.*,ps.appearances AS season_appearances,ps.starts AS season_starts,ps.minutes AS season_minutes,ps.goals AS season_goals,ps.assists AS season_assists,ps.rating AS season_rating,ps.yellow_cards AS season_yellow_cards,ps.red_cards AS season_red_cards FROM players p LEFT JOIN player_seasons ps ON ps.player_id=p.id AND ps.season=? WHERE p.current_squad=1 ORDER BY CASE p.position WHEN 'Goalkeeper' THEN 1 WHEN 'Defender' THEN 2 WHEN 'Midfielder' THEN 3 WHEN 'Attacker' THEN 4 ELSE 5 END,p.shirt_number,p.name`).all(currentSeason);
+  res.json({season:currentSeason,players});
 });
 api.get('/transfers', (req,res)=>{
   const season=String(req.query.season??'').trim();
@@ -254,7 +256,27 @@ api.get('/data-manager', (_req,res)=>{
     LEFT JOIN match_events e ON c.entity_type='match_event' AND e.id=CAST(c.entity_key AS INTEGER)
     LEFT JOIN matches m ON m.id=e.match_id
     ORDER BY c.status='open' DESC,c.created_at DESC LIMIT 50`).all();
-  res.json({counts:{seasons:count('seasons'),matches:count('matches'),players:count('players'),playerSeasons:count('player_seasons'),standings:count('season_standings'),transfers:count('transfers'),news:count('news_articles')},coverage,lastAuditAt:getSetting('data_last_audit_at'),sync:db.prepare(`SELECT * FROM sync_state ORDER BY provider,resource`).all(),conflicts,recentChanges:db.prepare(`SELECT id,entity_type,entity_id,action,source_url,note,author,backup_id,created_at FROM change_log ORDER BY id DESC LIMIT 12`).all(),backups:db.prepare(`SELECT id,reason,file_path,created_at FROM backup_runs ORDER BY id DESC LIMIT 12`).all(),importRuns:db.prepare(`SELECT * FROM import_runs ORDER BY id DESC LIMIT 12`).all(),auditRuns:db.prepare(`SELECT id,audit_type,status,generated_at,report_path,report_sha256,issue_count,blocking_issue_count FROM audit_runs ORDER BY id DESC LIMIT 8`).all(),candidateRuns:db.prepare(`SELECT * FROM research_candidates ORDER BY CASE status WHEN 'in_review' THEN 0 WHEN 'validated' THEN 1 WHEN 'candidate' THEN 2 ELSE 3 END,last_seen_at DESC LIMIT 20`).all(),zeroKeyMode:!process.env.FOOTBALL_DATA_API_KEY&&!process.env.API_FOOTBALL_KEY&&!process.env.KICKOFF_API_KEY,apiFootball:apiFootballStatus(),kickoff:kickoffStatus()});
+  const playerConflicts=(db.prepare(`SELECT * FROM player_match_conflicts WHERE status='open' AND raw_name<>'__CONTROLLED_IMPORT_PREVIEW_ONLY__' AND context NOT LIKE 'test-fixture%' AND (context LIKE 'player-season:%' OR context LIKE 'api-football:%' OR context LIKE 'thesportsdb:%' OR context LIKE 'controlled-import:players:%') ORDER BY created_at DESC LIMIT 100`).all() as any[]).map(c=>({...c,candidates:JSON.parse(c.candidates_json||'[]')}));
+  res.json({counts:{seasons:count('seasons'),matches:count('matches'),players:count('players'),playerSeasons:count('player_seasons'),standings:count('season_standings'),transfers:count('transfers'),news:count('news_articles')},coverage,lastAuditAt:getSetting('data_last_audit_at'),sync:db.prepare(`SELECT * FROM sync_state ORDER BY provider,resource`).all(),conflicts,playerConflicts,recentChanges:db.prepare(`SELECT id,entity_type,entity_id,action,source_url,note,author,backup_id,created_at FROM change_log ORDER BY id DESC LIMIT 12`).all(),backups:db.prepare(`SELECT id,reason,file_path,created_at FROM backup_runs ORDER BY id DESC LIMIT 12`).all(),importRuns:db.prepare(`SELECT * FROM import_runs ORDER BY id DESC LIMIT 12`).all(),auditRuns:db.prepare(`SELECT id,audit_type,status,generated_at,report_path,report_sha256,issue_count,blocking_issue_count FROM audit_runs ORDER BY id DESC LIMIT 8`).all(),candidateRuns:db.prepare(`SELECT * FROM research_candidates ORDER BY CASE status WHEN 'in_review' THEN 0 WHEN 'validated' THEN 1 WHEN 'candidate' THEN 2 ELSE 3 END,last_seen_at DESC LIMIT 20`).all(),zeroKeyMode:!process.env.FOOTBALL_DATA_API_KEY&&!process.env.API_FOOTBALL_KEY&&!process.env.KICKOFF_API_KEY,apiFootball:apiFootballStatus(),kickoff:kickoffStatus()});
+});
+
+api.post('/player-identity-conflicts/:id/resolve', (req,res)=>{
+  try {
+    const x=req.body??{};
+    const result=resolvePlayerIdentityConflict(asInt(req.params.id)!, { action:x.action, playerId:asInt(x.playerId) ?? undefined, name:x.name, firstname:x.firstname, lastname:x.lastname });
+    res.json({ok:true,...result});
+  } catch(e) { res.status(400).json({error:String(e)}); }
+});
+
+api.get('/player-identity-conflicts/:id/preview', (req,res)=>{
+  try {
+    const conflict=db.prepare(`SELECT id,raw_name,source_provider,source_player_id,context FROM player_match_conflicts WHERE id=? AND status='open'`).get(req.params.id) as any;
+    if(!conflict)return res.status(404).json({error:'Conflitto non trovato'});
+    const playerId=asInt(String(req.query.playerId??''));
+    const stats=playerId==null?null:db.prepare(`SELECT COUNT(*) AS seasons,COALESCE(SUM(appearances),0) AS appearances,COALESCE(SUM(minutes),0) AS minutes,COALESCE(SUM(goals),0) AS goals,COALESCE(SUM(assists),0) AS assists FROM player_seasons WHERE player_id=?`).get(playerId);
+    const matches=playerId==null?null:db.prepare(`SELECT COUNT(*) AS match_stats,COALESCE(SUM(minutes),0) AS match_minutes,COALESCE(SUM(goals),0) AS match_goals,COALESCE(SUM(assists),0) AS match_assists FROM match_player_stats WHERE player_id=?`).get(playerId);
+    res.json({conflict, target:playerId==null?null:db.prepare('SELECT id,name FROM players WHERE id=?').get(playerId), stats, matches, incoming:{player_seasons:0,match_stats:0,note:'Il conflitto non è ancora associato a un player_id: nessuna statistica viene aggiunta automaticamente.'}});
+  } catch(e) { res.status(400).json({error:String(e)}); }
 });
 
 api.get('/data/candidates/:id', (req,res)=>{
@@ -849,7 +871,13 @@ api.post('/manual/players',(req,res)=>{try{const x=req.body??{};if(!x.name)retur
 api.put('/manual/players/:id',(req,res)=>{try{const x=req.body??{};db.prepare(`UPDATE players SET name=?,photo_url=?,nationality=?,birth_date=?,position=?,shirt_number=?,first_appearance=?,last_appearance=?,appearances=?,starts=?,minutes=?,goals=?,assists=?,yellow_cards=?,red_cards=?,clean_sheets=?,current_squad=?,source_provider='manual',source_url=?,last_verified_at=? WHERE id=?`).run(x.name,nullish(x.photo_url),nullish(x.nationality),nullish(x.birth_date),nullish(x.position),asInt(x.shirt_number),nullish(x.first_appearance),nullish(x.last_appearance),asInt(x.appearances),asInt(x.starts),asInt(x.minutes),asInt(x.goals),asInt(x.assists),asInt(x.yellow_cards),asInt(x.red_cards),asInt(x.clean_sheets),boolInt(x.current_squad),nullish(x.source_url),nowIso(),req.params.id);res.json({ok:true});}catch(e){res.status(500).json({error:String(e)});}});
 api.delete('/manual/players/:id',(req,res)=>{try{const id=asInt(req.params.id);if(id==null)return res.status(400).json({error:'ID non valido'});const backup=deleteManualRecord('players',id);if(!backup)return res.status(404).json({error:'Record non trovato'});res.json({ok:true,backupId:backup.id});}catch(e){res.status(500).json({error:String(e)});}});
 
-function resolvePlayerId(x:any){if(x.player_id)return asInt(x.player_id);if(!x.player_name)return null;let p=db.prepare(`SELECT id FROM players WHERE lower(name)=lower(?)`).get(x.player_name) as {id:number}|undefined;if(!p){const r=db.prepare(`INSERT INTO players(name,source_provider,last_verified_at) VALUES(?,?,?)`).run(x.player_name,'manual',nowIso());return Number(r.lastInsertRowid);}return p.id;}
+function resolvePlayerId(x:any){
+  if(x.player_id)return asInt(x.player_id);
+  if(!x.player_name)return null;
+  const resolution=resolvePlayer({name:String(x.player_name),sourceProvider:'manual',context:'manual-editor',allowCreate:true});
+  if(resolution.status==='conflict') throw new Error(`Identità ambigua: ${resolution.reason}. Risolvere dalla schermata Identità giocatori.`);
+  return resolution.playerId;
+}
 api.post('/manual/player-seasons',(req,res)=>{try{const x=req.body??{},pid=resolvePlayerId(x);if(!pid||!x.season)return res.status(400).json({error:'player_name/player_id e season sono obbligatori'});db.prepare(`INSERT INTO player_seasons(player_id,season,competition,appearances,starts,minutes,goals,assists,rating,shots_total,shots_on,passes_key,tackles_total,yellow_cards,red_cards,clean_sheets,source_provider,source_url,last_verified_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(player_id,season,competition) DO UPDATE SET appearances=excluded.appearances,starts=excluded.starts,minutes=excluded.minutes,goals=excluded.goals,assists=excluded.assists,rating=excluded.rating,shots_total=excluded.shots_total,shots_on=excluded.shots_on,passes_key=excluded.passes_key,tackles_total=excluded.tackles_total,yellow_cards=excluded.yellow_cards,red_cards=excluded.red_cards,clean_sheets=excluded.clean_sheets,source_provider='manual',source_url=excluded.source_url,last_verified_at=excluded.last_verified_at`).run(pid,x.season,x.competition||'Serie A',asInt(x.appearances),asInt(x.starts),asInt(x.minutes),asInt(x.goals),asInt(x.assists),asNum(x.rating),asInt(x.shots_total),asInt(x.shots_on),asInt(x.passes_key),asInt(x.tackles_total),asInt(x.yellow_cards),asInt(x.red_cards),asInt(x.clean_sheets),'manual',nullish(x.source_url),nowIso());recomputeDerivedPlayerStats();res.json({ok:true});}catch(e){res.status(500).json({error:String(e)});}});
 api.put('/manual/player-seasons/:id',(req,res)=>{try{const x=req.body??{},pid=resolvePlayerId(x);if(!pid)return res.status(400).json({error:'Giocatore non valido'});db.prepare(`UPDATE player_seasons SET player_id=?,season=?,competition=?,appearances=?,starts=?,minutes=?,goals=?,assists=?,rating=?,shots_total=?,shots_on=?,passes_key=?,tackles_total=?,yellow_cards=?,red_cards=?,clean_sheets=?,source_provider='manual',source_url=?,last_verified_at=? WHERE id=?`).run(pid,x.season,x.competition||'Serie A',asInt(x.appearances),asInt(x.starts),asInt(x.minutes),asInt(x.goals),asInt(x.assists),asNum(x.rating),asInt(x.shots_total),asInt(x.shots_on),asInt(x.passes_key),asInt(x.tackles_total),asInt(x.yellow_cards),asInt(x.red_cards),asInt(x.clean_sheets),nullish(x.source_url),nowIso(),req.params.id);recomputeDerivedPlayerStats();res.json({ok:true});}catch(e){res.status(500).json({error:String(e)});}});
 api.delete('/manual/player-seasons/:id',(req,res)=>{try{const id=asInt(req.params.id);if(id==null)return res.status(400).json({error:'ID non valido'});const backup=deleteManualRecord('player-seasons',id);if(!backup)return res.status(404).json({error:'Record non trovato'});recomputeDerivedPlayerStats();res.json({ok:true,backupId:backup.id});}catch(e){res.status(500).json({error:String(e)});}});
