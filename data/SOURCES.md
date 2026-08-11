@@ -61,3 +61,7 @@ Lo storico di campionato viene ora esteso a cinque stagioni prima del debutto in
 La rosa Transfermarkt attesta l'appartenenza al club e può popolare nome, ruolo, nazionalità, numero e foto. Non viene usata per inferire presenze, minuti, gol o assist: questi campi restano `NULL` / `N/D` finché non esiste una fonte statistica verificata.
 
 Eseguire `npm.cmd run data:audit` dopo un import. Il report deve avere zero `duplicateFixtures`, zero `seasonsWithoutLeagueMatches` per le stagioni concluse e segnalerà separatamente le righe di rosa prive di statistiche.
+
+## Storia del club e staff tecnico
+
+I record editoriali condivisi da pagina Club e Timeline sono in `club-history.json`; gli incarichi di allenatori e staff sono in `technical-staff.json`. Ogni voce conserva un `sourceUrl` puntuale. Le fonti primarie principali sono le sezioni ufficiali **La nostra storia**, **Mapei Stadium**, **Organigramma** e i comunicati ufficiali sugli staff 2025/26 e 2026/27 del Sassuolo Calcio. Date o termini non dichiarati restano `N/D` e non vengono inferiti dal campo `seasons.manager`.

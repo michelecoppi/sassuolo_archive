@@ -13,7 +13,7 @@ Lo script salva righe PlayerSeason e `fbref-standard-manifest.json` con URL, dat
 
 ## Coperture distinte
 
-Le fonti candidate per Serie C1 2007/08, Coppa Italia ed Europa League sono nel file [coverage-sources.json](coverage-sources.json). Restano fuori dall'import finché un curator non registra un export riproducibile e verificabile; una gara di coppa non contribuisce mai alla completezza del campionato.
+Il perimetro completo è dichiarato in [historical-scope.json](historical-scope.json); le fonti candidate per Serie C1 2007/08, Coppa Italia ed Europa League sono nel file [coverage-sources.json](coverage-sources.json). Le righe mancanti restano visibili nella matrice di copertura ma fuori dall'import finché un curator non registra un export riproducibile e verificabile; una gara di coppa non contribuisce mai alla completezza del campionato.
 
 ## Serie B 2008/09–2012/13
 

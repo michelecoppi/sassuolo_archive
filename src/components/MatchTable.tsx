@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { Match } from '../types';
-import { CompetitionBadge, DataTable, Score, SourceBadge } from './Ui';
+import { CompetitionBadge, CompletenessBadge, DataTable, Score, SourceBadge } from './Ui';
 
 export function MatchCard({match:m}:{match:Match}){return <Link to={`/matches/${m.id}`} className="card block p-4 transition hover:border-neroverde-400/40"><div className="mb-3 flex items-center justify-between gap-2"><CompetitionBadge competition={m.competition}/><span className="text-xs text-zinc-500">{new Date(m.date).toLocaleDateString('it-IT')}</span></div><div className="flex items-center justify-between gap-3"><span className="min-w-0 truncate font-bold text-white">{m.home_team}</span><Score home={m.home_score} away={m.away_score}/><span className="min-w-0 truncate text-right font-bold text-white">{m.away_team}</span></div></Link>}
 export default function MatchTable({matches}:{matches:Match[]}){
@@ -10,7 +10,7 @@ export default function MatchTable({matches}:{matches:Match[]}){
     <td><CompetitionBadge competition={m.competition}/></td>
     <td><Link className="font-semibold text-white hover:text-neroverde-400" to={`/matches/${m.id}`}><span>{m.home_team}</span><span className="mx-2 text-zinc-600">vs</span><span>{m.away_team}</span></Link></td>
     <td><Score home={m.home_score} away={m.away_score}/></td>
-    <td><span className={`badge text-[10px] ${m.completeness_level==='DETAILED'?'text-neroverde-300':m.completeness_level==='STANDARD'?'text-amber-200':'text-zinc-400'}`}>{m.completeness_level||'BASIC'}</span></td>
+    <td><CompletenessBadge level={m.completeness_level}/></td>
     <td><SourceBadge provider={m.source_provider} url={m.source_url} verifiedAt={m.last_verified_at}/></td>
     <td><Link className="text-xs font-semibold text-neroverde-400 hover:text-neroverde-300" to={`/matches/${m.id}`}>Dettagli →</Link></td>
   </tr>)}</tbody></table></DataTable>

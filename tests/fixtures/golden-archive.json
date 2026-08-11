@@ -1,0 +1,15 @@
+{
+  "matches": [
+    {"external_key":"golden-a","date":"2020-09-01","season":"2020/21","competition":"Serie A","home_team":"U.S. Sassuolo Calcio","away_team":"Roma","home_score":2,"away_score":1},
+    {"external_key":"golden-b","date":"2020-09-08","season":"2020/21","competition":"Serie A","home_team":"U.S. Sassuolo Calcio","away_team":"Milan","home_score":3,"away_score":0},
+    {"external_key":"golden-c","date":"2020-09-15","season":"2020/21","competition":"Serie A","home_team":"Inter","away_team":"U.S. Sassuolo Calcio","home_score":2,"away_score":0},
+    {"external_key":"golden-d","date":"2020-09-22","season":"2020/21","competition":"Serie A","home_team":"U.S. Sassuolo Calcio","away_team":"AC Milan","home_score":1,"away_score":0},
+    {"external_key":"golden-cup","date":"2020-10-01","season":"2020/21","competition":"Coppa Italia","home_team":"U.S. Sassuolo Calcio","away_team":"Spezia","home_score":1,"away_score":1},
+    {"external_key":"golden-null","date":"2099-09-01","season":"2099/00","competition":"Serie A","home_team":"U.S. Sassuolo Calcio","away_team":"Parma","home_score":null,"away_score":null}
+  ],
+  "players": [
+    {"name":"Golden Hero","position":"Attacker","seasons":[{"season":"2020/21","competition":"Serie A","appearances":30,"minutes":2400,"goals":17,"assists":8},{"season":"2020/21","competition":"Coppa Italia","appearances":1,"minutes":90,"goals":1,"assists":null}]},
+    {"name":"Golden Unknown","position":"Defender","seasons":[{"season":"2020/21","competition":"Serie A","appearances":null,"minutes":null,"goals":null,"assists":null}]}
+  ],
+  "expected": {"milanPlayed":2,"milanWins":2,"milanStreak":"W x2","longestWinningStreak":2,"serieAGoalsLeader":"Golden Hero","serieAGoals":17,"cupGoals":1}
+}

@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "startSeason": "2007/08",
+  "endSeason": "2026/27",
+  "inclusionPolicy": "Il perimetro moderno parte dalla stagione 2007/08, prima promozione del Sassuolo dalla Serie C1 alla Serie B. Include il campionato, ogni coppa alla quale il club ha partecipato e le fasi playoff/playout come competizioni separate; non presume che una competizione a eliminazione abbia un numero fisso di gare.",
+  "evidence": [
+    {
+      "label": "Storia ufficiale del club: promozione 2007/08 e Supercoppa di Serie C",
+      "url": "https://www.sassuolocalcio.it/club/la-nostra-storia/dalle-origini/"
+    },
+    {
+      "label": "Riepiloghi di campionato verificati nel repository",
+      "path": "data/seasons/sassuolo-league-history.json"
+    },
+    {
+      "label": "Registro delle fonti candidate per coppe ed Europa League",
+      "path": "data/coverage-sources.json"
+    }
+  ],
+  "seasons": [
+    {
+      "season": "2007/08",
+      "competitions": [
+        {"competition": "Serie C1", "kind": "league", "expectedMatches": 34, "gapReason": "Il campionato è nel perimetro, ma fixture, classifica e rosa non sono ancora state importate da un pacchetto verificato."},
+        {"competition": "Coppa Italia Serie C", "kind": "domestic_cup", "expectedMatches": 6, "gapReason": "La partecipazione è documentata, ma le sei gare tra girone e sedicesimi non sono ancora presenti nel dataset canonico."},
+        {"competition": "Supercoppa di Serie C", "kind": "super_cup", "expectedMatches": 2, "gapReason": "La finale su andata e ritorno vinta contro la Salernitana è documentata dalla storia ufficiale, ma le due fixture non sono ancora importate."}
+      ]
+    },
+    {"season": "2008/09", "competitions": [{"competition": "Serie B", "kind": "league", "expectedMatches": 42, "gapReason": "Restano da completare i blocchi di dettaglio delle gare."}, {"competition": "Coppa Italia", "kind": "domestic_cup", "expectedMatches": null, "gapReason": "Partecipazione dichiarata; manca un pacchetto verificato che stabilisca il numero di gare e importi le fixture."}]},
+    {"season": "2009/10", "competitions": [{"competition": "Serie B", "kind": "league", "expectedMatches": 42, "gapReason": "Restano da completare i blocchi di dettaglio delle gare."}, {"competition": "Serie B playoff", "kind": "playoff", "expectedMatches": 2, "gapReason": "Le due semifinali playoff contro il Torino sono fuori dal conteggio della regular season e non sono ancora importate come fase separata."}, {"competition": "Coppa Italia", "kind": "domestic_cup", "expectedMatches": null, "gapReason": "Partecipazione dichiarata; manca un pacchetto verificato che stabilisca il numero di gare e importi le fixture."}]},
+    {"season": "2010/11", "competitions": [{"competition": "Serie B", "kind": "league", "expectedMatches": 42, "gapReason": "Restano da completare i blocchi di dettaglio delle gare."}, {"competition": "Coppa Italia", "kind": "domestic_cup", "expectedMatches": null, "gapReason": "Partecipazione dichiarata; manca un pacchetto verificato che stabilisca il numero di gare e importi le fixture."}]},
+    {"season": "2011/12", "competitions": [{"competition": "Serie B", "kind": "league", "expectedMatches": 42, "gapReason": "Restano da completare i blocchi di dettaglio delle gare."}, {"competition": "Serie B playoff", "kind": "playoff", "expectedMatches": 2, "gapReason": "Le due semifinali playoff contro la Sampdoria sono fuori dal conteggio della regular season e non sono ancora importate come fase separata."}, {"competition": "Coppa Italia", "kind": "domestic_cup", "expectedMatches": null, "gapReason": "Partecipazione dichiarata; manca un pacchetto verificato che stabilisca il numero di gare e importi le fixture."}]},
+    {"season": "2012/13", "competitions": [{"competition": "Serie B", "kind": "league", "expectedMatches": 42, "gapReason": "Restano da completare i blocchi di dettaglio delle gare."}, {"competition": "Coppa Italia", "kind": "domestic_cup", "expectedMatches": null, "gapReason": "Partecipazione dichiarata; manca un pacchetto verificato che stabilisca il numero di gare e importi le fixture."}]},
+    {"season": "2013/14", "competitions": [{"competition": "Serie A", "kind": "league", "expectedMatches": 38, "gapReason": "Restano da completare rosa e dettaglio gara secondo la matrice."}, {"competition": "Coppa Italia", "kind": "domestic_cup", "expectedMatches": null, "gapReason": "Partecipazione dichiarata; manca un pacchetto verificato che stabilisca il numero di gare e importi le fixture."}]},
+    {"season": "2014/15", "competitions": [{"competition": "Serie A", "kind": "league", "expectedMatches": 38, "gapReason": "Restano da completare rosa e dettaglio gara secondo la matrice."}, {"competition": "Coppa Italia", "kind": "domestic_cup", "expectedMatches": null, "gapReason": "Partecipazione dichiarata; manca un pacchetto verificato che stabilisca il numero di gare e importi le fixture."}]},
+    {"season": "2015/16", "competitions": [{"competition": "Serie A", "kind": "league", "expectedMatches": 38, "gapReason": "Restano da completare rosa e dettaglio gara secondo la matrice."}, {"competition": "Coppa Italia", "kind": "domestic_cup", "expectedMatches": null, "gapReason": "Partecipazione dichiarata; manca un pacchetto verificato che stabilisca il numero di gare e importi le fixture."}]},
+    {"season": "2016/17", "competitions": [{"competition": "Serie A", "kind": "league", "expectedMatches": 38, "gapReason": "Restano da completare rosa e dettaglio gara secondo la matrice."}, {"competition": "Coppa Italia", "kind": "domestic_cup", "expectedMatches": null, "gapReason": "Partecipazione dichiarata; manca un pacchetto verificato che stabilisca il numero di gare e importi le fixture."}, {"competition": "Europa League", "kind": "continental_cup", "expectedMatches": 10, "gapReason": "Le fixture sono presenti, ma rosa, statistiche giocatore e dettaglio completo restano parziali."}]},
+    {"season": "2017/18", "competitions": [{"competition": "Serie A", "kind": "league", "expectedMatches": 38, "gapReason": "Restano da completare rosa e dettaglio gara secondo la matrice."}, {"competition": "Coppa Italia", "kind": "domestic_cup", "expectedMatches": null, "gapReason": "Partecipazione dichiarata; manca un pacchetto verificato che stabilisca il numero di gare e importi le fixture."}]},
+    {"season": "2018/19", "competitions": [{"competition": "Serie A", "kind": "league", "expectedMatches": 38, "gapReason": "Restano da completare rosa e dettaglio gara secondo la matrice."}, {"competition": "Coppa Italia", "kind": "domestic_cup", "expectedMatches": null, "gapReason": "Partecipazione dichiarata; manca un pacchetto verificato che stabilisca il numero di gare e importi le fixture."}]},
+    {"season": "2019/20", "competitions": [{"competition": "Serie A", "kind": "league", "expectedMatches": 38, "gapReason": "Restano da completare rosa e dettaglio gara secondo la matrice."}, {"competition": "Coppa Italia", "kind": "domestic_cup", "expectedMatches": null, "gapReason": "Partecipazione dichiarata; manca un pacchetto verificato che stabilisca il numero di gare e importi le fixture."}]},
+    {"season": "2020/21", "competitions": [{"competition": "Serie A", "kind": "league", "expectedMatches": 38, "gapReason": "Restano da completare rosa e dettaglio gara secondo la matrice."}, {"competition": "Coppa Italia", "kind": "domestic_cup", "expectedMatches": 1, "gapReason": "La fixture è presente; rosa e dettaglio avanzato della competizione restano non coperti."}]},
+    {"season": "2021/22", "competitions": [{"competition": "Serie A", "kind": "league", "expectedMatches": 38, "gapReason": "Restano da completare rosa e dettaglio gara secondo la matrice."}, {"competition": "Coppa Italia", "kind": "domestic_cup", "expectedMatches": 2, "gapReason": "Le fixture sono presenti; rosa e dettaglio avanzato della competizione restano non coperti."}]},
+    {"season": "2022/23", "competitions": [{"competition": "Serie A", "kind": "league", "expectedMatches": 38, "gapReason": "Restano da completare rosa e dettaglio gara secondo la matrice."}, {"competition": "Coppa Italia", "kind": "domestic_cup", "expectedMatches": 1, "gapReason": "La fixture è presente; rosa e dettaglio avanzato della competizione restano non coperti."}]},
+    {"season": "2023/24", "competitions": [{"competition": "Serie A", "kind": "league", "expectedMatches": 38, "gapReason": "Restano da completare rosa e dettaglio gara secondo la matrice."}, {"competition": "Coppa Italia", "kind": "domestic_cup", "expectedMatches": 3, "gapReason": "Le fixture sono presenti; rosa e dettaglio avanzato della competizione restano non coperti."}]},
+    {"season": "2024/25", "competitions": [{"competition": "Serie B", "kind": "league", "expectedMatches": 38, "gapReason": "Restano da completare rosa e dettaglio gara secondo la matrice."}, {"competition": "Coppa Italia", "kind": "domestic_cup", "expectedMatches": 3, "gapReason": "Le fixture sono presenti; rosa e dettaglio avanzato della competizione restano non coperti."}]},
+    {"season": "2025/26", "competitions": [{"competition": "Serie A", "kind": "league", "expectedMatches": 38, "gapReason": "Restano da completare rosa e dettaglio gara secondo la matrice."}, {"competition": "Coppa Italia", "kind": "domestic_cup", "expectedMatches": 2, "gapReason": "Le fixture sono presenti; rosa e dettaglio avanzato della competizione restano non coperti."}]},
+    {"season": "2026/27", "competitions": [{"competition": "Serie A", "kind": "league", "expectedMatches": 38, "gapReason": "Stagione corrente: la copertura cresce con i risultati pubblicati e non viene trattata come una lacuna storica conclusa."}, {"competition": "Coppa Italia", "kind": "domestic_cup", "expectedMatches": null, "gapReason": "Stagione corrente: il numero di gare dipende dall'avanzamento nel tabellone e viene aggiornato solo da fonti verificate."}]}
+  ]
+}

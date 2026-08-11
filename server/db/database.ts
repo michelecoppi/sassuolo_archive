@@ -1,4 +1,5 @@
 import Database from 'better-sqlite3';
+import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -43,8 +44,66 @@ function ensureColumn(table: string, definition: string) {
   if (!columnNames(table).has(name)) db.exec(`ALTER TABLE ${table} ADD COLUMN ${definition}`);
 }
 
+type SchemaMigration = { version: number; name: string; apply: () => void };
+
+const schemaMigrations: SchemaMigration[] = [
+  { version: 1, name: 'baseline-schema', apply: () => undefined },
+  { version: 2, name: 'conflict-review-workflow', apply: () => {
+    ensureColumn('data_conflicts', "status TEXT NOT NULL DEFAULT 'open'");
+    ensureColumn('data_conflicts', 'resolved_value TEXT');
+    ensureColumn('data_conflicts', 'resolved_at TEXT');
+    ensureColumn('data_conflicts', 'resolved_by TEXT');
+    ensureColumn('data_conflicts', 'resolution_note TEXT');
+    ensureColumn('data_conflicts', 'updated_at TEXT');
+  } },
+  { version: 3, name: 'field-level-provenance', apply: () => {
+    ensureColumn('source_references', 'source_provider TEXT');
+    ensureColumn('source_references', 'import_run_id INTEGER');
+    ensureColumn('source_references', 'transformation TEXT');
+    ensureColumn('source_references', 'original_value TEXT');
+  } },
+  { version: 4, name: 'verified-backup-restore', apply: () => {
+    ensureColumn('backup_runs', 'sha256 TEXT');
+    ensureColumn('backup_runs', 'size_bytes INTEGER');
+    ensureColumn('backup_runs', 'verified_at TEXT');
+    ensureColumn('backup_runs', 'restored_at TEXT');
+  } },
+  { version: 5, name: 'security-audit-log', apply: () => undefined },
+  { version: 6, name: 'archive-detail-profiles', apply: () => {
+    for (const definition of [
+      'period_first INTEGER', 'period_second INTEGER', 'extra INTEGER', 'venue_id INTEGER',
+      'league_id INTEGER', 'league_logo TEXT', 'league_flag TEXT', 'league_season INTEGER',
+      'home_team_api_id INTEGER', 'home_winner INTEGER', 'away_team_api_id INTEGER', 'away_winner INTEGER',
+      'extratime_home INTEGER', 'extratime_away INTEGER', 'penalty_home INTEGER', 'penalty_away INTEGER'
+    ]) ensureColumn('match_details', definition);
+  } },
+  { version: 7, name: 'archive-club-transfers-corrections', apply: () => {
+    for (const definition of [
+      'movement_type TEXT', 'session TEXT', 'fee_amount REAL', 'fee_currency TEXT', 'fee_display TEXT'
+    ]) ensureColumn('transfers', definition);
+  } },
+];
+
+function runSchemaMigrations() {
+  const applied = new Set((db.prepare(`SELECT version FROM schema_migrations`).all() as {version:number}[]).map(row => row.version));
+  for (const migration of schemaMigrations) {
+    if (applied.has(migration.version)) continue;
+    db.transaction(() => {
+      migration.apply();
+      db.prepare(`INSERT INTO schema_migrations(version,name,applied_at) VALUES(?,?,?)`).run(migration.version, migration.name, nowIso());
+      db.pragma(`user_version = ${migration.version}`);
+    })();
+  }
+}
+
 export function initDb() {
   db.exec(`
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      version INTEGER PRIMARY KEY,
+      name TEXT NOT NULL UNIQUE,
+      applied_at TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS teams (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       canonical_name TEXT NOT NULL UNIQUE,
@@ -329,7 +388,7 @@ export function initDb() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       match_id INTEGER NOT NULL UNIQUE REFERENCES matches(id) ON DELETE CASCADE,
       source_provider TEXT NOT NULL DEFAULT 'unknown',
-      provider_match_id TEXT NOT NULL,
+      provider_match_id TEXT NOT NULL DEFAULT 'unknown',
       api_fixture_id INTEGER,
       timezone TEXT,
       kickoff_timestamp INTEGER,
@@ -568,6 +627,12 @@ export function initDb() {
       old_value TEXT,
       new_value TEXT,
       provider TEXT,
+      status TEXT NOT NULL DEFAULT 'open',
+      resolved_value TEXT,
+      resolved_at TEXT,
+      resolved_by TEXT,
+      resolution_note TEXT,
+      updated_at TEXT,
       created_at TEXT NOT NULL
     );
 
@@ -581,6 +646,10 @@ export function initDb() {
       source_url TEXT NOT NULL,
       note TEXT,
       author TEXT,
+      source_provider TEXT,
+      import_run_id INTEGER,
+      transformation TEXT,
+      original_value TEXT,
       verified_at TEXT NOT NULL,
       created_at TEXT NOT NULL
     );
@@ -605,8 +674,24 @@ export function initDb() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       reason TEXT NOT NULL,
       file_path TEXT NOT NULL,
+      sha256 TEXT,
+      size_bytes INTEGER,
+      verified_at TEXT,
+      restored_at TEXT,
       created_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS security_audit_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      method TEXT NOT NULL,
+      path TEXT NOT NULL,
+      actor TEXT,
+      role TEXT,
+      ip TEXT,
+      status_code INTEGER,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_security_audit_created ON security_audit_log(created_at DESC);
 
     -- One row per controlled import/sync. This is the operational ledger:
     -- payload tables remain the source of data, while this table explains
@@ -671,7 +756,27 @@ export function initDb() {
       notes TEXT
     );
     CREATE INDEX IF NOT EXISTS idx_research_candidates_status ON research_candidates(status, last_seen_at DESC);
+
+    CREATE TABLE IF NOT EXISTS correction_requests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      entity_type TEXT NOT NULL,
+      entity_id TEXT,
+      field TEXT NOT NULL,
+      current_value TEXT,
+      proposed_value TEXT NOT NULL,
+      source_url TEXT NOT NULL,
+      explanation TEXT NOT NULL,
+      reporter_name TEXT,
+      reporter_contact TEXT,
+      status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','approved','rejected')),
+      reviewer TEXT,
+      review_note TEXT,
+      reviewed_at TEXT,
+      created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_correction_requests_status ON correction_requests(status, created_at DESC);
   `);
+  runSchemaMigrations();
   for (const table of ['players', 'transfers', 'match_events', 'match_lineups', 'match_injuries', 'match_player_stats']) {
     const column = table === 'players' ? 'name' : 'player_name';
     if (columnNames(table).has(column)) db.prepare(`UPDATE ${table} SET ${column}=replace(replace(replace(${column}, '&apos;', char(39)), '&#39;', char(39)), '&#x27;', char(39)) WHERE ${column} LIKE '%&apos;%' OR ${column} LIKE '%&#39;%' OR ${column} LIKE '%&#x27;%'`).run();
@@ -706,6 +811,16 @@ export function initDb() {
     'penalty_missed INTEGER', 'penalty_saved INTEGER', 'source_provider TEXT', 'source_url TEXT', 'last_verified_at TEXT'
   ]) ensureColumn('player_seasons', definition);
   ensureColumn('transfers', 'source_url TEXT');
+  for (const definition of ['movement_type TEXT','session TEXT','fee_amount REAL','fee_currency TEXT','fee_display TEXT']) ensureColumn('transfers', definition);
+  db.exec(`UPDATE transfers SET movement_type=CASE
+    WHEN lower(COALESCE(type,'')) LIKE '%loan%' AND lower(COALESCE(type,'')) LIKE '%return%' THEN 'RETURN'
+    WHEN lower(COALESCE(type,'')) LIKE '%loan%' THEN 'LOAN'
+    WHEN lower(COALESCE(type,'')) LIKE '%free%' THEN 'FREE'
+    ELSE 'TRANSFER' END WHERE movement_type IS NULL`);
+  db.exec(`UPDATE transfers SET session=CASE
+    WHEN date IS NULL THEN NULL
+    WHEN CAST(strftime('%m',date) AS INTEGER) IN (1,2) THEN 'WINTER'
+    ELSE 'SUMMER' END WHERE session IS NULL`);
 
   // Provider-aware match detail columns. These are additive so the patch also
   // works on databases created by the previous API-Football match-detail patch.
@@ -764,10 +879,10 @@ export function initDb() {
   // Resolve only when the replacement is a valid, evidenced manual value;
   // unresolved records remain visible to the Data Manager.
   db.prepare(`UPDATE data_conflicts
-    SET status='resolved', resolved_value=(SELECT CAST(e.minute AS TEXT) FROM match_events e WHERE e.id=CAST(data_conflicts.entity_key AS INTEGER)), resolved_at=?
+    SET status='resolved', resolved_value=(SELECT CAST(e.minute AS TEXT) FROM match_events e WHERE e.id=CAST(data_conflicts.entity_key AS INTEGER)), resolved_at=?,resolved_by='migration',resolution_note='Valore manuale già verificato con fonte',updated_at=?
     WHERE entity_type='match_event' AND field='minute' AND status='open'
       AND EXISTS(SELECT 1 FROM match_events e WHERE e.id=CAST(data_conflicts.entity_key AS INTEGER)
-        AND e.source_provider='manual' AND e.minute IS NOT NULL AND e.source_url IS NOT NULL AND e.last_verified_at IS NOT NULL)`).run(nowIso());
+        AND e.source_provider='manual' AND e.minute IS NOT NULL AND e.source_url IS NOT NULL AND e.last_verified_at IS NOT NULL)`).run(nowIso(),nowIso());
 
   // CHECK constraints are not retrofitted by ALTER TABLE, so triggers protect
   // both the current archive and additive migrations.
@@ -952,24 +1067,60 @@ export function recordSourceReference(input: {
   note?: string | null;
   author?: string | null;
   verifiedAt?: string | null;
+  sourceProvider?: string | null;
+  importRunId?: number | null;
+  transformation?: string | null;
+  originalValue?: unknown;
 }) {
-  db.prepare(`INSERT INTO source_references(entity_type,entity_id,field,source_url,note,author,verified_at,created_at)
-    VALUES(?,?,?,?,?,?,?,?)`).run(
+  db.prepare(`INSERT INTO source_references(entity_type,entity_id,field,source_url,note,author,source_provider,import_run_id,transformation,original_value,verified_at,created_at)
+    VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`).run(
     input.entityType,
     input.entityId,
     input.field ?? null,
     input.sourceUrl,
     input.note ?? null,
     input.author ?? null,
+    input.sourceProvider ?? null,
+    input.importRunId ?? null,
+    input.transformation ?? null,
+    input.originalValue == null ? null : String(input.originalValue),
     input.verifiedAt ?? nowIso(),
     nowIso(),
   );
 }
 
+export function backfillFieldProvenance() {
+  const configurations = [
+    {table:'seasons',entity:'seasons',fields:['season','competition','final_position','matches','wins','draws','losses','goals_for','goals_against','points','manager','stadium','top_scorer']},
+    {table:'matches',entity:'matches',fields:['date','season','competition','round','home_team','away_team','home_score','away_score','halftime_score','stadium','attendance','referee']},
+    {table:'players',entity:'players',fields:['name','nationality','birth_date','position','shirt_number','first_appearance','last_appearance']},
+    {table:'player_seasons',entity:'player_seasons',fields:['season','competition','position','appearances','starts','minutes','goals','own_goals','assists','yellow_cards','red_cards','clean_sheets']},
+    {table:'transfers',entity:'transfers',fields:['player_name','date','type','direction','from_team_name','to_team_name','season']},
+  ] as const;
+  let created=0;
+  db.transaction(()=>{
+    for(const config of configurations){
+      const available=columnNames(config.table);const fields=config.fields.filter(field=>available.has(field));
+      const records=db.prepare(`SELECT id,source_provider,source_url,last_verified_at,${fields.map(quoteIdentifier).join(',')} FROM ${quoteIdentifier(config.table)} WHERE source_provider IS NOT NULL OR source_url IS NOT NULL`).all() as any[];
+      for(const record of records){
+        const sourceUrl=record.source_url||`provider://${String(record.source_provider||'unknown').toLowerCase().replace(/[^a-z0-9._-]+/g,'-')}`;
+        for(const field of fields){
+          if(record[field]==null||String(record[field]).trim()==='')continue;
+          const exists=db.prepare(`SELECT 1 FROM source_references WHERE entity_type=? AND entity_id=? AND field=? LIMIT 1`).get(config.entity,record.id,field);
+          if(exists)continue;
+          recordSourceReference({entityType:config.entity,entityId:record.id,field,sourceUrl,sourceProvider:record.source_provider,transformation:'legacy-row-backfill',originalValue:record[field],verifiedAt:record.last_verified_at||undefined,note:'Provenienza ricostruita dai metadati già presenti nella riga; nessuna nuova fonte introdotta.'});
+          created++;
+        }
+      }
+    }
+  })();
+  return {created};
+}
+
 export function recordChange(input: {
   entityType: string;
   entityId?: number | null;
-  action: 'create' | 'update' | 'delete' | 'resolve-conflict' | 'undo' | 'rollback';
+  action: 'create' | 'update' | 'delete' | 'resolve-conflict' | 'approve-correction' | 'reject-correction' | 'undo' | 'rollback';
   before?: unknown;
   after?: unknown;
   sourceUrl?: string | null;
@@ -993,14 +1144,89 @@ export function recordChange(input: {
 }
 
 export function createBackupSnapshot(reason: string) {
-  const backupsDir = path.resolve('server/db/backups');
+  const backupsDir = backupDirectory();
   fs.mkdirSync(backupsDir, { recursive: true });
   const filename = `sassuolo-${reason.replace(/[^a-z0-9_-]+/gi, '-').slice(0, 80)}-${nowIso().replace(/[:.]/g, '-')}.db`;
   const backupPath = path.join(backupsDir, filename);
   db.exec(`VACUUM INTO '${backupPath.replace(/'/g, "''")}'`);
-  const result = db.prepare(`INSERT INTO backup_runs(reason,file_path,created_at) VALUES(?,?,?)`)
-    .run(reason, backupPath, nowIso());
-  return { id: Number(result.lastInsertRowid), filePath: backupPath };
+  const verification = verifyBackupFile(backupPath);
+  const result = db.prepare(`INSERT INTO backup_runs(reason,file_path,sha256,size_bytes,verified_at,created_at) VALUES(?,?,?,?,?,?)`)
+    .run(reason, backupPath, verification.sha256, verification.sizeBytes, verification.verifiedAt, nowIso());
+  return { id: Number(result.lastInsertRowid), filePath: backupPath, ...verification };
+}
+
+function backupDirectory() {
+  return path.resolve(process.env.SASSUOLO_BACKUPS_DIR || (process.env.SASSUOLO_DB_PATH ? path.join(path.dirname(dbPath),'backups') : 'server/db/backups'));
+}
+
+export function verifyBackupFile(filePath: string) {
+  const resolved = path.resolve(filePath);
+  if (!fs.existsSync(resolved)) throw new Error('File di backup non trovato');
+  const backupDb = new Database(resolved, { readonly: true, fileMustExist: true });
+  try {
+    const integrity = String(backupDb.pragma('integrity_check', { simple: true }));
+    if (integrity !== 'ok') throw new Error(`Backup SQLite non integro: ${integrity}`);
+  } finally { backupDb.close(); }
+  return {
+    sha256: crypto.createHash('sha256').update(fs.readFileSync(resolved)).digest('hex'),
+    sizeBytes: fs.statSync(resolved).size,
+    verifiedAt: nowIso(),
+  };
+}
+
+const restorableTables = [
+  'teams','team_aliases','seasons','matches','players','player_source_ids','player_seasons',
+  'season_standings','team_season_stats','transfers','match_details','match_events',
+  'match_lineups','match_team_stats','match_player_stats','match_injuries','news_articles',
+  'sync_state','player_name_aliases','player_match_conflicts','app_settings','data_conflicts',
+  'source_references','research_candidates','correction_requests',
+] as const;
+
+const quoteIdentifier = (value: string) => `"${value.replace(/"/g, '""')}"`;
+
+export function restoreBackupSnapshot(backupId: number, expectedSha256: string, actor = 'Data Manager') {
+  const backup = db.prepare(`SELECT * FROM backup_runs WHERE id=?`).get(backupId) as any;
+  if (!backup) throw new Error('Backup non trovato');
+  const backupsRoot = backupDirectory() + path.sep;
+  const backupPath = path.resolve(String(backup.file_path));
+  if (!backupPath.startsWith(backupsRoot)) throw new Error('Percorso backup non autorizzato');
+  const verification = verifyBackupFile(backupPath);
+  if (!/^[a-f0-9]{64}$/i.test(expectedSha256) || !crypto.timingSafeEqual(Buffer.from(expectedSha256), Buffer.from(verification.sha256))) throw new Error('Checksum di conferma non valido');
+  if (backup.sha256 && backup.sha256 !== verification.sha256) throw new Error('Il backup è cambiato dopo la creazione');
+
+  const safetyBackup = createBackupSnapshot(`before-restore-${backupId}`);
+  db.prepare(`ATTACH DATABASE ? AS restore_source`).run(backupPath);
+  try {
+    db.pragma('foreign_keys = OFF');
+    db.transaction(() => {
+      for (const table of [...restorableTables].reverse()) {
+        const exists = db.prepare(`SELECT 1 FROM restore_source.sqlite_master WHERE type='table' AND name=?`).get(table);
+        if (exists) db.exec(`DELETE FROM ${quoteIdentifier(table)}`);
+      }
+      for (const table of restorableTables) {
+        const exists = db.prepare(`SELECT 1 FROM restore_source.sqlite_master WHERE type='table' AND name=?`).get(table);
+        if (!exists) continue;
+        const mainColumns = columnNames(table);
+        const backupColumns = new Set((db.prepare(`PRAGMA restore_source.table_info(${quoteIdentifier(table)})`).all() as {name:string}[]).map(column => column.name));
+        const columns = [...mainColumns].filter(column => backupColumns.has(column));
+        if (columns.length) {
+          const list = columns.map(quoteIdentifier).join(',');
+          db.exec(`INSERT INTO ${quoteIdentifier(table)}(${list}) SELECT ${list} FROM restore_source.${quoteIdentifier(table)}`);
+        }
+      }
+    })();
+  } finally {
+    db.pragma('foreign_keys = ON');
+    db.exec(`DETACH DATABASE restore_source`);
+  }
+  const restoredAt = nowIso();
+  db.prepare(`UPDATE backup_runs SET restored_at=? WHERE id=?`).run(restoredAt, backupId);
+  recordChange({entityType:'database',action:'rollback',after:{restoredBackupId:backupId,sha256:verification.sha256},author:actor,backupId:safetyBackup.id,note:'Ripristino snapshot SQLite verificato'});
+  return { restoredBackupId: backupId, restoredAt, safetyBackupId: safetyBackup.id, tables: restorableTables.length };
+}
+
+export function getSchemaVersion() {
+  return Number(db.pragma('user_version', { simple: true }));
 }
 
 export function recordImportRun(input: {
@@ -1069,8 +1295,9 @@ export function recordDataConflict(entityType: string, entityKey: string, field:
   const oldText = oldValue == null ? null : String(oldValue);
   const newText = newValue == null ? null : String(newValue);
   if (oldText === newText) return;
-  db.prepare(`INSERT OR IGNORE INTO data_conflicts(entity_type,entity_key,field,old_value,new_value,provider,created_at) VALUES(?,?,?,?,?,?,?)`)
-    .run(entityType, entityKey, field, oldText, newText, provider, nowIso());
+  const createdAt=nowIso();
+  db.prepare(`INSERT OR IGNORE INTO data_conflicts(entity_type,entity_key,field,old_value,new_value,provider,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)`)
+    .run(entityType, entityKey, field, oldText, newText, provider, createdAt, createdAt);
 }
 
 export function recordFixtureConflicts(existing: any, incoming: { date?: unknown; home_score?: unknown; away_score?: unknown }, provider: string) {

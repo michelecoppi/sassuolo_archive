@@ -89,6 +89,22 @@ Dalle partite vengono poi calcolati localmente:
 
 > Nota: questo bootstrap è per il **campionato**. Coppa Italia, Europa League, marcatori/assist delle singole partite e dati giocatore completi richiedono dataset aggiuntivi e possono essere importati separatamente.
 
+## Leggere fonti e copertura
+
+La pagina **Fonti e metodo** documenta la matrice di copertura per stagione e competizione, l'ordine di priorità dei provider, la gestione dei conflitti e delle correzioni manuali, la semantica di `N/D` e le formule statistiche. Il perimetro storico versionato parte dal 2007/08 e separa campionati, playoff/playout e coppe: anche le competizioni ancora prive di record compaiono nella matrice con una lacuna motivata. I badge `BASIC`, `STANDARD` e `DETAILED` rimandano direttamente alla definizione del relativo livello; i badge di provenienza aprono la spiegazione metodologica e l'icona esterna apre la fonte puntuale quando disponibile.
+
+Le schede stagione espongono inoltre affidabilità, allenatori e relativi intervalli quando documentati, stadio, capitano, provenienza dei record e lacune puntuali. Una stagione dichiarata nel perimetro resta consultabile anche quando non possiede ancora record: in quel caso i campi rimangono `N/D` e la scheda spiega cosa manca.
+
+Le pagine **Club** e **Timeline** condividono `data/club-history.json`, che raccoglie palmarès, passaggi di categoria, stadi, proprietà, presidenti, maglie e ricorrenze con fonti. **Allenatori e staff** usa incarichi espliciti da `data/technical-staff.json`: i cambi in corsa e i ritorni multipli non vengono inferiti dal campo testuale della stagione.
+
+I **Trasferimenti** sono filtrabili per stagione, sessione e tipo di movimento; costo, valuta e fonte restano campi distinti e l’interfaccia evidenzia le identità non riconciliate. Da **Segnala correzione** chiunque può proporre un valore con una fonte: la proposta non modifica il dato pubblico e viene approvata o rifiutata dalla coda del Data Manager, alimentando il change log.
+
+Il centro partita deriva il livello effettivo dai blocchi disponibili: `BASIC` limita la vista al risultato, `STANDARD` aggiunge metadati documentati, `DETAILED` indica almeno un blocco avanzato tra eventi, formazioni e statistiche. Intervallo, supplementari, rigori, arbitro, stadio e spettatori compaiono solo quando presenti; non vengono renderizzate sezioni vuote.
+
+Le schede giocatore usano `player_seasons` come base canonica per totali generali e per competizione. Mostrano biografia, titolarità, minuti, gol, assist, disciplina, trasferimenti e provenienza; gli identificativi di fonte sono riuniti nello stesso profilo e gli eventuali conflitti d'identità aperti restano evidenziati.
+
+Records e Hall of Fame mostrano inoltre il perimetro effettivo del calcolo, la data dell'ultimo ricalcolo e, per ogni classifica, formula, spareggio e soglia minima. Queste regole sono centralizzate in `server/services/statDefinitions.ts`: una nuova metrica non va aggiunta soltanto al frontend, ma deve avere una definizione dichiarativa e test dello spareggio.
+
 ## Modificare i dati a mano
 
 Dal sito apri:
@@ -197,6 +213,11 @@ Tabelle principali:
 - `news_articles`
 - `sync_state`
 - `data_conflicts`
+- `schema_migrations`
+- `source_references`
+- `backup_runs`
+- `import_runs`
+- `security_audit_log`
 
 ## Provider e modalità senza chiavi
 
@@ -224,10 +245,17 @@ npm run setup              # crea DB + importa file locali
 npm run history:bootstrap  # scarica/importa lo storico campionato Sassuolo
 npm run import:all         # importa file JSON/CSV presenti in data/
 npm run db:init            # inizializza/migra SQLite
+npm run db:migrate         # applica e mostra la versione delle migrazioni
+npm run data:provenance    # backup + backfill delle fonti già presenti
+npm run data:audit:full    # audit bloccante e report JSON
 npm run check              # TypeScript check
-npm run build              # check + build Vite
+npm run check:secrets      # cerca credenziali nei file tracciati
+npm run check:bundle       # verifica i budget sui file già generati in dist/
+npm run build              # check + build Vite + budget bundle
 npm start                  # avvia solo API
 ```
+
+`GET /api/health` fornisce lo stato operativo di database, cache, richieste, provider e import recenti. Le letture pubbliche supportano `ETag`; dopo ogni import o correzione riuscita la cache server viene invalidata automaticamente.
 
 ## Affidabilità dei dati
 
@@ -236,6 +264,12 @@ npm start                  # avvia solo API
 - Le partite usano chiavi stabili per evitare duplicati.
 - Le modifiche manuali sono protette dagli import automatici.
 - È sempre consigliato compilare `source_url` quando aggiungi una correzione manuale importante.
+
+## Sicurezza e pubblicazione
+
+Le letture API restano pubbliche. In produzione tutte le richieste `POST`, `PUT`, `PATCH` e `DELETE` richiedono `Authorization: Bearer <ADMIN_API_TOKEN>`, salvo `POST /api/corrections`, che è pubblico, limitato e salva soltanto una proposta in attesa; l'avvio viene bloccato se il token manca. Imposta anche `CORS_ORIGINS` con gli origin autorizzati. Il Data Manager conserva token e nome del curatore soltanto in `sessionStorage`, tramite **Accesso admin**.
+
+Ogni scrittura è soggetta a rate limit e viene registrata in `security_audit_log`. Copiare `.env.example` in `.env`, usare un token casuale lungo e non commettere mai il file `.env`.
 
 ---
 

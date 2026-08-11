@@ -1,7 +1,11 @@
 export type Match = {
   id:number; date:string; season?:string|null; competition?:string|null; round?:string|null;
   home_team:string; away_team:string; home_score:number|null; away_score:number|null;
-  stadium?:string|null; referee?:string|null; halftime_score?:string|null; completeness_level?:'BASIC'|'STANDARD'|'DETAILED'|null; source_external_id?:string|null; external_key?:string|null; source_provider?:string|null; source_url?:string|null; last_verified_at?:string|null; kickoff_fixture_id?:number|null; bigballs_match_id?:string|null;
+  stadium?:string|null; attendance?:number|null; referee?:string|null; halftime_score?:string|null; scorers?:string|null;
+  possession_home?:number|null; possession_away?:number|null; shots_home?:number|null; shots_away?:number|null;
+  shots_on_target_home?:number|null; shots_on_target_away?:number|null; corners_home?:number|null; corners_away?:number|null;
+  fouls_home?:number|null; fouls_away?:number|null; xg_home?:number|null; xg_away?:number|null;
+  completeness_level?:'BASIC'|'STANDARD'|'DETAILED'|null; source_external_id?:string|null; external_key?:string|null; source_provider?:string|null; source_url?:string|null; last_verified_at?:string|null; kickoff_fixture_id?:number|null; bigballs_match_id?:string|null;
 };
 
 export type Season = {
@@ -11,6 +15,7 @@ export type Season = {
   home_record?:string|null; away_record?:string|null; api_football_league_id?:number|null;
   api_football_season_year?:number|null; top_scorer_player_id?:number|null; top_scorer_player_name?:string|null;
   top_scorer_goals?:number|null; cup_exit?:string|null;
+  declared_only?:boolean;
 };
 
 export type Player = {
@@ -19,7 +24,9 @@ export type Player = {
   age?:number|null; height?:string|null; weight?:string|null; photo_url?:string|null; position:string|null;
   shirt_number:number|null; injured?:number; appearances:number|null; starts:number|null; minutes:number|null;
   goals:number|null; own_goals?:number|null; assists:number|null; yellow_cards:number|null; red_cards:number|null; clean_sheets:number|null;
+  yellow_red_cards?:number|null;
   current_squad:number; source_provider?:string|null; source_external_id?:string|null; source_url?:string|null; last_verified_at?:string|null;
+  first_appearance?:string|null; last_appearance?:string|null;
 };
 
 export type PlayerSeason = {
@@ -32,7 +39,7 @@ export type PlayerSeason = {
   dribbles_attempts?:number|null; dribbles_success?:number|null; fouls_drawn?:number|null; fouls_committed?:number|null;
   yellow_cards:number|null; yellow_red_cards?:number|null; red_cards:number|null; penalty_won?:number|null;
   penalty_committed?:number|null; penalty_scored?:number|null; penalty_missed?:number|null; penalty_saved?:number|null;
-  clean_sheets:number|null; source_provider?:string|null; last_verified_at?:string|null;
+  clean_sheets:number|null; source_provider?:string|null; source_url?:string|null; last_verified_at?:string|null;
 };
 
 export type Standing = {
@@ -56,4 +63,7 @@ export type Transfer = {
   id:number; player_id:number|null; api_football_player_id:number|null; player_name:string; date:string|null; type:string|null;
   direction:'IN'|'OUT'|string; from_team_id:number|null; from_team_name:string|null; from_team_logo:string|null;
   to_team_id:number|null; to_team_name:string|null; to_team_logo:string|null; season:string|null;
+  source_provider?:string|null; source_url?:string|null; last_verified_at?:string|null;
+  movement_type?:'TRANSFER'|'LOAN'|'RETURN'|'FREE'|'RELEASE'|string|null; session?:'SUMMER'|'WINTER'|string|null;
+  fee_amount?:number|null; fee_currency?:string|null; fee_display?:string|null; identity_status?:'reconciled'|'unresolved';
 };

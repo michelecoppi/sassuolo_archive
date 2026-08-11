@@ -1,0 +1,4 @@
+{
+  "initialJavaScriptKiB": 300,
+  "asyncChunkJavaScriptKiB": 400
+}

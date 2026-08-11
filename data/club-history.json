@@ -1,0 +1,47 @@
+{
+  "identity": {
+    "name": "U.S. Sassuolo Calcio",
+    "foundedOn": "1920-07-17",
+    "colors": ["nero", "verde"],
+    "ownership": "Mapei S.p.A.",
+    "headquarters": "Sassuolo (Modena)",
+    "sourceUrl": "https://www.sassuolocalcio.it/club/la-nostra-storia/dalle-origini/"
+  },
+  "honours": [
+    {"competition":"Serie C1, girone A","season":"2007/08","kind":"campionato","sourceUrl":"https://www.sassuolocalcio.it/club/la-nostra-storia/dalle-origini/"},
+    {"competition":"Supercoppa di Lega di Serie C1","season":"2007/08","kind":"coppa","sourceUrl":"https://www.sassuolocalcio.it/club/la-nostra-storia/dalle-origini/"},
+    {"competition":"Serie B","season":"2012/13","kind":"campionato","sourceUrl":"https://www.sassuolocalcio.it/club/la-nostra-storia/serie-a/"},
+    {"competition":"Serie B","season":"2024/25","kind":"campionato","sourceUrl":"https://www.sassuolocalcio.it/prima-squadra/sassuolo-campione-della-serie-bkt-24-25-alzata-al-cielo-la-coppa-nexus/"}
+  ],
+  "venues": [
+    {"name":"Stadio Enzo Ricci","city":"Sassuolo","from":"1920","to":"2008","role":"Casa storica","sourceUrl":"https://www.sassuolocalcio.it/club/la-nostra-storia/dalle-origini/"},
+    {"name":"Stadio Alberto Braglia","city":"Modena","from":"2008","to":"2013","role":"Gare interne in Serie B","sourceUrl":"https://www.sassuolocalcio.it/club/la-nostra-storia/dalle-origini/"},
+    {"name":"Mapei Stadium – Città del Tricolore","city":"Reggio Emilia","from":"2013","to":null,"role":"Stadio della prima squadra","sourceUrl":"https://www.sassuolocalcio.it/strutture/mapei-stadium/"}
+  ],
+  "leadership": [
+    {"person":"Antonio Cuoghi","role":"Presidente","from":"1966","to":"N/D","note":"Primo presidente dopo la fusione del 1966; il termine del mandato non è dichiarato dalla fonte consultata.","sourceUrl":"https://www.sassuolocalcio.it/club/la-nostra-storia/dalle-origini/"},
+    {"person":"Rodolfo Baldelli","role":"Presidente","from":"1998","to":"N/D","note":"Presidente al ritorno tra i professionisti; il termine del mandato non è dichiarato dalla fonte consultata.","sourceUrl":"https://www.sassuolocalcio.it/club/la-nostra-storia/dalle-origini/"},
+    {"person":"Giorgio Squinzi / Mapei","role":"Proprietà","from":"2003","to":null,"note":"Mapei entra come sponsor nel 2002 e acquisisce il club nel 2003.","sourceUrl":"https://www.sassuolocalcio.it/club/la-nostra-storia/dalle-origini/"},
+    {"person":"Carlo Rossi","role":"Presidente CDA","from":"2026","to":null,"note":"Organigramma societario vigente.","sourceUrl":"https://www.sassuolocalcio.it/club/organigramma/"},
+    {"person":"Veronica Squinzi","role":"Amministratore delegato e direttore generale","from":"2026","to":null,"note":"Organigramma societario vigente.","sourceUrl":"https://www.sassuolocalcio.it/club/organigramma/"}
+  ],
+  "milestones": [
+    {"date":"1920-07-17","season":"1920","type":"foundation","title":"Fondazione","detail":"Prima affiliazione del Sassuolo Calcio alla FIGC.","sourceUrl":"https://www.sassuolocalcio.it/club/la-nostra-storia/dalle-origini/"},
+    {"date":"1966-06-10","season":"1966","type":"identity","title":"La fusione cittadina","detail":"Sassuolo Sportiva e Sassuolo Football Club danno vita al Sassuolo Sportiva Football Club; nero e verde restano i colori identitari.","sourceUrl":"https://www.sassuolocalcio.it/club/la-nostra-storia/dalle-origini/"},
+    {"date":"1999-06-01","season":"1998/99","type":"promotion","title":"Ritorno tra i professionisti","detail":"La promozione riporta il club nei campionati professionistici.","sourceUrl":"https://www.sassuolocalcio.it/club/la-nostra-storia/dalle-origini/"},
+    {"date":"2003-07-01","season":"2003","type":"ownership","title":"Inizia l’era Mapei","detail":"Dopo l’ingresso come sponsor nel 2002, Giorgio Squinzi acquisisce il club nel 2003.","sourceUrl":"https://www.sassuolocalcio.it/club/la-nostra-storia/dalle-origini/"},
+    {"date":"2006-06-01","season":"2005/06","type":"promotion","title":"Promozione in Serie C1","detail":"Il Sassuolo supera i playoff e sale in Serie C1.","sourceUrl":"https://www.sassuolocalcio.it/club/la-nostra-storia/dalle-origini/"},
+    {"date":"2008-05-01","season":"2007/08","type":"trophy","title":"Serie B e Supercoppa","detail":"Primo posto nel girone A di Serie C1, prima promozione in B e vittoria della Supercoppa di Lega.","sourceUrl":"https://www.sassuolocalcio.it/club/la-nostra-storia/dalle-origini/"},
+    {"date":"2013-05-18","season":"2012/13","type":"promotion","title":"Prima promozione in Serie A","detail":"Il Sassuolo vince la Serie B e raggiunge per la prima volta la massima serie.","sourceUrl":"https://www.sassuolocalcio.it/club/la-nostra-storia/serie-a/"},
+    {"date":"2013-08-01","season":"2013/14","type":"stadium","title":"Il Mapei Stadium diventa la nuova casa","detail":"Dalla prima stagione in A le gare interne si disputano a Reggio Emilia.","sourceUrl":"https://www.sassuolocalcio.it/strutture/mapei-stadium/"},
+    {"date":"2016-08-25","season":"2016/17","type":"europe","title":"Esordio europeo","detail":"Superati i preliminari, il Sassuolo partecipa alla fase a gironi di UEFA Europa League.","sourceUrl":"https://www.sassuolocalcio.it/club/la-nostra-storia/serie-a/"},
+    {"date":"2019-06-10","season":"2018/19","type":"facility","title":"Apre il Mapei Football Center","detail":"Viene inaugurato il centro sportivo della prima squadra e del settore giovanile.","sourceUrl":"https://www.sassuolocalcio.it/strutture/mapei-football-center/"},
+    {"date":"2020-07-17","season":"2020/21","type":"anniversary","title":"Il centenario","detail":"Il club celebra cento anni con logo, maglia e iniziative dedicate.","sourceUrl":"https://www.sassuolocalcio.it/club/la-nostra-storia/serie-a/"},
+    {"date":"2024-05-19","season":"2023/24","type":"relegation","title":"Retrocessione in Serie B","detail":"Dopo undici stagioni consecutive in Serie A, il Sassuolo retrocede.","sourceUrl":"https://www.sassuolocalcio.it/club/la-nostra-storia/serie-a/"},
+    {"date":"2025-04-13","season":"2024/25","type":"promotion","title":"Ritorno immediato in Serie A","detail":"La promozione è conquistata con anticipo; il campionato di Serie B viene poi vinto.","sourceUrl":"https://www.sassuolocalcio.it/prima-squadra/sassuolo-campione-della-serie-bkt-24-25-alzata-al-cielo-la-coppa-nexus/"}
+  ],
+  "kitHistory": [
+    {"period":"Dal 1920","title":"Neroverde","detail":"Nero e verde costituiscono l’identità cromatica storica del club.","sourceUrl":"https://www.sassuolocalcio.it/club/la-nostra-storia/dalle-origini/"},
+    {"period":"2020/21","title":"Maglia del centenario","detail":"La stagione dei cento anni è accompagnata da identità e iniziative celebrative dedicate.","sourceUrl":"https://www.sassuolocalcio.it/club/la-nostra-storia/serie-a/"}
+  ]
+}

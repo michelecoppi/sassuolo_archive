@@ -6,8 +6,8 @@ declare module 'better-sqlite3' {
     all(...params: any[]): any[];
   }
   class Database {
-    constructor(filename: string);
-    pragma(source: string): unknown;
+    constructor(filename: string, options?: { readonly?: boolean; fileMustExist?: boolean });
+    pragma(source: string, options?: { simple?: boolean }): unknown;
     exec(source: string): this;
     prepare(source: string): Statement;
     transaction<T extends (...args: any[]) => any>(fn: T): T;

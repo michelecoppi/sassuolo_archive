@@ -1,6 +1,10 @@
 export async function api<T>(path:string, init?:RequestInit):Promise<T>{
   try{
-    const res=await fetch(`/api${path}`,{cache:'no-store',headers:{'Content-Type':'application/json',...(init?.headers||{})},...init});
+    const adminToken=typeof window!=='undefined'?window.sessionStorage.getItem('sassuolo_admin_token'):null;
+    const adminName=typeof window!=='undefined'?window.sessionStorage.getItem('sassuolo_admin_name'):null;
+    const method=String(init?.method??'GET').toUpperCase();
+    const {headers:requestHeaders,...requestInit}=init??{};
+    const res=await fetch(`/api${path}`,{...requestInit,cache:init?.cache??(method==='GET'?'default':'no-store'),headers:{'Content-Type':'application/json',...(adminToken?{Authorization:`Bearer ${adminToken}`}:{ }),...(adminName?{'X-Admin-Name':adminName}:{ }),...(requestHeaders||{})}});
     if(!res.ok){
       const body=await res.text();
       let detail=body;

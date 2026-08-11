@@ -15,7 +15,7 @@ Sassuolo History & Stats è un archivio locale e consultabile della storia dell'
 - Un dato non verificato resta `NULL` e viene mostrato come `N/D`; non si devono inventare statistiche.
 - Le modifiche manuali hanno priorità sugli import automatici.
 
-Il perimetro principale è il campionato dalla Serie B 2008/09 alla stagione corrente; sono presenti anche dati separati per Coppa Italia, Europa League, rose, trasferimenti, news e dettagli gara quando la fonte li rende disponibili.
+Il perimetro storico moderno va dalla Serie C1 2007/08 alla stagione corrente. Il manifesto versionato [`data/historical-scope.json`](data/historical-scope.json) dichiara senza interruzioni campionato, playoff/playout effettivamente disputati, coppe nazionali, Supercoppa di Serie C ed Europa League. La matrice `/coverage` unisce questo perimetro ai record reali: una competizione attesa rimane quindi visibile anche quando non ha ancora dati, insieme alla motivazione della lacuna.
 
 ## 2. Struttura del repository
 
@@ -62,7 +62,7 @@ API Express /api/*
 React: pagine e componenti
 ```
 
-Le statistiche di dashboard, record, testa a testa e Hall of Fame vengono calcolate dalle tabelle locali. Non aggiungere numeri hard-coded nelle pagine.
+Le statistiche di dashboard, record, testa a testa e Hall of Fame vengono calcolate dalle tabelle locali. Non aggiungere numeri hard-coded nelle pagine. Le metriche pubbliche di Records e Hall of Fame devono essere registrate in `server/services/statDefinitions.ts` con formula, spareggio e soglia; le relative API devono restituire anche perimetro, copertura e data dell'ultimo ricalcolo.
 
 ## 4. Modello dati essenziale
 
@@ -135,15 +135,24 @@ npm.cmd run history:bootstrap
 npm.cmd run history:pre-serie-a
 npm.cmd run data:audit
 npm.cmd run data:audit:full
+npm.cmd run data:provenance
+npm.cmd run db:migrate
+npm.cmd run check:secrets
 npm.cmd run matches:dedupe
 npm.cmd run matches:dedupe:apply
 ```
 
 `matches:dedupe:apply` modifica il database: eseguire prima la modalità anteprima e verificare il backup creato. Per i test usare `SASSUOLO_DB_PATH` verso un database isolato.
 
+In produzione le scritture API richiedono `ADMIN_API_TOKEN`; le letture rimangono pubbliche. L’unica scrittura pubblica è `POST /api/corrections`: accetta una proposta documentata, soggetta a rate limit, e la mantiene separata dai dati pubblicati finché un amministratore non la revisiona. Le migrazioni sono registrate in `schema_migrations`. Un ripristino completo è ammesso solo da un file sotto la directory backup, dopo verifica d'integrità e conferma del checksum SHA-256; prima del restore viene creato un ulteriore snapshot di sicurezza.
+
 ## 8. API principali
 
-Gli endpoint sono definiti in `server/routes/api.ts`. Tra quelli principali: `/health`, `/dashboard`, `/seasons`, `/seasons/:season`, `/matches`, `/matches/:id`, `/players`, `/players/:id`, `/squad/current`, `/transfers`, `/h2h/:opponent`, `/records`, `/hall-of-fame`, `/news` e `/data-manager`.
+Gli endpoint sono definiti in `server/routes/api.ts`. Tra quelli principali: `/health`, `/dashboard`, `/seasons`, `/seasons/:season`, `/matches`, `/matches/:id`, `/players`, `/players/:id`, `/squad/current`, `/transfers`, `/club-history`, `/timeline`, `/coaches`, `/corrections`, `/h2h/:opponent`, `/records`, `/hall-of-fame`, `/news`, `/coverage`, `/data/provenance/:entity/:id` e `/data-manager`. `/transfers` supporta `season`, `session`, `movement` e `direction`; ogni riga espone anche lo stato di riconciliazione del giocatore. `POST /corrections` è pubblico, mentre lettura e revisione della coda seguono la protezione amministrativa generale. Il dettaglio `/seasons/:season` restituisce anche `profile`, con copertura, affidabilità, termini degli allenatori, capitano, lacune e riepilogo delle fonti; per le competizioni dichiarate ma ancora vuote restituisce un record `declared_only` con valori nulli. `/matches/:id` espone `outcome` e `modules`, così il frontend rende soltanto i blocchi coperti e deriva `BASIC`, `STANDARD` o `DETAILED` dai dati reali. `/players/:id` restituisce gli stessi aggregati canonici della lista, i totali per competizione, identità, conflitti aperti e fonti collegate.
+
+Le GET pubbliche restituiscono `ETag` e richiedono revalidation (`Cache-Control: public, max-age=0, must-revalidate`); il backend conserva per 30 secondi le risposte serializzate per evitare di ripetere query identiche. Una scrittura HTTP riuscita invalida l'intera cache prima della lettura successiva. Le richieste con `Authorization` e `/health` non vengono memorizzate.
+
+`GET /health` restituisce `healthy`, `degraded` o `unhealthy` insieme a integrità/dimensione SQLite, durata del controllo, metriche richieste e cache, ultimo sync, stato dei provider e durata degli ultimi import. Non espone chiavi o configurazioni sensibili; gli eventuali token presenti nei messaggi di errore sono redatti.
 
 Per aggiungere un endpoint: validare query e parametri, usare query parametrizzate, restituire `404` per entità mancanti, non esporre `raw_json` o segreti, e aggiornare il client in `src/services/api.ts` e i tipi frontend.
 

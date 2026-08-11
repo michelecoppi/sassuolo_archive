@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { db, initDb, recordAuditRun } from '../server/db/database.js';
+import { getCoverageMatrix } from '../server/services/coverage.js';
 
 initDb();
 
@@ -13,7 +14,7 @@ const tables = [
   'match_details', 'match_events', 'match_lineups', 'match_team_stats',
   'match_player_stats', 'match_injuries', 'news_articles', 'sync_state',
   'data_conflicts', 'app_settings', 'source_references', 'change_log', 'backup_runs',
-  'import_runs', 'audit_runs', 'research_candidates',
+  'import_runs', 'audit_runs', 'research_candidates', 'schema_migrations', 'security_audit_log',
 ] as const;
 
 const rows = <T>(sql: string) => db.prepare(sql).all() as T[];
@@ -25,22 +26,7 @@ const report = {
   readOnly: true,
   tableCounts: Object.fromEntries(tables.map(table => [table, count(table)])),
   coverage: {
-    seasons: rows<{
-      season: string; competition: string; expected_matches: number | null; found_matches: number;
-      completed_matches: number; incomplete_matches: number; player_seasons: number;
-      player_seasons_with_appearances: number; standing_rows: number; team_stat_rows: number;
-    }>(`
-      SELECT s.season, s.competition, s.matches AS expected_matches,
-        (SELECT COUNT(*) FROM matches m WHERE m.season=s.season AND m.competition=s.competition) AS found_matches,
-        (SELECT COUNT(*) FROM matches m WHERE m.season=s.season AND m.competition=s.competition AND m.home_score IS NOT NULL AND m.away_score IS NOT NULL) AS completed_matches,
-        (SELECT COUNT(*) FROM matches m WHERE m.season=s.season AND m.competition=s.competition AND (m.home_score IS NULL OR m.away_score IS NULL)) AS incomplete_matches,
-        (SELECT COUNT(*) FROM player_seasons ps WHERE ps.season=s.season AND ps.competition=s.competition) AS player_seasons,
-        (SELECT COUNT(*) FROM player_seasons ps WHERE ps.season=s.season AND ps.competition=s.competition AND ps.appearances IS NOT NULL) AS player_seasons_with_appearances,
-        (SELECT COUNT(*) FROM season_standings ss WHERE ss.season=s.season AND ss.competition=s.competition) AS standing_rows,
-        (SELECT COUNT(*) FROM team_season_stats ts WHERE ts.season=s.season AND ts.competition=s.competition) AS team_stat_rows
-      FROM seasons s
-      ORDER BY s.season, s.competition
-    `),
+    seasons: getCoverageMatrix().rows,
     detailedMatches: rows<{
       season: string; competition: string; matches: number; details: number; event_matches: number;
       lineup_matches: number; team_stat_matches: number; player_stat_matches: number; injury_matches: number;
@@ -168,7 +154,7 @@ const report = {
     `),
   },
   sync: rows<unknown>(`SELECT * FROM sync_state ORDER BY provider,resource`),
-  conflicts: rows<unknown>(`SELECT * FROM data_conflicts ORDER BY status='open' DESC,created_at DESC`),
+  conflicts: rows<unknown>(`SELECT * FROM data_conflicts WHERE status='open' ORDER BY created_at DESC`),
 };
 
 const auditDir = path.resolve('data/reconciliation/audits');
@@ -197,3 +183,4 @@ const auditRunId = recordAuditRun({
   issues: { integrity: report.integrity, conflicts: report.conflicts },
 });
 console.log(JSON.stringify({ ...report, auditRunId, reportPath, reportSha256: digest }, null, 2));
+if (blockingIssueCount > 0) process.exitCode = 1;

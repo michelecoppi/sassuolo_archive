@@ -1,4 +1,5 @@
-import { db, normalizeTeamName } from '../db/database.js';
+import { db, getSetting, normalizeTeamName } from '../db/database.js';
+import { HALL_OF_FAME_COMPETITIONS, HALL_OF_FAME_DEFINITIONS, HALL_OF_FAME_LIMIT, RECORD_DEFINITIONS, STATISTICS_POLICY_VERSION } from './statDefinitions.js';
 
 const SASSUOLO = 'U.S. Sassuolo Calcio';
 
@@ -113,18 +114,20 @@ export function headToHead(opponentRaw: string) {
 
 export function records(filters: Record<string,string|undefined> = {}) {
   const matches=completedMatches(filters).filter(m => [normalizeTeamName(m.home_team),normalizeTeamName(m.away_team)].includes(SASSUOLO));
-  if(!matches.length) return { biggestWin:null,biggestHomeWin:null,biggestAwayWin:null,biggestDefeat:null,longestWinningStreak:0,longestUnbeatenStreak:0,longestLosingStreak:0,mostGoalsInMatch:null,seasonRecords:[] };
+  const meta={policyVersion:STATISTICS_POLICY_VERSION,lastRecalculation:getSetting('data_last_audit_at')||getSetting('last_import_at'),filters:{competition:filters.competition||null,from:filters.from||null,to:filters.to||null},coverage:{matches:matches.length,seasons:new Set(matches.map(m=>m.season).filter(Boolean)).size,competitions:[...new Set(matches.map(m=>m.competition).filter(Boolean))],fromDate:matches[0]?.date??null,toDate:matches.at(-1)?.date??null},definitions:RECORD_DEFINITIONS};
+  if(!matches.length) return { biggestWin:null,biggestHomeWin:null,biggestAwayWin:null,biggestDefeat:null,longestWinningStreak:null,longestUnbeatenStreak:null,longestLosingStreak:null,mostGoalsInMatch:null,seasonRecords:[],meta };
   const wins=matches.filter(m=>perspective(m).result==='W');
   const losses=matches.filter(m=>perspective(m).result==='L');
   const margin=(m:MatchRow)=>perspective(m).gf-perspective(m).ga;
-  const biggestWin=[...wins].sort((a,b)=>margin(b)-margin(a))[0]??null;
-  const biggestHomeWin=[...wins].filter(m=>perspective(m).isHome).sort((a,b)=>margin(b)-margin(a))[0]??null;
-  const biggestAwayWin=[...wins].filter(m=>!perspective(m).isHome).sort((a,b)=>margin(b)-margin(a))[0]??null;
-  const biggestDefeat=[...losses].sort((a,b)=>margin(a)-margin(b))[0]??null;
-  const mostGoalsInMatch=[...matches].sort((a,b)=>(perspective(b).gf+perspective(b).ga)-(perspective(a).gf+perspective(a).ga))[0]??null;
+  const oldest=(a:MatchRow,b:MatchRow)=>a.date.localeCompare(b.date)||a.id-b.id;
+  const biggestWin=[...wins].sort((a,b)=>margin(b)-margin(a)||oldest(a,b))[0]??null;
+  const biggestHomeWin=[...wins].filter(m=>perspective(m).isHome).sort((a,b)=>margin(b)-margin(a)||oldest(a,b))[0]??null;
+  const biggestAwayWin=[...wins].filter(m=>!perspective(m).isHome).sort((a,b)=>margin(b)-margin(a)||oldest(a,b))[0]??null;
+  const biggestDefeat=[...losses].sort((a,b)=>margin(a)-margin(b)||oldest(a,b))[0]??null;
+  const mostGoalsInMatch=[...matches].sort((a,b)=>(perspective(b).gf+perspective(b).ga)-(perspective(a).gf+perspective(a).ga)||oldest(a,b))[0]??null;
   const streak=(predicate:(r:'W'|'D'|'L')=>boolean)=>{let best=0,cur=0;for(const m of matches){if(predicate(perspective(m).result)){cur++;best=Math.max(best,cur);}else cur=0;}return best;};
   const seasons=db.prepare(`SELECT * FROM seasons ORDER BY season`).all();
-  return { biggestWin,biggestHomeWin,biggestAwayWin,biggestDefeat,longestWinningStreak:streak(r=>r==='W'),longestUnbeatenStreak:streak(r=>r!=='L'),longestLosingStreak:streak(r=>r==='L'),mostGoalsInMatch,seasonRecords:seasons };
+  return { biggestWin,biggestHomeWin,biggestAwayWin,biggestDefeat,longestWinningStreak:streak(r=>r==='W'),longestUnbeatenStreak:streak(r=>r!=='L'),longestLosingStreak:streak(r=>r==='L'),mostGoalsInMatch,seasonRecords:seasons,meta };
 }
 
 export type HallOfFameFilters = {
@@ -163,28 +166,30 @@ export function hallOfFame(filters: HallOfFameFilters = {}) {
       const aggregateParams=[...psParams];
       const aggregateHaving=`SUM(ps.${field}) IS NOT NULL${min != null ? ` AND SUM(ps.${field})>=?` : ''}`;
       if(min != null) aggregateParams.push(min);
-      result[field]=db.prepare(`SELECT p.id,p.name,p.photo_url,p.position,SUM(ps.${field}) AS ${field} FROM player_seasons ps JOIN players p ON p.id=ps.player_id WHERE ${aggregateWhere.join(' AND ')} GROUP BY p.id HAVING ${aggregateHaving} ORDER BY ${field} DESC,p.name LIMIT 20`).all(...aggregateParams);
+      result[field]=db.prepare(`SELECT p.id,p.name,p.photo_url,p.position,SUM(ps.${field}) AS ${field} FROM player_seasons ps JOIN players p ON p.id=ps.player_id WHERE ${aggregateWhere.join(' AND ')} GROUP BY p.id HAVING ${aggregateHaving} ORDER BY ${field} DESC,p.name LIMIT ?`).all(...aggregateParams,HALL_OF_FAME_LIMIT);
     } else {
-      result[field]=db.prepare(`SELECT p.id,p.name,p.photo_url,p.position,ps.${field} AS ${field},ps.season,ps.competition FROM player_seasons ps JOIN players p ON p.id=ps.player_id WHERE ${where.join(' AND ')} ORDER BY ps.${field} DESC,p.name LIMIT 20`).all(...params);
+      result[field]=db.prepare(`SELECT p.id,p.name,p.photo_url,p.position,ps.${field} AS ${field},ps.season,ps.competition FROM player_seasons ps JOIN players p ON p.id=ps.player_id WHERE ${where.join(' AND ')} ORDER BY ps.${field} DESC,p.name LIMIT ?`).all(...params,HALL_OF_FAME_LIMIT);
     }
   }
   const aggregateWhere=[...psWhere]; const aggregateParams=[...psParams];
-  const aggregate=(field:string, alias=field)=>db.prepare(`SELECT p.id,p.name,p.photo_url,p.position,SUM(ps.${field}) AS ${alias} FROM player_seasons ps JOIN players p ON p.id=ps.player_id WHERE ${aggregateWhere.join(' AND ')} AND ps.${field} IS NOT NULL GROUP BY p.id HAVING SUM(ps.${field}) IS NOT NULL ORDER BY ${alias} DESC,p.name LIMIT 20`).all(...aggregateParams);
-  result.mostSeasons=db.prepare(`SELECT p.id,p.name,p.photo_url,p.position,COUNT(DISTINCT ps.season) AS seasons_count FROM players p JOIN player_seasons ps ON ps.player_id=p.id WHERE ${psWhere.join(' AND ')} GROUP BY p.id ORDER BY seasons_count DESC,p.name LIMIT 20`).all(...psParams);
+  const aggregate=(field:string, alias=field)=>db.prepare(`SELECT p.id,p.name,p.photo_url,p.position,SUM(ps.${field}) AS ${alias} FROM player_seasons ps JOIN players p ON p.id=ps.player_id WHERE ${aggregateWhere.join(' AND ')} AND ps.${field} IS NOT NULL GROUP BY p.id HAVING SUM(ps.${field}) IS NOT NULL ORDER BY ${alias} DESC,p.name LIMIT ?`).all(...aggregateParams,HALL_OF_FAME_LIMIT);
+  result.mostSeasons=db.prepare(`SELECT p.id,p.name,p.photo_url,p.position,COUNT(DISTINCT ps.season) AS seasons_count FROM players p JOIN player_seasons ps ON ps.player_id=p.id WHERE ${psWhere.join(' AND ')} GROUP BY p.id ORDER BY seasons_count DESC,p.name LIMIT ?`).all(...psParams,HALL_OF_FAME_LIMIT);
   result.serieAAppearances=aggregate('appearances','serie_a_appearances');
   result.serieAGoals=aggregate('goals','serie_a_goals');
-  result.singleSeasonGoals=db.prepare(`SELECT p.id AS player_id,p.name,p.photo_url,p.position,ps.season,ps.competition,ps.goals,ps.appearances,ps.minutes FROM player_seasons ps JOIN players p ON p.id=ps.player_id WHERE ${psWhere.join(' AND ')} AND ps.goals IS NOT NULL ORDER BY ps.goals DESC,COALESCE(ps.minutes,999999) ASC LIMIT 20`).all(...psParams);
-  result.singleSeasonAssists=db.prepare(`SELECT p.id AS player_id,p.name,p.photo_url,p.position,ps.season,ps.competition,ps.assists,ps.appearances,ps.minutes FROM player_seasons ps JOIN players p ON p.id=ps.player_id WHERE ${psWhere.join(' AND ')} AND ps.assists IS NOT NULL ORDER BY ps.assists DESC,COALESCE(ps.minutes,999999) ASC LIMIT 20`).all(...psParams);
+  result.singleSeasonGoals=db.prepare(`SELECT p.id AS player_id,p.name,p.photo_url,p.position,ps.season,ps.competition,ps.goals,ps.appearances,ps.minutes FROM player_seasons ps JOIN players p ON p.id=ps.player_id WHERE ${psWhere.join(' AND ')} AND ps.goals IS NOT NULL ORDER BY ps.goals DESC,COALESCE(ps.minutes,999999) ASC,p.name,ps.season,ps.competition LIMIT ?`).all(...psParams,HALL_OF_FAME_LIMIT);
+  result.singleSeasonAssists=db.prepare(`SELECT p.id AS player_id,p.name,p.photo_url,p.position,ps.season,ps.competition,ps.assists,ps.appearances,ps.minutes FROM player_seasons ps JOIN players p ON p.id=ps.player_id WHERE ${psWhere.join(' AND ')} AND ps.assists IS NOT NULL ORDER BY ps.assists DESC,COALESCE(ps.minutes,999999) ASC,p.name,ps.season,ps.competition LIMIT ?`).all(...psParams,HALL_OF_FAME_LIMIT);
   const competitionRanking=(competition:string)=>{
     const where=`ps.competition=? AND (ps.appearances IS NOT NULL OR ps.goals IS NOT NULL OR ps.assists IS NOT NULL OR ps.minutes IS NOT NULL OR ps.clean_sheets IS NOT NULL)`;
-    const ranked=(field:string)=>db.prepare(`SELECT p.id,p.name,p.photo_url,p.position,SUM(ps.${field}) AS ${field} FROM player_seasons ps JOIN players p ON p.id=ps.player_id WHERE ${where} AND ps.${field} IS NOT NULL GROUP BY p.id HAVING SUM(ps.${field}) IS NOT NULL ORDER BY ${field} DESC,p.name LIMIT 20`).all(competition);
+    const ranked=(field:string)=>db.prepare(`SELECT p.id,p.name,p.photo_url,p.position,SUM(ps.${field}) AS ${field} FROM player_seasons ps JOIN players p ON p.id=ps.player_id WHERE ${where} AND ps.${field} IS NOT NULL GROUP BY p.id HAVING SUM(ps.${field}) IS NOT NULL ORDER BY ${field} DESC,p.name LIMIT ?`).all(competition,HALL_OF_FAME_LIMIT);
     return {appearances:ranked('appearances'),goals:ranked('goals'),own_goals:ranked('own_goals'),assists:ranked('assists'),minutes:ranked('minutes'),clean_sheets:ranked('clean_sheets')};
   };
-  result.byCompetition=Object.fromEntries(['Serie A','Serie B','Serie C','Europa League','Coppa Italia'].map(competition=>[competition,competitionRanking(competition)]));
-  const negative=(field:'own_goals'|'yellow_cards'|'red_cards'|'fouls_committed')=>db.prepare(`SELECT p.id,p.name,p.photo_url,COALESCE(ps.position,p.position) AS position,SUM(ps.${field}) AS ${field} FROM player_seasons ps JOIN players p ON p.id=ps.player_id WHERE ${aggregateWhere.join(' AND ')} AND ps.${field} IS NOT NULL GROUP BY p.id HAVING SUM(ps.${field})>0 ORDER BY ${field} DESC,p.name LIMIT 20`).all(...aggregateParams);
+  result.byCompetition=Object.fromEntries(HALL_OF_FAME_COMPETITIONS.map(competition=>[competition,competitionRanking(competition)]));
+  const negative=(field:'own_goals'|'yellow_cards'|'red_cards'|'fouls_committed')=>db.prepare(`SELECT p.id,p.name,p.photo_url,COALESCE(ps.position,p.position) AS position,SUM(ps.${field}) AS ${field} FROM player_seasons ps JOIN players p ON p.id=ps.player_id WHERE ${aggregateWhere.join(' AND ')} AND ps.${field} IS NOT NULL GROUP BY p.id HAVING SUM(ps.${field})>0 ORDER BY ${field} DESC,p.name LIMIT ?`).all(...aggregateParams,HALL_OF_FAME_LIMIT);
   result.negative={own_goals:negative('own_goals'),yellow_cards:negative('yellow_cards'),red_cards:negative('red_cards'),fouls_committed:negative('fouls_committed')};
   const seasonWhere:string[]=[];const seasonParams:any[]=[];
   if(filters.competition){seasonWhere.push('competition=?');seasonParams.push(filters.competition);}if(filters.season){seasonWhere.push('season=?');seasonParams.push(filters.season);}
   result.teamOwnGoals=db.prepare(`SELECT season,competition,own_goals_for,own_goals_against FROM seasons WHERE ${seasonWhere.length?seasonWhere.join(' AND ')+' AND ':''}(own_goals_for IS NOT NULL OR own_goals_against IS NOT NULL) ORDER BY season DESC`).all(...seasonParams);
+  const coverage=db.prepare(`SELECT COUNT(*) AS playerSeasonRows,COUNT(DISTINCT ps.player_id) AS players,COUNT(DISTINCT ps.season) AS seasons,COUNT(DISTINCT ps.competition) AS competitions,MAX(ps.last_verified_at) AS lastVerifiedAt FROM player_seasons ps JOIN players p ON p.id=ps.player_id WHERE ${psWhere.join(' AND ')}`).get(...psParams) as any;
+  result.meta={policyVersion:STATISTICS_POLICY_VERSION,lastRecalculation:getSetting('data_last_audit_at')||getSetting('last_import_at')||coverage.lastVerifiedAt||null,filters:{competition:filters.competition||null,season:filters.season||null,position:filters.position||null,minimums:{appearances:filters.minAppearances??null,goals:filters.minGoals??null,assists:filters.minAssists??null,minutes:filters.minMinutes??null,clean_sheets:filters.minCleanSheets??null}},coverage,aggregation:(!filters.season||!filters.competition)?'Somma per giocatore nel perimetro selezionato.':'Riga della stagione e competizione selezionate.',rankingLimit:HALL_OF_FAME_LIMIT,competitions:[...HALL_OF_FAME_COMPETITIONS],definitions:HALL_OF_FAME_DEFINITIONS};
   return result;
 }

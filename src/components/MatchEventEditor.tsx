@@ -1,0 +1,71 @@
+import { useEffect, useMemo, useState } from 'react';
+import type { FormEvent } from 'react';
+import { CheckCircle2, Edit3, Plus, Save, Trash2, X } from 'lucide-react';
+import { api } from '../services/api';
+import { Loading } from './Ui';
+
+type MatchContext = {id:number;date:string;home_team:string;away_team:string;home_score:number|null;away_score:number|null;source_url?:string|null};
+type EventRow = Record<string,any>&{id:number;minute:number|null;extra_minute:number|null;team_name:string|null;player_name:string|null;assist_name:string|null;type:string|null;detail:string|null};
+type Payload = {match:MatchContext;events:EventRow[]};
+type EventKind = 'goal'|'penalty'|'own-goal'|'missed-penalty'|'yellow-card'|'red-card'|'substitution'|'var-goal-confirmed'|'var-goal-cancelled'|'var-penalty-confirmed'|'var-penalty-cancelled'|'var-card-reviewed'|'var-card-upgrade';
+type EventForm = {minute:string;extra_minute:string;team_name:string;player_name:string;assist_name:string;kind:EventKind;comments:string;home_score:string;away_score:string;source_url:string;verification_note:string;verified_by:string;verified:boolean};
+
+const EVENT_STANDARD:Record<EventKind,{type:string;detail:string;label:string}>={
+  goal:{type:'Goal',detail:'Normal Goal',label:'Gol su azione'},
+  penalty:{type:'Goal',detail:'Penalty',label:'Gol su rigore'},
+  'own-goal':{type:'Goal',detail:'Own Goal',label:'Autogol'},
+  'missed-penalty':{type:'Goal',detail:'Missed Penalty',label:'Rigore sbagliato'},
+  'yellow-card':{type:'Card',detail:'Yellow Card',label:'Cartellino giallo'},
+  'red-card':{type:'Card',detail:'Red Card',label:'Cartellino rosso'},
+  substitution:{type:'subst',detail:'Substitution',label:'Sostituzione'},
+  'var-goal-confirmed':{type:'Var',detail:'Goal confirmed',label:'VAR · gol confermato'},
+  'var-goal-cancelled':{type:'Var',detail:'Goal cancelled',label:'VAR · gol annullato'},
+  'var-penalty-confirmed':{type:'Var',detail:'Penalty confirmed',label:'VAR · rigore confermato'},
+  'var-penalty-cancelled':{type:'Var',detail:'Penalty cancelled',label:'VAR · rigore annullato'},
+  'var-card-reviewed':{type:'Var',detail:'Card reviewed',label:'VAR · cartellino rivisto'},
+  'var-card-upgrade':{type:'Var',detail:'Card upgrade',label:'VAR · cartellino aggravato'},
+};
+const emptyForm=(sourceUrl=''):EventForm=>({minute:'',extra_minute:'',team_name:'',player_name:'',assist_name:'',kind:'goal',comments:'',home_score:'',away_score:'',source_url:sourceUrl,verification_note:'',verified_by:'',verified:false});
+const kindFor=(event:EventRow):EventKind=>{
+  const hit=(Object.entries(EVENT_STANDARD) as [EventKind,(typeof EVENT_STANDARD)[EventKind]][]).find(([,standard])=>standard.type.toLowerCase()===String(event.type??'').toLowerCase()&&(standard.detail.toLowerCase()===String(event.detail??'').toLowerCase()||(standard.type==='subst'&&String(event.type??'').toLowerCase().includes('subst'))));
+  return hit?.[0]??'goal';
+};
+const minuteLabel=(event:EventRow)=>event.minute==null?'Minuto N/D':`${event.minute}${event.extra_minute?`+${event.extra_minute}`:''}'`;
+
+export default function MatchEventEditor({matchId,onClose,onChanged}:{matchId:number;onClose:()=>void;onChanged:()=>void}){
+  const [data,setData]=useState<Payload|null>(null);const[form,setForm]=useState<EventForm>(emptyForm());const[editing,setEditing]=useState<number|null>(null);const[busy,setBusy]=useState(false);const[status,setStatus]=useState('');
+  const load=async()=>{const value=await api<Payload>(`/current-season/matches/${matchId}/events`);setData(value);setForm(current=>current.source_url?current:{...current,source_url:value.match.source_url??''});};
+  useEffect(()=>{void load()},[matchId]);
+  const standard=EVENT_STANDARD[form.kind],isVar=standard.type==='Var',isSub=form.kind==='substitution',isGoal=['goal','penalty','own-goal'].includes(form.kind),showsAssist=form.kind==='goal'||isSub;
+  const ordered=useMemo(()=>[...(data?.events??[])].sort((a,b)=>(a.minute??999)-(b.minute??999)||(a.extra_minute??0)-(b.extra_minute??0)||a.id-b.id),[data]);
+  const reset=()=>{setEditing(null);setForm(emptyForm(data?.match.source_url??''));setStatus('');};
+  const beginEdit=(event:EventRow)=>{setEditing(event.id);setForm({minute:event.minute==null?'':String(event.minute),extra_minute:event.extra_minute==null?'':String(event.extra_minute),team_name:event.team_name??'',player_name:event.player_name??'',assist_name:event.assist_name??'',kind:kindFor(event),comments:event.comments??'',home_score:event.home_score==null?'':String(event.home_score),away_score:event.away_score==null?'':String(event.away_score),source_url:event.source_url??data?.match.source_url??'',verification_note:event.verification_note??'',verified_by:event.verified_by??'',verified:Boolean(event.last_verified_at)});setStatus('');};
+  const save=async(event:FormEvent)=>{event.preventDefault();if(!data)return;setBusy(true);setStatus('');try{
+    await api(`/manual/match-events${editing?`/${editing}`:''}`,{method:editing?'PUT':'POST',body:JSON.stringify({...form,match_id:data.match.id,type:standard.type,detail:standard.detail,scoring_play:isGoal,is_own_goal:form.kind==='own-goal'})});
+    setStatus(editing?'Evento aggiornato.':'Evento aggiunto alla sequenza.');setEditing(null);setForm(emptyForm(data.match.source_url??''));await load();onChanged();
+  }catch(error){setStatus(String(error).replace(/^Error:\s*/,''));}finally{setBusy(false)}};
+  const remove=async(event:EventRow)=>{if(!confirm(`Eliminare l’evento al ${minuteLabel(event)}? Verrà creato un backup.`))return;setBusy(true);try{await api(`/manual/match-events/${event.id}`,{method:'DELETE'});await load();onChanged();setStatus('Evento eliminato; backup creato.');}catch(error){setStatus(String(error).replace(/^Error:\s*/,''));}finally{setBusy(false)}};
+  if(!data)return <div className="fixed inset-0 z-50 grid place-items-center bg-black/85"><Loading/></div>;
+  const match=data.match,completed=match.home_score!=null&&match.away_score!=null;
+  return <div className="fixed inset-0 z-50 overflow-y-auto bg-black/85 p-3 backdrop-blur-sm md:p-6" role="dialog" aria-modal="true" aria-label="Eventi della partita"><div className="mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/10 bg-zinc-950 shadow-2xl">
+    <header className="sticky top-0 z-20 flex items-start justify-between gap-4 border-b border-white/[.08] bg-zinc-950/95 px-5 py-4 backdrop-blur md:px-7"><div><div className="text-xs font-black uppercase tracking-[.18em] text-neroverde-300">Partite e calendario · eventi</div><h2 className="mt-1 text-xl font-black">{match.home_team} <span className="text-zinc-600">–</span> {match.away_team}</h2><p className="mt-1 text-xs text-zinc-500">{String(match.date).slice(0,10)} · risultato {completed?`${match.home_score}–${match.away_score}`:'N/D'}</p></div><button className="btn-secondary !min-h-9 !px-2" onClick={onClose} aria-label="Chiudi"><X className="h-4 w-4"/></button></header>
+    <div className="grid gap-6 p-4 md:p-7 xl:grid-cols-[1.1fr_.9fr]">
+      <form onSubmit={save} className="rounded-2xl border border-white/[.08] bg-zinc-900/40 p-4 md:p-5"><div className="mb-5 flex items-start justify-between"><div><h3 className="font-black">{editing?'Modifica evento':'Nuovo evento'}</h3><p className="mt-1 text-xs leading-5 text-zinc-500">Usa una voce standard: il modulo mostra solo i campi pertinenti e non deduce dati dal risultato.</p></div>{editing&&<button type="button" className="btn-secondary !min-h-8 !px-2" onClick={reset}><X className="h-3.5 w-3.5"/>Annulla</button>}</div>
+        {!completed&&<div className="mb-5 rounded-xl border border-amber-400/30 bg-amber-400/10 p-3 text-sm text-amber-100"><b>Prima completa la partita.</b> Gli eventi possono essere registrati solo dopo aver salvato il risultato finale in Partite e calendario.</div>}
+        <div className="grid gap-4 sm:grid-cols-2"><Field label="Tipo evento" required><select className="input" value={form.kind} onChange={e=>setForm({...form,kind:e.target.value as EventKind,assist_name:'',home_score:'',away_score:''})}>{Object.entries(EVENT_STANDARD).map(([key,value])=><option key={key} value={key}>{value.label}</option>)}</select></Field><Field label="Squadra" required><select className="input" required value={form.team_name} onChange={e=>setForm({...form,team_name:e.target.value})}><option value="">Seleziona squadra</option><option>{match.home_team}</option><option>{match.away_team}</option></select></Field>
+          <Field label="Minuto" required hint="0–130; usa Recupero per 45+2 o 90+5"><input className="input" required type="number" min="0" max="130" value={form.minute} onChange={e=>setForm({...form,minute:e.target.value})}/></Field><Field label="Recupero"><input className="input" type="number" min="0" max="30" value={form.extra_minute} onChange={e=>setForm({...form,extra_minute:e.target.value})}/></Field>
+          {!isVar&&<Field label={isSub?'Giocatore che esce':'Giocatore'} required><input className="input" required value={form.player_name} onChange={e=>setForm({...form,player_name:e.target.value})}/></Field>}{showsAssist&&<Field label={isSub?'Giocatore che entra':'Assist'} required={isSub} hint={isSub?'Deve essere diverso dal giocatore che esce':'Lascia vuoto se il gol è senza assist'}><input className="input" required={isSub} value={form.assist_name} onChange={e=>setForm({...form,assist_name:e.target.value})}/></Field>}
+          {isGoal&&<><Field label="Punteggio casa dopo il gol" required><input className="input" required type="number" min="0" max={match.home_score??undefined} value={form.home_score} onChange={e=>setForm({...form,home_score:e.target.value})}/></Field><Field label="Punteggio trasferta dopo il gol" required><input className="input" required type="number" min="0" max={match.away_score??undefined} value={form.away_score} onChange={e=>setForm({...form,away_score:e.target.value})}/></Field></>}
+          <div className="sm:col-span-2"><Field label="URL fonte" required hint="Referto o fonte puntuale della singola gara"><input className="input" required type="url" value={form.source_url} onChange={e=>setForm({...form,source_url:e.target.value})}/></Field></div><div className="sm:col-span-2"><Field label="Nota evento"><input className="input" value={form.comments} onChange={e=>setForm({...form,comments:e.target.value})} placeholder="Solo informazioni presenti nella fonte"/></Field></div>
+        </div>
+        <details className="mt-4 rounded-xl border border-zinc-800 p-3"><summary className="cursor-pointer text-sm font-bold text-zinc-400">Verifica curatoriale</summary><div className="mt-3 grid gap-3 sm:grid-cols-2"><Field label="Verificato da"><input className="input" value={form.verified_by} onChange={e=>setForm({...form,verified_by:e.target.value})}/></Field><Field label="Nota curatoriale"><input className="input" value={form.verification_note} onChange={e=>setForm({...form,verification_note:e.target.value})}/></Field><label className="flex items-center gap-2 text-sm text-zinc-300 sm:col-span-2"><input className="h-5 w-5 accent-emerald-500" type="checkbox" checked={form.verified} onChange={e=>setForm({...form,verified:e.target.checked})}/>Marca come verificato</label></div></details>
+        <div className="mt-5 flex flex-wrap items-center gap-3"><button className="btn-primary" disabled={busy||!completed}><Save className="h-4 w-4"/>{busy?'Salvataggio…':editing?'Salva evento':'Aggiungi evento'}</button>{status&&<span className="text-sm text-zinc-300">{status}</span>}</div>
+      </form>
+      <section><div className="mb-4 flex items-center justify-between"><div><h3 className="font-black">Sequenza della partita</h3><p className="mt-1 text-xs text-zinc-500">{ordered.length} eventi già presenti, ordinati per minuto.</p></div><span className="badge">Standard archivio</span></div>{ordered.length?<div className="max-h-[680px] space-y-2 overflow-y-auto pr-1">{ordered.map(event=><article key={event.id} className={`rounded-xl border p-3 ${editing===event.id?'border-neroverde-400/50 bg-neroverde-400/[.06]':'border-zinc-800 bg-zinc-950/60'}`}><div className="flex items-start justify-between gap-3"><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><b className="tabular-nums">{minuteLabel(event)}</b><span className="badge">{EVENT_STANDARD[kindFor(event)].label}</span><span className="text-xs text-zinc-500">{event.team_name}</span></div><div className="mt-2 text-sm font-semibold">{event.player_name??event.comments??'Evento squadra'}{event.assist_name&&<span className="font-normal text-zinc-400"> · {String(event.type).toLowerCase().includes('subst')?'entra':'assist'}: {event.assist_name}</span>}</div>{event.home_score!=null&&event.away_score!=null&&<div className="mt-1 text-xs text-zinc-500">Punteggio dopo l’evento: {event.home_score}–{event.away_score}</div>}</div><div className="flex shrink-0 gap-1"><button className="btn-secondary !min-h-8 !px-2" onClick={()=>beginEdit(event)} aria-label="Modifica evento"><Edit3 className="h-3.5 w-3.5"/></button><button className="btn-secondary !min-h-8 !px-2 text-red-300" disabled={busy} onClick={()=>void remove(event)} aria-label="Elimina evento"><Trash2 className="h-3.5 w-3.5"/></button></div></div></article>)}</div>:<div className="rounded-2xl border border-dashed border-zinc-800 p-8 text-center"><Plus className="mx-auto h-6 w-6 text-zinc-600"/><p className="mt-3 text-sm text-zinc-500">Nessun evento presente. Inizia dal primo evento documentato dalla fonte.</p></div>}
+        {ordered.length>0&&<div className="mt-4 rounded-xl border border-emerald-400/20 bg-emerald-400/[.06] p-3 text-xs leading-5 text-emerald-100"><CheckCircle2 className="mr-1.5 inline h-4 w-4"/>I nuovi eventi usano gli stessi valori normalizzati già presenti nell’archivio: Goal, Card, subst e Var.</div>}
+      </section>
+    </div>
+  </div></div>;
+}
+
+function Field({label,hint,required,children}:{label:string;hint?:string;required?:boolean;children:any}){return <label className="block text-sm"><span className="mb-1.5 block font-bold text-zinc-300">{label}{required&&<b className="text-neroverde-400"> *</b>}</span>{children}{hint&&<span className="mt-1.5 block text-xs leading-5 text-zinc-600">{hint}</span>}</label>}

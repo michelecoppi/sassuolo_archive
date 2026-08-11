@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { db, initDb, normalizeTeamName } from '../db/database.js';
+import { db, initDb, normalizeTeamName, recordSourceReference } from '../db/database.js';
 import { importAll } from './importer.js';
 import { resolvePlayer } from './playerResolver.js';
 
@@ -103,4 +103,25 @@ export function applyControlledImport(entity:ImportEntity, filename:string, cont
     const result=db.transaction(()=>importAll({base:tempRoot}))();
     return {preview,result};
   }finally{fs.rmSync(tempRoot,{recursive:true,force:true});}
+}
+
+export function recordControlledImportProvenance(entity:ImportEntity, filename:string, content:string, importRunId:number, archivedPath:string) {
+  const {rows}=parseImportFile(filename,content);
+  const entityTypes:Record<ImportEntity,string>={seasons:'seasons',matches:'matches',players:'players','player-seasons':'player_seasons'};
+  let references=0;
+  db.transaction(()=>{
+    for(const row of rows){
+      const existing=existingRecord(entity,row) as {id:number}|undefined;
+      if(!existing?.id)continue;
+      const sourceProvider=textOf(row,['source_provider','sourceProvider'])||'controlled-upload';
+      const sourceUrl=textOf(row,['source_url','sourceUrl'])||`archive://${archivedPath.replace(/\\/g,'/')}`;
+      const ignored=new Set(['source_provider','sourceProvider','source_url','sourceUrl','last_verified_at','lastVerifiedAt']);
+      for(const [field,value] of Object.entries(row)){
+        if(ignored.has(field)||value==null||String(value).trim()==='')continue;
+        recordSourceReference({entityType:entityTypes[entity],entityId:existing.id,field,sourceUrl,sourceProvider,importRunId,transformation:`controlled-import:${filename}`,originalValue:value,verifiedAt:textOf(row,['last_verified_at','lastVerifiedAt'])||undefined});
+        references++;
+      }
+    }
+  })();
+  return references;
 }

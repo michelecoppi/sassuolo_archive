@@ -2,6 +2,21 @@
 
 Aggiornamento: 10 agosto 2026, dopo l'import della classifica Serie A 2021/22.
 
+## Allineamento piattaforma P0 — 11 agosto 2026
+
+La ricerca storica resta un processo separato e incrementale. La procedura autorevole è [`research/GUIDA_AUTONOMA_RICERCA_E_IMPORT.md`](research/GUIDA_AUTONOMA_RICERCA_E_IMPORT.md): una sola tranche per volta, pacchetto ZIP riproducibile, revisione, checksum, backup, import e audit. Non avviare nuovamente la tranche PlayerSeason Serie B 2008/09–2012/13, già conclusa; il prossimo lavoro consigliato resta il dettaglio partita storico o la Coppa Italia.
+
+La piattaforma di supporto è stata portata allo schema versione 5:
+
+- matrice canonica generata dal database e condivisa da API `/coverage`, Metodologia, Data Manager e audit completo;
+- 18.348 riferimenti campo-per-campo ricostruiti esclusivamente dai metadati già presenti, con backup verificato `#57` prima del backfill;
+- conflitti con motivazione, revisore, timestamp, riapertura e change log;
+- backup con integrità SQLite, SHA-256, dimensione, conferma esplicita e snapshot di sicurezza prima del restore;
+- migrazioni versionate, autenticazione delle scritture in produzione, rate limit, audit di sicurezza e pipeline CI bloccante;
+- dataset golden di regressione per H2H, streak, competizioni e semantica `NULL`.
+
+Audit di verifica: run `#24`, `2026-08-11T14:08:58.013Z`, zero problemi bloccanti e zero conflitti aperti. Report: `data/reconciliation/audits/audit-full-2026-08-11T14-08-58-013Z.json`.
+
 ## Punto di ripartenza
 
 La tranche **PlayerSeason Serie B 2008/09–2012/13** e la tranche **classifiche storiche 2008/09–2021/22** sono concluse. Tutti i pacchetti elencati sotto risultano `imported` nel database e dispongono di backup pre-import.

@@ -1,65 +1,167 @@
-# Miglioramenti — Sassuolo History & Stats
+# Roadmap miglioramenti — Sassuolo History & Stats
 
-Backlog mantenuto dopo l'audit del 9 agosto 2026. Ogni voce deve avere un owner, un criterio di accettazione e test prima di passare a completata.
+Ultimo riordino: 11 agosto 2026.
 
-## Nuove priorità per l'esperienza utente
+Questo documento è la fonte operativa per ciò che manca al progetto. Le voci non ancora concluse sono ordinate per priorità e area; quelle terminate sono raccolte in fondo per non confondere il lavoro futuro con quanto è già disponibile.
 
-- [x] Aggiungere un onboarding leggero: spiegare copertura, `N/D`, livelli di completezza e differenza tra dati verificati e importati.
-- [x] Rendere la ricerca globale il punto di ingresso principale, con risultati raggruppati per giocatori, stagioni, partite e avversari.
-- [x] Aggiungere breadcrumb e collegamenti contestuali tra stagione, partita, giocatore, rosa e competizione.
-- [x] Introdurre una funzione "Confronta" per due stagioni o due giocatori, indicando anche la copertura disponibile.
-- [x] Salvare viste preferite e ultimo contesto di navigazione, con comando per ripristinare i filtri.
-- [x] Migliorare stati di caricamento, errore e assenza dati con skeleton, messaggi chiari e azione "Riprova".
-- [x] Rendere condivisibili le viste tramite URL con filtri, tab e query di ricerca; verificare il refresh diretto delle route.
-- [x] Aggiungere una timeline delle stagioni con promozioni, retrocessioni, debutto europeo, trofei e cambi di allenatore.
-- [ ] Mostrare "Come è calcolato" per punti, posizione, streak, record e Hall of Fame, con data dell'ultimo ricalcolo.
-- [ ] Creare una pagina Fonti e metodologia con copertura, priorità tra provider, regole di conflitto e correzioni manuali.
-- [ ] Supportare una modalità offline di sola lettura con cache dell'ultimo dataset e data di aggiornamento visibile.
-- [x] Aggiungere avanzamento dettagliato per import e sincronizzazioni, con riepilogo di inseriti, aggiornati, ignorati e scartati.
-- [ ] Introdurre paginazione server-side e risposte aggregate dedicate ai grafici per migliorare tempi e stabilità.
-- [x] Aggiungere tema chiaro/scuro, riduzione animazioni e layout mobile delle tabelle come card.
+## Quando l'applicativo può dirsi davvero completo
 
-## P0 — affidabilità dei dati e release
+Il progetto ha raggiunto il vero salto di qualità quando:
 
-- [x] Corrette la dichiarazione locale di `better-sqlite3` e quella CSS TypeScript. Verificare in CI che `npm.cmd run check` e `npm.cmd run build` restino verdi.
-- [x] Aggiungere test automatizzati per importer e servizi statistiche: fixture duplicate con orari diversi, alias squadra, righe manuali protette, H2H, streak e Hall of Fame.
-- [x] Imporre in SQLite una strategia di identità per le fixture (giorno + casa + trasferta normalizzate) oppure una tabella di collegamento provider. L'attuale protezione applicativa va mantenuta ma un vincolo DB renderebbe impossibili regressioni.
-- [x] Salvare i conflitti di score/data tra provider in `data_conflicts` e renderli revisionabili nel Data Manager; non scegliere silenziosamente una fonte.
-- [x] Mostrare nel Data Manager un indicatore di copertura per stagione: partite attese/trovate, rose, righe PlayerSeason con statistiche e ultimo audit.
-- [x] Bloccare l'inserimento di match conclusi con stagione incoerente rispetto alla data e segnalare i record futuri/non giocati.
+- ogni stagione e competizione dichiarata ha una copertura misurabile, fonti consultabili e lacune esplicite;
+- ogni numero mostrato è riconducibile alla fonte e alla regola di calcolo, senza trasformare dati mancanti in zeri;
+- import, correzioni, conflitti, backup e ripristino sono ripetibili e verificabili;
+- archivio storico, stagione corrente, ricerca, confronti e schede di dettaglio formano un'esperienza coerente anche su mobile e con tecnologie assistive;
+- test, audit, sicurezza, prestazioni e monitoraggio permettono una pubblicazione affidabile.
 
-## P1 — completezza dell'archivio
+## Legenda e regole di stato
 
-- [ ] Importare statistiche individuali pre-2013 solo da un export riproducibile e verificabile (ad esempio tabelle Standard FBref archiviate con data/fonte). Priorità: 2012/13, poi 2011/12–2008/09. Importatore e manifest sono pronti; manca l'export verificabile da archiviare.
-- [x] Cercare dataset affidabili per Serie C1 2007/08 e, separatamente, per Coppa Italia ed Europa League. Tenere tornei e copertura distinti dal campionato.
-- [x] Aggiungere allenatori, stadio e capocannonieri verificati alle cinque stagioni di Serie B; ogni valore deve citare la fonte.
-- [x] Normalizzare l'anagrafica giocatore su un ID di fonte oltre al nome, per evitare collisioni omonime e varianti diacritiche.
-- [x] Introdurre un livello di completezza per gara (`BASIC`, `STANDARD`, `DETAILED`) visibile in lista e dettaglio.
+- **P0 — bloccante:** affidabilità, perdita dati, sicurezza o impossibilità di pubblicare.
+- **P1 — essenziale:** contenuto o funzione necessaria per considerare completo il prodotto.
+- **P2 — importante:** qualità d'uso, prestazioni e operatività.
+- **P3 — evolutivo:** rifinitura o ampliamento successivo.
+- `[ ]` indica lavoro non concluso; `[x]` indica lavoro verificato e spostato nella sezione **Completati**.
+- Gli ID sono permanenti: non riutilizzarli e non rinumerarli.
 
-## P1 — prodotto e UX
+Una voce è conclusa solo se soddisfa il relativo criterio di accettazione, non soltanto perché esiste una pagina o una prima implementazione.
 
-- [x] Correggere tutte le stringhe con mojibake (sequenze U+00C3/U+00C2/U+00E2) e adottare UTF-8 senza BOM in sorgenti, CSV e documenti.
-- [x] Rendere i filtri Giocatori completi (ruolo, nazionalità, stagione) e mostrare chiaramente `N/D` invece di ordinare valori nulli come zero.
-- [x] Aggiungere badge di provenienza e data di verifica su stagioni, partite e statistiche, con link alla fonte esterna.
-- [x] Separare nella rosa storica “in rosa” da “ha giocato”, con contatori espliciti e tooltip sulla copertura.
-- [x] Aggiungere ricerca H2H con suggerimenti/autocomplete e normalizzazione visibile degli alias avversari.
-- [x] Rendere Dashboard e Records filtrabili per competizione/intervallo stagionale per non mescolare Serie A e Serie B senza contesto.
-- [x] Completare grafici utili: posizione, W/N/P, gol fatti/subiti, punti cumulati e progressione punti; nascondere una serie quando manca la base dati.
+## Da fare
 
-## P2 — accessibilità, operatività e performance
+### P0 — integrità dei dati e pubblicazione affidabile
 
-- [ ] Testare tastiera, focus, contrasto, screen reader e layout mobile delle tabelle; aggiungere etichette accessibili ai controlli icona.
-- [ ] Virtualizzare o paginare liste lunghe di partite e aggiungere filtri persistenti nell'URL.
-- [ ] Ridurre il bundle iniziale (attualmente circa 669 kB minificati) con route lazy-loaded e code splitting dei grafici Recharts.
-- [ ] Aggiungere export CSV/JSON filtrato e import preview con validazione, righe scartate e rollback.
-- [ ] Introdurre backup/versionamento esplicito degli import oltre al backup della deduplicazione.
-- [ ] Aggiungere CI con check, build, test e controllo di segreti; bloccare il deploy se l'audit dati fallisce.
-- [ ] Definire una policy di immagini: cache locale/proxy, `alt` utile e fallback quando un URL storico non è più disponibile.
+- [ ] **DATA-01 — Proseguire il completamento storico una tranche alla volta (processo continuativo, escluso dalla tranche tecnica P0).** PlayerSeason Serie B 2008/09–2012/13 e classifiche 2008/09–2021/22 risultano già concluse: non ripeterle. Ripartire dai dettagli partita storici o dalla Coppa Italia seguendo [`data/docs/DATA_EXECUTION_STATUS.md`](data/docs/DATA_EXECUTION_STATUS.md) e [`data/docs/research/GUIDA_AUTONOMA_RICERCA_E_IMPORT.md`](data/docs/research/GUIDA_AUTONOMA_RICERCA_E_IMPORT.md). **Accettazione per ogni tranche:** un solo perimetro stagione/competizione, pacchetto ZIP riproducibile, manifest e checksum, fonti puntuali, discrepanze risolte, preview approvata, backup, import idempotente e audit senza regressioni. `Owner: processo dati separato`
 
-## Già completato nell'audit corrente
+### P1 — completezza dell'archivio storico
 
-- [x] Esteso il bootstrap Football-Data alla Serie B 2008/09–2012/13.
-- [x] Recuperate cinque rose storiche e 106 giocatori unici pre-Serie A tramite bootstrap ripetibile.
-- [x] Aggiunto `data:audit` per copertura, doppioni e dati mancanti.
-- [x] Risolti 38 duplicati di fixture 2025/26 con backup SQLite, normalizzando Milan/Roma/Verona.
-- [x] Aggiunta protezione import contro duplicati tra provider con timestamp formattati diversamente.
+
+### P1 — esperienza utente e scoperta dei contenuti
+
+- [ ] **UX-02 — Trasformare la stagione corrente in un centro aggiornato.** Riunire prossima/ultima gara, classifica, forma, rosa, infortuni/squalifiche, calendario e freschezza dei dati. **Accettazione:** l'ora dell'ultimo sync e gli errori del provider sono visibili e i dati storici non vengono alterati da una sync incompleta.
+- [ ] **UX-03 — Potenziare ricerca e navigazione esplorativa.** Aggiungere tolleranza a refusi/alias, scorciatoie, cronologia recente e filtri trasversali per periodo e competizione. **Accettazione:** da qualunque risultato si raggiungono entità correlate senza perdere il contesto.
+- [ ] **UX-04 — Evolvere i confronti.** Confrontare giocatori e stagioni normalizzando per partite/minuti e distinguendo competizioni e qualità della copertura. **Accettazione:** URL condivisibile, definizione delle metriche e avviso quando il confronto non è omogeneo.
+- [ ] **UX-05 — Rendere esportabili le viste.** Aggiungere CSV/JSON filtrati e un riepilogo stampabile/condivisibile con metadati di fonte. **Accettazione:** l'export coincide con filtri e ordinamento visibili e conserva `NULL`, unità e data di generazione.
+- [ ] **UX-06 — Aggiungere una modalità offline di sola lettura.** Conservare l'ultimo snapshot valido dell'archivio e indicarne chiaramente la data. **Accettazione:** pagine principali e preferiti funzionano senza rete, senza presentare la cache come aggiornata.
+- [ ] **UX-07 — Completare accessibilità e navigazione da tastiera.** Verificare focus, contrasto, screen reader, zoom, riduzione animazioni, grafici e tabelle/card mobile. **Accettazione:** audit WCAG 2.2 AA sulle rotte principali, test automatici e prova manuale documentata.
+
+### P2 — import, amministrazione e qualità operativa
+
+- [ ] **ADM-01 — Completare import preview e validazione.** Mostrare mapping colonne, righe valide/scartate, duplicati, conflitti e impatto prima della scrittura. **Accettazione:** l'utente può annullare, correggere e rieseguire lo stesso file senza duplicazioni.
+- [ ] **ADM-02 — Creare una dashboard qualità dati.** Ordinare lacune, conflitti, identità sospette, fonti obsolete e stagioni incomplete per severità. **Accettazione:** ogni anomalia ha stato, responsabile, azione suggerita e collegamento al record interessato.
+- [ ] **ADM-03 — Automatizzare sync e aggiornamenti controllati.** Pianificare job idempotenti con lock, retry, backoff e rispetto quote provider. **Accettazione:** esecuzioni concorrenti non duplicano dati e i fallimenti producono un avviso azionabile.
+- [ ] **ADM-04 — Documentare il contratto API.** Definire schema, filtri, paginazione, errori e versionamento tramite OpenAPI o equivalente. **Accettazione:** esempi e client TypeScript vengono validati contro gli endpoint reali.
+
+### P2 — prestazioni e robustezza frontend
+
+- [ ] **PERF-01 — Introdurre paginazione server-side e aggregati dedicati.** Applicarla a partite, giocatori, trasferimenti e liste amministrative. **Accettazione:** filtri e pagina persistono nell'URL, i grafici non scaricano dataset completi e i tempi sono misurati su un archivio realistico.
+- [ ] **PERF-04 — Definire una policy per immagini e asset remoti.** Prevedere proxy/cache, formati moderni, dimensioni, `alt` utile e fallback. **Accettazione:** URL storici non più disponibili non rompono layout o contenuto.
+- [ ] **QA-02 — Aggiungere test end-to-end e visuali.** Coprire ricerca, filtri URL, confronto, import preview, conflitti, editor e principali breakpoint. **Accettazione:** i flussi critici girano in CI su database isolato e producono artefatti utili in caso di errore.
+- [ ] **QA-03 — Verificare compatibilità e resilienza.** Testare browser supportati, route dirette, refresh, stati lenti/offline e risposte API parziali. **Accettazione:** esiste una matrice supportata e nessuna pagina critica resta bianca per il fallimento di un singolo widget.
+
+### P3 — rifinitura e diffusione
+
+- [ ] **POLISH-01 — Migliorare condivisione e indicizzazione.** Aggiungere title/description specifici, Open Graph, sitemap e dati strutturati dove appropriati. **Accettazione:** schede giocatore, stagione e partita generano anteprime comprensibili e URL canonici.
+- [ ] **POLISH-02 — Preparare localizzazione e formati.** Centralizzare testi, date, numeri e nomi delle competizioni, mantenendo l'italiano come lingua primaria. **Accettazione:** nessun formato locale è hardcoded nei componenti principali e una seconda lingua può essere aggiunta senza riscriverli.
+- [ ] **POLISH-03 — Aggiungere preferiti e raccolte personali esportabili.** Permettere di salvare giocatori, stagioni e partite senza obbligo di account. **Accettazione:** dati locali portabili, cancellabili e compatibili con modalità offline.
+- [ ] **POLISH-04 — Creare una pagina stato e changelog pubblico.** Comunicare aggiornamenti del dataset, nuove fonti, correzioni e incidenti. **Accettazione:** ogni release dati ha data, sintesi, copertura interessata e collegamento alle modifiche verificabili.
+
+## Completati
+
+Le voci seguenti risultavano già completate al momento del riordino. Mantenerle come storico sintetico; se una regressione le rende nuovamente incomplete, creare una nuova voce con un nuovo ID nella sezione **Da fare** e collegarla a quella originaria.
+
+### Dati, import e affidabilità
+
+- [x] **DATA-02 — Matrice di copertura canonica.** Un'unica matrice generata dai dati reali alimenta API `/coverage`, pagina Metodologia, Data Manager e audit completo. **Completato: 2026-08-11 · Evidenza:** `server/services/coverage.ts`, `src/pages/Methodology.tsx`, `src/pages/DataManager.tsx` · **Verifica:** check, 27 test, build, audit run #24.
+- [x] **DATA-03 — Provenienza campo-per-campo consultabile.** Import run, provider, trasformazione, valore originale e fonte sono esposti dal Data Manager; il backfill locale ha creato 18.348 riferimenti usando solo metadati esistenti, dopo backup verificato #57. **Completato: 2026-08-11 · Evidenza:** `source_references`, `scripts/backfill-provenance.ts`, API `/data/provenance/:entity/:id` · **Verifica:** `data:provenance`, audit run #24.
+- [x] **DATA-04 — Ciclo completo dei conflitti.** Risoluzione e riapertura richiedono motivazione e revisore, conservano timestamp/evidenza e alimentano il change log; l'audit segnala soltanto i conflitti aperti. **Completato: 2026-08-11 · Evidenza:** `server/routes/api.ts`, `data_conflicts`, Data Manager · **Verifica:** test integrazione resolve/reopen e audit con zero conflitti aperti.
+- [x] **OPS-01 — Migrazioni SQLite versionate.** Schema alla versione 7 con ledger `schema_migrations` e comando `db:migrate`. **Completato: 2026-08-11 · Evidenza:** `server/db/database.ts`, `scripts/migrate-db.ts` · **Verifica:** test schema su database isolato e migrazione del database locale.
+- [x] **OPS-02 — Backup e ripristino verificato.** Ogni snapshot registra integrità, SHA-256 e dimensione; il restore richiede conferma del checksum e crea prima un nuovo snapshot di sicurezza. **Completato: 2026-08-11 · Evidenza:** `createBackupSnapshot`, `restoreBackupSnapshot`, Data Manager · **Verifica:** test automatico di modifica e restore su database isolato.
+- [x] **OPS-03 — Pipeline CI di release.** Check segreti, TypeScript, test, build, migrazioni e audit bloccante, con report audit conservato come artefatto. **Completato: 2026-08-11 · Evidenza:** `.github/workflows/ci.yml`, `scripts/check-secrets.ts` · **Verifica:** tutti gli stessi passaggi eseguiti localmente; il primo run remoto partirà al prossimo push/PR.
+- [x] **SEC-01 — Funzioni amministrative protette.** In produzione tutte le scritture richiedono bearer token; sono attivi CORS allowlist, rate limit, security header, limite payload, audit delle operazioni e configurazione admin per scheda browser. **Completato: 2026-08-11 · Evidenza:** `server/app.ts`, `.env.example`, `security_audit_log` · **Verifica:** test lettura anonima, scrittura negata, ruolo admin, rate limit e conflict workflow.
+- [x] **QA-01 — Dataset golden di regressione.** Fixture deterministica separa Serie A/Coppa Italia e congela H2H, streak, Hall of Fame e `NULL`; i casi duplicati, omonimi, conflitti e override restano coperti dalle suite P0 già presenti. **Completato: 2026-08-11 · Evidenza:** `tests/fixtures/golden-archive.json`, `tests/golden-regression.test.ts` · **Verifica:** suite completa verde.
+
+- [x] **DONE-DATA-01** Dichiarazioni TypeScript locali per `better-sqlite3` e CSS corrette; check e build nuovamente eseguibili.
+- [x] **DONE-DATA-02** Test automatizzati aggiunti per importer e servizi statistici, inclusi duplicati con orari diversi, alias squadra, righe manuali protette, H2H, streak e Hall of Fame.
+- [x] **DONE-DATA-03** Identità logica delle fixture protetta sia a livello applicativo sia tramite vincolo SQLite.
+- [x] **DONE-DATA-04** Conflitti di punteggio/data tra provider salvati in `data_conflicts` e revisionabili nel Data Manager.
+- [x] **DONE-DATA-05** Indicatore di copertura per stagione aggiunto al Data Manager con partite, rose, statistiche giocatore e ultimo audit.
+- [x] **DONE-DATA-06** Blocco delle partite concluse con stagione incoerente e segnalazione di record futuri/non giocati.
+- [x] **DONE-DATA-07** Dataset distinti individuati per Serie C1 2007/08, Coppa Italia ed Europa League, mantenendo separate competizioni e copertura.
+- [x] **DONE-DATA-08** Allenatori, stadio e capocannonieri verificati aggiunti alle cinque stagioni di Serie B con relativa fonte.
+- [x] **DONE-DATA-09** Anagrafica giocatore normalizzata tramite ID di fonte oltre al nome.
+- [x] **DONE-DATA-10** Livelli di completezza gara `BASIC`, `STANDARD` e `DETAILED` introdotti e visibili.
+- [x] **DONE-DATA-11** Bootstrap Football-Data esteso alla Serie B 2008/09–2012/13.
+- [x] **DONE-DATA-12** Recuperate cinque rose storiche e 106 giocatori unici pre-Serie A tramite bootstrap ripetibile.
+- [x] **DONE-DATA-13** Comando `data:audit` aggiunto per copertura, doppioni e dati mancanti.
+- [x] **DONE-DATA-14** Risolti 38 duplicati fixture 2025/26 con backup SQLite e normalizzazione di Milan, Roma e Verona.
+- [x] **DONE-DATA-15** Import protetti dai duplicati tra provider con timestamp formattati diversamente.
+- [x] **DONE-DATA-16** Avanzamento dettagliato per import e sincronizzazioni con conteggio di inseriti, aggiornati, ignorati e scartati.
+
+### Prodotto ed esperienza utente
+
+- [x] **ARCH-01 — Dichiarare e completare il perimetro storico.** Il manifesto versionato copre senza interruzioni il periodo 2007/08–2026/27 e separa campionati, playoff, coppe nazionali, Supercoppa di Serie C ed Europa League; `/coverage` mostra anche competizioni senza record con una motivazione esplicita. **Completato: 2026-08-11 · Evidenza:** `data/historical-scope.json`, `server/services/historicalScope.ts`, `server/services/coverage.ts`, `src/pages/Methodology.tsx` · **Verifica:** `npm.cmd run check`, 38 test, build con budget bundle, `npm.cmd run data:audit`, controllo manuale desktop e mobile a 390 px.
+- [x] **ARCH-02 — Completare le schede stagione.** Le schede espongono piazzamento e punti senza fallback a zero, competizioni anche solo dichiarate, rosa, marcatori, capitano, stadio, allenatori con intervalli strutturati o `N/D`, provenienza, lacune e affidabilità; una stagione priva di record resta consultabile senza valori inventati. Corretta inoltre la stagione 2026/27 allineando Alberto Aquilani alla fonte ufficiale dopo backup verificato #58. **Completato: 2026-08-11 · Evidenza:** `server/routes/api.ts`, `src/pages/SeasonDetail.tsx`, `src/types/index.ts`, `tests/season-profile.test.ts` · **Verifica:** `npm.cmd run check`, 40 test, build con budget bundle, `npm.cmd run data:audit`, verifica manuale 2011/12, 2007/08 e 2026/27 su desktop/mobile a 390 px, console senza errori.
+- [x] **ARCH-03 — Completare il centro partita.** Il dettaglio deriva la copertura effettiva `BASIC`, `STANDARD` o `DETAILED`, espone risultato, intervallo, supplementari/rigori, marcatori ed eventi, formazioni e sostituzioni, arbitro, stadio, spettatori e statistiche quando presenti; i moduli senza dati non vengono renderizzati. **Completato: 2026-08-11 · Evidenza:** `server/routes/api.ts`, `server/db/database.ts`, `server/services/kickoffSync.ts`, `src/pages/MatchDetail.tsx`, `tests/archive-profiles.test.ts` · **Verifica:** check, 42 test, build con budget bundle, `data:audit`, controllo manuale BASIC/DETAILED desktop e assenza di pannelli vuoti.
+- [x] **ARCH-04 — Rendere complete le schede giocatore.** Il profilo riunisce identità e relativi conflitti aperti, biografia essenziale, totali canonici generali e per competizione, stagioni, presenze, titolarità, minuti, gol, assist, disciplina, trasferimenti e fonti; tutti gli aggregati derivano dalle stesse righe `player_seasons` senza trasformare `NULL` in zero. **Completato: 2026-08-11 · Evidenza:** `server/routes/api.ts`, `src/pages/PlayerDetail.tsx`, `src/types/index.ts`, `tests/archive-profiles.test.ts` · **Verifica:** check, 42 test, build con budget bundle, `data:audit`, controllo manuale desktop/mobile a 390 px; warning React sulle chiavi fonte rilevato e corretto.
+- [x] **ARCH-05 — Aggiungere archivio allenatori e staff tecnico.** Gli incarichi 2007/08–2026/27 sono periodi espliciti collegati alle stagioni, con fonti, gare/risultati derivati, moduli disponibili, traguardi, interim ed esoneri; i due incarichi di Di Francesco restano distinti. Lo staff ufficiale 2025/26 e 2026/27 è consultabile per ruolo. **Completato: 2026-08-11 · Evidenza:** `data/technical-staff.json`, `server/services/clubArchive.ts`, `src/pages/Coaches.tsx` · **Verifica:** check, 46 test, build, audit e controllo manuale desktop/mobile a 390 px.
+- [x] **ARCH-06 — Completare trasferimenti e movimenti rosa.** I movimenti distinguono acquisto/cessione, prestito, rientro, svincolo e rilascio, espongono club, sessione, costo con valuta/fonte e stato di riconciliazione dell’identità; filtri e URL restano sincronizzati. **Completato: 2026-08-11 · Evidenza:** migrazione schema 7, `server/services/apiFootballSync.ts`, `src/pages/Transfers.tsx`, `src/pages/ManualEditor.tsx` · **Verifica:** check, test d’integrazione filtri/costo/identità, build e verifica a 390 px senza overflow.
+- [x] **ARCH-07 — Costruire una sezione storia del club autorevole.** Palmarès, promozioni, retrocessione, stadi, presidenti, proprietà, maglie e ricorrenze hanno fonti puntuali; `/club-history`, pagina Club e Timeline leggono lo stesso dataset strutturato. **Completato: 2026-08-11 · Evidenza:** `data/club-history.json`, `server/services/clubArchive.ts`, `src/pages/Club.tsx`, `src/pages/Timeline.tsx` · **Verifica:** test di uguaglianza Club/Timeline, build, controllo fonti e date civili desktop/mobile.
+- [x] **ARCH-09 — Offrire segnalazioni e correzioni documentate.** Il modulo pubblico richiede entità, campo, valore, spiegazione e URL fonte; la proposta resta separata dai dati pubblici in `correction_requests`, entra nella coda del Data Manager e approvazione/rifiuto richiedono revisore e nota alimentando il change log. **Completato: 2026-08-11 · Evidenza:** migrazione schema 7, API `/corrections`, `src/pages/Corrections.tsx`, coda in `src/pages/DataManager.tsx` · **Verifica:** test pubblico/admin/change log, build, controllo mobile a 390 px e console senza errori.
+- [x] **ARCH-08 — Gestire record e Hall of Fame in modo dichiarativo.** Formule, spareggi, soglie, competizioni e limiti sono centralizzati e restituiti dalle API con copertura, filtri e ultimo ricalcolo; ogni classifica visibile espone “Come è calcolato”. I perimetri vuoti restano `N/D`. **Completato: 2026-08-11 · Evidenza:** `server/services/statDefinitions.ts`, `server/services/stats.ts`, `src/components/CalculationDisclosure.tsx`, `src/pages/Records.tsx`, `src/pages/HallOfFame.tsx` · **Verifica:** check, 36 test, build, controllo manuale desktop/mobile di filtri, soglie e disclosure.
+- [x] **UX-01 — Pubblicare Fonti e metodologia complete.** Copertura, priorità dei provider, conflitti, correzioni manuali, `N/D`, livelli partita e formule sono documentati; badge di fonte, completezza e stato rimandano alle rispettive definizioni. **Completato: 2026-08-11 · Evidenza:** `src/pages/Methodology.tsx`, `src/components/Ui.tsx`, `src/components/MatchTable.tsx`, `src/pages/MatchDetail.tsx` · **Verifica:** check, 34 test, build, controllo manuale desktop/mobile e navigazione badge.
+- [x] **DONE-UX-01** Onboarding leggero su copertura, `N/D`, livelli di completezza e differenza tra dati verificati e importati.
+- [x] **DONE-UX-02** Ricerca globale con risultati raggruppati per giocatori, stagioni, partite e avversari.
+- [x] **DONE-UX-03** Breadcrumb e collegamenti contestuali tra stagione, partita, giocatore, rosa e competizione.
+- [x] **DONE-UX-04** Prima funzione di confronto tra due stagioni o due giocatori con indicazione della copertura.
+- [x] **DONE-UX-05** Viste preferite, ultimo contesto di navigazione e ripristino filtri.
+- [x] **DONE-UX-06** Stati di caricamento, errore e assenza dati con skeleton, messaggi e azione “Riprova”.
+- [x] **DONE-UX-07** Viste condivisibili via URL con filtri, tab e query di ricerca, incluse route aperte direttamente.
+- [x] **DONE-UX-08** Timeline delle stagioni con promozioni, retrocessioni, debutto europeo, trofei e cambi di allenatore.
+- [x] **DONE-UX-09** Tema chiaro/scuro, riduzione animazioni e resa mobile delle tabelle come card.
+- [x] **DONE-UX-10** Mojibake corretto e UTF-8 senza BOM adottato per sorgenti, CSV e documenti.
+- [x] **DONE-UX-11** Filtri Giocatori per ruolo, nazionalità e stagione, con `N/D` distinto dallo zero.
+- [x] **DONE-UX-12** Badge di provenienza e data di verifica su stagioni, partite e statistiche con link esterno.
+- [x] **DONE-UX-13** Distinzione nella rosa storica tra “in rosa” e “ha giocato”, con contatori e tooltip di copertura.
+- [x] **DONE-UX-14** Ricerca H2H con autocomplete e normalizzazione visibile degli alias avversari.
+- [x] **DONE-UX-15** Dashboard e Records filtrabili per competizione e intervallo stagionale.
+- [x] **DONE-UX-16** Grafici per posizione, vittorie/pareggi/sconfitte, gol fatti/subiti, punti cumulati e progressione, con serie nascoste in assenza della base dati.
+
+### Prestazioni e robustezza frontend
+
+- [x] **PERF-02 — Ridurre il bundle iniziale.** Le rotte sono caricate in modo lazy e Recharts resta nel chunk Dashboard; il manifest Vite alimenta budget bloccanti di 300 KiB per il JavaScript iniziale e 400 KiB per ogni chunk. **Completato: 2026-08-11 · Evidenza:** `src/App.tsx`, `vite.config.ts`, `bundle-budgets.json`, `scripts/check-bundle-budget.ts` · **Verifica:** check, 28 test, build; entrypoint 250,9 KiB rispetto ai circa 669 kB iniziali, chunk massimo 362,5 KiB.
+- [x] **PERF-03 — Aggiungere cache HTTP e invalidazione consapevole.** Le GET pubbliche usano cache server con TTL, `ETag` e revalidation obbligatoria; ogni mutazione riuscita invalida la cache e una generazione impedisce di memorizzare risposte concorrenti ormai superate. **Completato: 2026-08-11 · Evidenza:** `server/services/operations.ts`, `server/app.ts`, `src/services/api.ts` · **Verifica:** check, 30 test, build; test automatico MISS/HIT/304 e invalidazione dopo scrittura.
+
+### Osservabilità
+
+- [x] **OBS-01 — Aggiungere osservabilità e health check reali.** `/api/health` espone integrità e dimensione totale SQLite, durata del controllo, tempi/errori API, metriche cache, ultimo sync, stato provider e durata degli import recenti; gli errori vengono limitati e ripuliti da token. **Completato: 2026-08-11 · Evidenza:** `server/services/operations.ts`, `server/routes/api.ts`, `tests/operations.test.ts` · **Verifica:** check, 30 test, build; test stato degradato, metriche operative e redazione dei segreti.
+
+## Procedura obbligatoria per gli agenti futuri
+
+### Prima di iniziare
+
+1. Scegliere una sola voce o un gruppo strettamente collegato e dichiararne l'ID nel piano di lavoro.
+2. Verificare codice, database, documentazione e test esistenti: la presenza di un file o di una route non prova il completamento.
+3. Annotare nella voce `Owner: <agente/sessione>` mentre il lavoro è in corso. Se il lavoro viene interrotto, rimuovere l'owner o aggiungere una breve nota sul blocco.
+4. Per dati storici, seguire sempre `PROJECT_SPEC.md`, `data/SOURCES.md` e le regole di riconciliazione; non inventare valori per riempire una lacuna.
+
+### Quando un miglioramento è completato
+
+1. Verificare integralmente il criterio di accettazione e aggiungere test proporzionati alla modifica.
+2. Eseguire almeno `npm.cmd run check` e `npm.cmd run test`; eseguire anche `npm.cmd run build` per modifiche frontend/build e `npm.cmd run data:audit` per modifiche a dati, import o statistiche.
+3. Effettuare una verifica manuale dell'interfaccia quando cambiano flussi, responsive layout, accessibilità o contratto API.
+4. Spostare la voce, senza cambiarne l'ID, dalla sezione **Da fare** a **Completati** e trasformare `[ ]` in `[x]`.
+5. Aggiungere alla voce completata: `Completato: YYYY-MM-DD · Evidenza: <PR/commit o file principali> · Verifica: <comandi/test eseguiti>`.
+6. Aggiornare README, specifica, fonti, API e changelog quando interessati dalla modifica.
+
+### Lavoro parziale, regressioni e nuove idee
+
+- Se solo una parte del criterio è soddisfatta, la voce resta aperta: aggiungere una nota `Stato parziale` con ciò che manca oppure dividerla in sotto-voci mantenendo il legame con l'ID originale.
+- Non segnare una voce come completata quando test, audit o build richiesti falliscono; documentare il blocco in modo riproducibile.
+- Una regressione genera una nuova voce con nuovo ID e riferimento alla voce completata originaria; lo storico non va riscritto.
+- Una nuova proposta deve includere priorità, ID univoco, risultato atteso e criterio di accettazione osservabile. Evitare duplicati e formulazioni generiche come “migliorare la UI”.
+- Non inserire segreti, database locali, backup o fonti non redistribuibili nel repository.
+
+### Modello per una nuova voce
+
+```md
+- [ ] **AREA-NN — Titolo orientato al risultato.** Descrizione dello scopo. **Accettazione:** condizioni osservabili e testabili. `Owner: —`
+```

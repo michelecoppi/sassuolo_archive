@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SASSUOLO_DB_PATH: .tmp/ci-sassuolo.db
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run check:secrets
+      - run: npm run check
+      - run: npm test
+      - run: npm run build
+      - run: npm run db:migrate
+      - run: npm run data:audit:full
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: data-audit
+          path: data/reconciliation/audits/audit-full-*.json
+          if-no-files-found: warn

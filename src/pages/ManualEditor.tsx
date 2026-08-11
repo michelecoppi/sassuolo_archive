@@ -24,15 +24,14 @@ const CONFIG: Record<Entity,{label:string; fields:Field[]; summary:(r:Row)=>stri
   ]},
   players:{label:'Giocatori',summary:r=>`${r.name}${r.position?` · ${r.position}`:''}`,fields:[
     {key:'name',label:'Nome',required:true}, {key:'photo_url',label:'URL foto'}, {key:'nationality',label:'Nazionalità'}, {key:'birth_date',label:'Data di nascita',type:'date'}, {key:'position',label:'Ruolo'}, {key:'shirt_number',label:'Numero',type:'number'},
-    {key:'first_appearance',label:'Prima presenza',type:'date'}, {key:'last_appearance',label:'Ultima presenza',type:'date'}, {key:'appearances',label:'Presenze',type:'number'}, {key:'starts',label:'Titolare',type:'number'}, {key:'minutes',label:'Minuti',type:'number'},
-    {key:'goals',label:'Gol',type:'number'}, {key:'assists',label:'Assist',type:'number'}, {key:'yellow_cards',label:'Gialli',type:'number'}, {key:'red_cards',label:'Rossi',type:'number'}, {key:'clean_sheets',label:'Clean sheet',type:'number'}, {key:'current_squad',label:'Rosa attuale',type:'checkbox'}, {key:'source_url',label:'URL fonte'}
+    {key:'first_appearance',label:'Prima presenza',type:'date'}, {key:'last_appearance',label:'Ultima presenza',type:'date'}, {key:'current_squad',label:'Rosa attuale',type:'checkbox'}, {key:'source_url',label:'URL fonte'}
   ]},
   'player-seasons':{label:'Statistiche giocatore/stagione',summary:r=>`${r.player_name} · ${r.season} · ${r.competition}`,fields:[
     {key:'player_name',label:'Giocatore',required:true}, {key:'season',label:'Stagione',required:true,placeholder:'2025/26'}, {key:'competition',label:'Competizione',required:true,placeholder:'Serie A'},
     {key:'appearances',label:'Presenze',type:'number'}, {key:'starts',label:'Titolare',type:'number'}, {key:'minutes',label:'Minuti',type:'number'}, {key:'goals',label:'Gol',type:'number'}, {key:'assists',label:'Assist',type:'number'}, {key:'rating',label:'Rating',type:'number'}, {key:'shots_total',label:'Tiri',type:'number'}, {key:'shots_on',label:'Tiri in porta',type:'number'}, {key:'passes_key',label:'Passaggi chiave',type:'number'}, {key:'tackles_total',label:'Tackle',type:'number'}, {key:'yellow_cards',label:'Gialli',type:'number'}, {key:'red_cards',label:'Rossi',type:'number'}, {key:'clean_sheets',label:'Clean sheet',type:'number'}, {key:'source_url',label:'URL fonte'}
   ]},
   transfers:{label:'Trasferimenti',summary:r=>`${r.date??'N/D'} · ${r.player_name} · ${r.direction}`,fields:[
-    {key:'player_name',label:'Giocatore',required:true}, {key:'date',label:'Data',type:'date'}, {key:'season',label:'Stagione',placeholder:'2025/26'}, {key:'direction',label:'Direzione',required:true,placeholder:'IN oppure OUT'}, {key:'type',label:'Tipo / cifra'}, {key:'from_team_name',label:'Da squadra'}, {key:'to_team_name',label:'A squadra'}, {key:'source_url',label:'URL fonte'}
+    {key:'player_name',label:'Giocatore',required:true}, {key:'date',label:'Data',type:'date'}, {key:'season',label:'Stagione',placeholder:'2025/26'}, {key:'session',label:'Sessione',placeholder:'SUMMER oppure WINTER'}, {key:'direction',label:'Direzione',required:true,placeholder:'IN oppure OUT'}, {key:'movement_type',label:'Movimento',placeholder:'TRANSFER, LOAN, RETURN, FREE, RELEASE'}, {key:'type',label:'Descrizione provider'}, {key:'from_team_name',label:'Club di origine'}, {key:'to_team_name',label:'Club di destinazione'}, {key:'fee_amount',label:'Costo',type:'number'}, {key:'fee_currency',label:'Valuta',placeholder:'EUR'}, {key:'fee_display',label:'Costo pubblicato',placeholder:'Prestito gratuito / N/D'}, {key:'source_url',label:'URL fonte'}
   ]},
   'match-events':{label:'Eventi partita',summary:r=>`${r.match_date?.slice(0,10)??'Data N/D'} · ${r.home_team??'N/D'} ${r.home_score??'–'}-${r.away_score??'–'} ${r.away_team??'N/D'} · ${r.minute==null?'minuto N/D':`${r.minute}${r.extra_minute?`+${r.extra_minute}`:''}'`} · ${r.player_name??r.team_name??'Evento'}`,fields:[
     {key:'match_id',label:'Partita (ID)',type:'number',required:true,placeholder:'ID partita'}, {key:'minute',label:'Minuto',type:'number',placeholder:'Lascia vuoto se non verificato'}, {key:'extra_minute',label:'Recupero',type:'number'}, {key:'team_name',label:'Squadra'}, {key:'player_name',label:'Giocatore'}, {key:'assist_name',label:'Assist / giocatore sostituito'}, {key:'type',label:'Tipo',placeholder:'Card, Goal, subst…'}, {key:'detail',label:'Dettaglio',placeholder:'Yellow Card'}, {key:'comments',label:'Nota evento'}, {key:'home_score',label:'Punteggio casa dopo evento',type:'number'}, {key:'away_score',label:'Punteggio trasferta dopo evento',type:'number'}, {key:'source_url',label:'URL referto / video autorizzato'}, {key:'verification_note',label:'Nota curatoriale'}, {key:'verified_by',label:'Verificato da'}, {key:'verified',label:'Dato verificato',type:'checkbox'}
@@ -74,6 +73,7 @@ export default function ManualEditor(){
   const beginEdit=(r:Row)=>{
     const next=emptyFor(entity);
     for(const f of cfg.fields)next[f.key]=f.type==='checkbox'?Boolean(r[f.key]):(r[f.key]??'');
+    if(entity==='match-events'&&String(next.type).toLowerCase().includes('subst')){next.type='subst';next.detail='Substitution';}
     setForm(next);setEditing(r.id);window.scrollTo({top:0,behavior:'smooth'});
   };
   useEffect(()=>{
@@ -118,11 +118,19 @@ export default function ManualEditor(){
                   setForm({...form, type, detail});
                 }}>
                   <option value="|">Seleziona tipo evento</option>
-                  <option value="Goal|Normal Goal">Goal</option>
+                  <option value="Goal|Normal Goal">Gol su azione</option>
+                  <option value="Goal|Penalty">Gol su rigore</option>
+                  <option value="Goal|Own Goal">Autogol</option>
+                  <option value="Goal|Missed Penalty">Rigore sbagliato</option>
                   <option value="Card|Yellow Card">Yellow Card</option>
                   <option value="Card|Red Card">Red Card</option>
-                  <option value="Substitution|Substitution">Substitution</option>
-                  <option value="VAR|VAR">VAR</option>
+                  <option value="subst|Substitution">Sostituzione</option>
+                  <option value="Var|Goal confirmed">VAR · gol confermato</option>
+                  <option value="Var|Goal cancelled">VAR · gol annullato</option>
+                  <option value="Var|Penalty confirmed">VAR · rigore confermato</option>
+                  <option value="Var|Penalty cancelled">VAR · rigore annullato</option>
+                  <option value="Var|Card reviewed">VAR · cartellino rivisto</option>
+                  <option value="Var|Card upgrade">VAR · cartellino aggravato</option>
                 </select>
               </label>
             );
