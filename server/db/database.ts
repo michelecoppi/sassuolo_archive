@@ -636,6 +636,42 @@ export function initDb() {
       created_at TEXT NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS data_quality_work_items (
+      issue_key TEXT PRIMARY KEY,
+      status TEXT NOT NULL DEFAULT 'open' CHECK(status IN ('open','in_progress','resolved','ignored')),
+      assignee TEXT,
+      note TEXT,
+      updated_at TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS sync_jobs (
+      job_name TEXT PRIMARY KEY,
+      schedule_minutes INTEGER NOT NULL DEFAULT 60,
+      enabled INTEGER NOT NULL DEFAULT 1,
+      next_run_at TEXT,
+      lock_owner TEXT,
+      lock_until TEXT,
+      attempt INTEGER NOT NULL DEFAULT 0,
+      last_status TEXT,
+      last_started_at TEXT,
+      last_finished_at TEXT,
+      last_error TEXT,
+      last_alert TEXT,
+      updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_sync_jobs_due ON sync_jobs(enabled,next_run_at);
+    CREATE TABLE IF NOT EXISTS sync_job_runs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      job_name TEXT NOT NULL,
+      idempotency_key TEXT NOT NULL UNIQUE,
+      status TEXT NOT NULL CHECK(status IN ('running','succeeded','failed','skipped')),
+      attempts INTEGER NOT NULL DEFAULT 0,
+      started_at TEXT NOT NULL,
+      finished_at TEXT,
+      result_json TEXT,
+      error_text TEXT
+    );
+
     -- Provenance is kept independently from the provider payload so a manual
     -- verification can be reviewed without overwriting the original record.
     CREATE TABLE IF NOT EXISTS source_references (

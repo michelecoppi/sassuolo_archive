@@ -15,6 +15,7 @@
     "check": "tsc --noEmit",
     "check:secrets": "tsx scripts/check-secrets.ts",
     "test": "tsx --test tests/**/*.test.ts",
+    "test:api-contract": "tsx --test tests/admin-enhancements.test.ts",
     "build": "npm run check && vite build && npm run check:bundle",
     "check:bundle": "tsx scripts/check-bundle-budget.ts",
     "preview": "vite preview",

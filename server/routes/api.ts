@@ -17,6 +17,8 @@ import { getCoverageMatrix } from '../services/coverage.js';
 import { getOperationalStatus } from '../services/operations.js';
 import { HALL_OF_FAME_DEFINITIONS, RECORD_DEFINITIONS } from '../services/statDefinitions.js';
 import { getClubHistory, getSeasonTechnicalContext, getTechnicalArchive } from '../services/clubArchive.js';
+import { getAdminScheduler } from '../services/adminScheduler.js';
+import { openApiDocument } from '../openapi.js';
 
 type CupMetadata={exit:string;topScorer:string|null;topScorerGoals:number};
 const cupMetadataPath=path.resolve('data/cup-brackets/coppa-italia-sassuolo-metadata.json');
@@ -53,13 +55,64 @@ function dateKey(value:unknown){
 }
 
 function coppaItaliaBracket(season:string, sassuoloMatches:any[]) {
-  const sources=['coppa-italia-2020-2025.json','coppa-italia-2025-2026.json'].map(file=>path.resolve('data/cup-brackets',file));
+  const sources=['coppa-italia-2020-2025.json','coppa-italia-2025-2026.json','coppa-italia-2026-2027.json'].map(file=>path.resolve('data/cup-brackets',file));
   const fixtures=sources.flatMap(source=>fs.existsSync(source)?JSON.parse(fs.readFileSync(source,'utf8')).filter((x:any)=>x.season===season):[]);
-  return [...fixtures,...sassuoloMatches].sort((a:any,b:any)=>String(a.date).localeCompare(String(b.date)));
+  const unique=new Map<string,any>();
+  for(const fixture of [...fixtures,...sassuoloMatches])unique.set(fixture.external_key??`${fixture.date}|${fixture.home_team}|${fixture.away_team}`,fixture);
+  return [...unique.values()].sort((a:any,b:any)=>String(a.date).localeCompare(String(b.date)));
 }
 
 export const api = Router();
-api.get('/search', (req,res,next)=>{const q=String(req.query.q??'').trim();if(!q)return res.json({players:[],matches:[],seasons:[],opponents:[]});const needle=normalizeSearchText(q);const players=(db.prepare('SELECT id,name,position FROM players ORDER BY name').all() as any[]).filter(p=>normalizeSearchText(p.name).includes(needle)).slice(0,8);const like=`%${q}%`;res.json({players,matches:db.prepare('SELECT id,date,home_team,away_team,home_score,away_score FROM matches WHERE home_team LIKE ? OR away_team LIKE ? ORDER BY date DESC LIMIT 8').all(like,like),seasons:db.prepare('SELECT id,season,competition FROM seasons WHERE season LIKE ? OR competition LIKE ? ORDER BY season DESC LIMIT 8').all(like,like),opponents:[]});});
+api.get('/openapi.json', (_req,res)=>res.json(openApiDocument));
+function editDistance(a:string,b:string){
+  const previous=Array.from({length:b.length+1},(_,index)=>index);
+  for(let i=1;i<=a.length;i++){
+    let diagonal=previous[0];previous[0]=i;
+    for(let j=1;j<=b.length;j++){
+      const above=previous[j];
+      previous[j]=Math.min(previous[j]+1,previous[j-1]+1,diagonal+(a[i-1]===b[j-1]?0:1));
+      diagonal=above;
+    }
+  }
+  return previous[b.length];
+}
+function searchScore(value:unknown,needle:string){
+  const normalized=normalizeSearchText(value);
+  if(!normalized||!needle)return Number.POSITIVE_INFINITY;
+  if(normalized===needle)return 0;
+  if(normalized.startsWith(needle))return 1;
+  if(normalized.includes(needle))return 2;
+  const words=normalized.split(/\s+/);
+  const distance=Math.min(editDistance(normalized,needle),...words.map(word=>editDistance(word,needle)));
+  const tolerance=needle.length<5?1:needle.length<9?2:3;
+  return distance<=tolerance?3+distance:Number.POSITIVE_INFINITY;
+}
+api.get('/search', (req,res)=>{
+  const query=String(req.query.q??'').trim(),needle=normalizeSearchText(query);
+  if(!needle)return res.json({players:[],matches:[],seasons:[],opponents:[]});
+  const competition=String(req.query.competition??'').trim(),from=Number(req.query.from)||null,to=Number(req.query.to)||null;
+  const inPeriod=(season:unknown)=>{const year=Number(String(season??'').slice(0,4));return (!from||year>=from)&&(!to||year<=to);};
+  const inCompetition=(value:unknown)=>!competition||String(value??'')===competition;
+  const aliases=db.prepare(`SELECT player_id,alias FROM player_name_aliases`).all() as {player_id:number;alias:string}[];
+  const aliasesByPlayer=new Map<number,string[]>();
+  for(const alias of aliases)aliasesByPlayer.set(alias.player_id,[...(aliasesByPlayer.get(alias.player_id)??[]),alias.alias]);
+  const eligiblePlayers=new Set((db.prepare(`SELECT player_id,season,competition FROM player_seasons`).all() as any[]).filter(row=>inPeriod(row.season)&&inCompetition(row.competition)).map(row=>row.player_id));
+  const players=(db.prepare(`SELECT id,name,position FROM players ORDER BY name`).all() as any[])
+    .map(player=>({...player,score:Math.min(searchScore(player.name,needle),...(aliasesByPlayer.get(player.id)??[]).map(alias=>searchScore(alias,needle))),matched_alias:(aliasesByPlayer.get(player.id)??[]).find(alias=>Number.isFinite(searchScore(alias,needle)))??null}))
+    .filter(player=>Number.isFinite(player.score)&&(!competition&&!from&&!to||eligiblePlayers.has(player.id)))
+    .sort((a,b)=>a.score-b.score||a.name.localeCompare(b.name)).slice(0,8).map(({score,...player})=>player);
+  const matches=(db.prepare(`SELECT id,date,season,competition,home_team,away_team,home_score,away_score FROM matches ORDER BY date DESC`).all() as any[])
+    .map(row=>({...row,score:Math.min(searchScore(row.home_team,needle),searchScore(row.away_team,needle))}))
+    .filter(row=>Number.isFinite(row.score)&&inPeriod(row.season)&&inCompetition(row.competition)).sort((a,b)=>a.score-b.score||String(b.date).localeCompare(String(a.date))).slice(0,8).map(({score,...row})=>row);
+  const seasons=(db.prepare(`SELECT id,season,competition FROM seasons ORDER BY season DESC`).all() as any[])
+    .map(row=>({...row,score:Math.min(searchScore(row.season,needle),searchScore(row.competition,needle),searchScore(`${row.season} ${row.competition}`,needle))}))
+    .filter(row=>Number.isFinite(row.score)&&inPeriod(row.season)&&inCompetition(row.competition)).sort((a,b)=>a.score-b.score||String(b.season).localeCompare(String(a.season))).slice(0,8).map(({score,...row})=>row);
+  const opponentRows=(db.prepare(`SELECT season,competition,CASE WHEN lower(home_team) LIKE '%sassuolo%' THEN away_team ELSE home_team END AS name FROM matches`).all() as any[])
+    .filter(row=>inPeriod(row.season)&&inCompetition(row.competition)&&Number.isFinite(searchScore(row.name,needle)));
+  const opponentCounts=new Map<string,number>();for(const row of opponentRows)opponentCounts.set(row.name,(opponentCounts.get(row.name)??0)+1);
+  const opponents=[...opponentCounts].map(([name,matches])=>({name,matches,score:searchScore(name,needle)})).sort((a,b)=>a.score-b.score||b.matches-a.matches||a.name.localeCompare(b.name)).slice(0,8).map(({score,...row})=>row);
+  res.json({players,matches,seasons,opponents});
+});
 
 async function trackedProviderRun(scope: { provider: string; area: string; season?: string; competition?: string }, task: () => Promise<any>) {
   const started = nowIso();
@@ -430,12 +483,19 @@ api.post('/player-identity-conflicts/:id/resolve', (req,res)=>{
 
 api.get('/player-identity-conflicts/:id/preview', (req,res)=>{
   try {
-    const conflict=db.prepare(`SELECT id,raw_name,source_provider,source_player_id,context FROM player_match_conflicts WHERE id=? AND status='open'`).get(req.params.id) as any;
+    const conflict=db.prepare(`SELECT id,raw_name,source_provider,source_player_id,source_url,context,reason FROM player_match_conflicts WHERE id=? AND status='open'`).get(req.params.id) as any;
     if(!conflict)return res.status(404).json({error:'Conflitto non trovato'});
     const playerId=asInt(String(req.query.playerId??''));
     const stats=playerId==null?null:db.prepare(`SELECT COUNT(*) AS seasons,COALESCE(SUM(appearances),0) AS appearances,COALESCE(SUM(minutes),0) AS minutes,COALESCE(SUM(goals),0) AS goals,COALESCE(SUM(assists),0) AS assists FROM player_seasons WHERE player_id=?`).get(playerId);
     const matches=playerId==null?null:db.prepare(`SELECT COUNT(*) AS match_stats,COALESCE(SUM(minutes),0) AS match_minutes,COALESCE(SUM(goals),0) AS match_goals,COALESCE(SUM(assists),0) AS match_assists FROM match_player_stats WHERE player_id=?`).get(playerId);
-    res.json({conflict, target:playerId==null?null:db.prepare('SELECT id,name FROM players WHERE id=?').get(playerId), stats, matches, incoming:{player_seasons:0,match_stats:0,note:'Il conflitto non è ancora associato a un player_id: nessuna statistica viene aggiunta automaticamente.'}});
+    const target=playerId==null?null:db.prepare('SELECT id,name,position,nationality,birth_date FROM players WHERE id=?').get(playerId) as any;
+    if(playerId!=null&&!target)return res.status(404).json({error:'Giocatore di destinazione non trovato'});
+    const related=playerId==null?null:{
+      transfers:(db.prepare('SELECT COUNT(*) AS count FROM transfers WHERE player_id=?').get(playerId) as any).count,
+      source_ids:(db.prepare('SELECT COUNT(*) AS count FROM player_source_ids WHERE player_id=?').get(playerId) as any).count,
+      aliases:(db.prepare('SELECT COUNT(*) AS count FROM player_name_aliases WHERE player_id=?').get(playerId) as any).count,
+    };
+    res.json({conflict,target,stats,matches,related,incoming:{player_seasons:0,match_stats:0,transfers:0,note:'Questa revisione collega un’identità di importazione: non sposta statistiche o altri record giocatore.'},effects:{alias_to_save:conflict.raw_name,source_id_to_link:conflict.source_provider&&conflict.source_player_id?`${conflict.source_provider} · ${conflict.source_player_id}`:null,canonical_name:target?.name??null}});
   } catch(e) { res.status(400).json({error:String(e)}); }
 });
 
@@ -714,22 +774,57 @@ api.get('/data-quality', (_req,res)=>{
   for(const duplicate of db.prepare(`SELECT normalized_title,COUNT(*) AS count FROM news_articles GROUP BY normalized_title HAVING COUNT(*)>1`).all() as any[]){
     add({id:`news-duplicate-${duplicate.normalized_title}`,priority:'medium',type:'Duplicato',title:`${duplicate.count} news con titolo duplicato`,description:'È un duplicato editoriale potenziale: usa l’anteprima e conserva la voce più recente prima di applicare la deduplica.',location:'RSS news',season:null,competition:null,source:'imported',verified:false,conflict:false,count:duplicate.count,actionLabel:'Apri deduplica',actionPath:'/data-manager',canEdit:false,canImport:false,needsSource:false});
   }
+  for(const identity of db.prepare(`SELECT id,raw_name,source_provider,reason FROM player_match_conflicts WHERE status='open' AND raw_name<>'__CONTROLLED_IMPORT_PREVIEW_ONLY__' ORDER BY created_at DESC`).all() as any[]){
+    add({id:`identity-${identity.id}`,priority:'high',type:'Identità sospetta',title:`Identità da verificare: ${identity.raw_name}`,description:identity.reason||'Il nome può riferirsi a più giocatori: collega o crea l’identità solo dopo la verifica.',location:identity.source_provider||'Import giocatori',season:null,competition:null,source:'imported',verified:false,conflict:true,count:1,actionLabel:'Risolvi identità',actionPath:'/data-manager',canEdit:true,canImport:false,needsSource:true});
+  }
+  const staleBefore=new Date(Date.now()-180*86_400_000).toISOString();
+  for(const stale of db.prepare(`SELECT source_provider,COUNT(*) AS count,MIN(last_verified_at) AS oldest FROM matches WHERE last_verified_at IS NOT NULL AND last_verified_at<? GROUP BY source_provider`).all(staleBefore) as any[]){
+    add({id:`stale-source-${stale.source_provider||'unknown'}`,priority:'medium',type:'Fonte obsoleta',title:`${stale.count} partite con verifica obsoleta`,description:`La verifica più vecchia risale a ${String(stale.oldest).slice(0,10)}. Riesegui un sync controllato o verifica la fonte.`,location:stale.source_provider||'Provider non dichiarato',season:null,competition:null,source:'imported',verified:false,conflict:false,count:stale.count,actionLabel:'Apri provider',actionPath:'/data-manager',canEdit:false,canImport:true,needsSource:true});
+  }
+  const workflow=new Map((db.prepare(`SELECT issue_key,status,assignee,note,updated_at FROM data_quality_work_items`).all() as any[]).map(row=>[row.issue_key,row]));
+  const severity={critical:0,high:1,medium:2,low:3};
+  const enriched=issues.map(issue=>({...issue,status:workflow.get(issue.id)?.status??'open',assignee:workflow.get(issue.id)?.assignee??null,note:workflow.get(issue.id)?.note??null,workflowUpdatedAt:workflow.get(issue.id)?.updated_at??null,suggestedAction:issue.actionLabel,recordPath:issue.actionPath})).sort((a,b)=>severity[a.priority]-severity[b.priority]||a.title.localeCompare(b.title));
   const summary={critical:issues.filter(x=>x.priority==='critical').reduce((n,x)=>n+x.count,0),high:issues.filter(x=>x.priority==='high').reduce((n,x)=>n+x.count,0),medium:issues.filter(x=>x.priority==='medium').reduce((n,x)=>n+x.count,0),low:issues.filter(x=>x.priority==='low').reduce((n,x)=>n+x.count,0)};
-  res.json({summary,issues});
+  res.json({summary,issues:enriched});
+});
+api.patch('/data-quality/:issueKey', (req,res)=>{
+  const issueKey=String(req.params.issueKey??'').trim();const status=String(req.body?.status??'');const assignee=req.body?.assignee==null?null:String(req.body.assignee).trim();const note=req.body?.note==null?null:String(req.body.note).trim();
+  if(!issueKey||!['open','in_progress','resolved','ignored'].includes(status))return res.status(400).json({error:'Stato qualità non valido'});
+  db.prepare(`INSERT INTO data_quality_work_items(issue_key,status,assignee,note,updated_at) VALUES(?,?,?,?,?) ON CONFLICT(issue_key) DO UPDATE SET status=excluded.status,assignee=excluded.assignee,note=excluded.note,updated_at=excluded.updated_at`).run(issueKey,status,assignee,note,nowIso());
+  res.json({ok:true,issueKey,status,assignee,note});
 });
 api.get('/compare/seasons', (req,res)=>{
   const selected=[String(req.query.a??''),String(req.query.b??'')].filter(Boolean);
   if(selected.length!==2)return res.status(400).json({error:'Seleziona due stagioni'});
+  const requestedCompetition=String(req.query.competition??'').trim();
   const rows=selected.map(season=>{
-    const records=db.prepare(`SELECT * FROM seasons WHERE season=? ORDER BY CASE competition WHEN 'Serie A' THEN 0 WHEN 'Serie B' THEN 1 ELSE 2 END`).all(season) as any[];
-    return {season,records:records.map(record=>({...record,coverage:db.prepare(`SELECT COUNT(*) AS matches, SUM(CASE WHEN home_score IS NOT NULL AND away_score IS NOT NULL THEN 1 ELSE 0 END) AS completed, COUNT(DISTINCT ps.player_id) AS squad FROM matches m LEFT JOIN player_seasons ps ON ps.season=m.season AND ps.competition=m.competition WHERE m.season=? AND m.competition=?`).get(record.season,record.competition)}))};
+    const records=db.prepare(`SELECT * FROM seasons WHERE season=? ${requestedCompetition?'AND competition=?':''} ORDER BY CASE competition WHEN 'Serie A' THEN 0 WHEN 'Serie B' THEN 1 ELSE 2 END`).all(...(requestedCompetition?[season,requestedCompetition]:[season])) as any[];
+    return {season,records:records.map(record=>{
+      const coverage=db.prepare(`SELECT COUNT(DISTINCT m.id) AS matches, SUM(CASE WHEN m.home_score IS NOT NULL AND m.away_score IS NOT NULL THEN 1 ELSE 0 END) AS completed, COUNT(DISTINCT ps.player_id) AS squad,MAX(COALESCE(m.last_verified_at,ps.last_verified_at)) AS last_verified_at FROM matches m LEFT JOIN player_seasons ps ON ps.season=m.season AND ps.competition=m.competition WHERE m.season=? AND m.competition=?`).get(record.season,record.competition) as any;
+      const played=Number(record.matches??coverage.completed??0);
+      return {...record,coverage,normalized:{points_per_match:played&&record.points!=null?record.points/played:null,goals_for_per_match:played&&record.goals_for!=null?record.goals_for/played:null,goals_against_per_match:played&&record.goals_against!=null?record.goals_against/played:null,win_rate:played&&record.wins!=null?record.wins/played*100:null}};
+    })};
   });
-  res.json(rows);
+  const competitions=[...new Set(rows.flatMap(group=>group.records.map(record=>record.competition)))];
+  const payload={groups:rows,meta:{competition:requestedCompetition||null,competitions,homogeneous:competitions.length===1&&rows.every(group=>group.records.length===1),warning:competitions.length===1&&rows.every(group=>group.records.length===1)?null:'Il perimetro include competizioni diverse o non presenti in entrambe le stagioni.'}};
+  res.json(req.query.enhanced==='1'?payload:rows);
 });
 api.get('/compare/players', (req,res)=>{
   const ids=[Number(req.query.a),Number(req.query.b)];
   if(ids.some(id=>!Number.isInteger(id)||id<=0)||ids[0]===ids[1])return res.status(400).json({error:'Seleziona due giocatori diversi'});
-  res.json(ids.map(id=>{const player=canonicalPlayer(id);if(!player)return null;const coverage=db.prepare(`SELECT COUNT(*) AS seasons,COUNT(CASE WHEN appearances IS NOT NULL OR minutes IS NOT NULL OR goals IS NOT NULL THEN 1 END) AS with_stats,MAX(last_verified_at) AS last_verified_at FROM player_seasons WHERE player_id=?`).get(id);return {player,coverage,seasons:db.prepare(`SELECT season,competition,appearances,minutes,goals,assists FROM player_seasons WHERE player_id=? ORDER BY season DESC`).all(id)}}));
+  const competition=String(req.query.competition??'').trim();
+  const items=ids.map(id=>{
+    const base=canonicalPlayer(id);if(!base)return null;
+    const args=competition?[id,competition]:[id];
+    const where=`player_id=?${competition?' AND competition=?':''}`;
+    const totals=db.prepare(`SELECT COUNT(*) AS seasons,COUNT(CASE WHEN appearances IS NOT NULL OR minutes IS NOT NULL OR goals IS NOT NULL THEN 1 END) AS with_stats,MAX(last_verified_at) AS last_verified_at,SUM(appearances) AS appearances,SUM(minutes) AS minutes,SUM(goals) AS goals,SUM(assists) AS assists FROM player_seasons WHERE ${where}`).get(...args) as any;
+    const denominator=Number(totals.minutes)||0;
+    const per90=(value:unknown)=>denominator&&value!=null?Number(value)*90/denominator:null;
+    return {player:{...base,appearances:totals.appearances,minutes:totals.minutes,goals:totals.goals,assists:totals.assists},coverage:{seasons:totals.seasons,with_stats:totals.with_stats,last_verified_at:totals.last_verified_at},normalized:{goals_per_90:per90(totals.goals),assists_per_90:per90(totals.assists),minutes_per_appearance:totals.appearances&&totals.minutes!=null?Number(totals.minutes)/Number(totals.appearances):null},seasons:db.prepare(`SELECT season,competition,appearances,minutes,goals,assists,source_provider,source_url,last_verified_at FROM player_seasons WHERE ${where} ORDER BY season DESC`).all(...args)};
+  });
+  const coverageComparable=items.every(item=>item&&Number(item.player.minutes)>0&&Number(item.coverage.with_stats)>0);
+  const payload={items,meta:{competition:competition||null,homogeneous:Boolean(competition)&&coverageComparable,warning:!competition?'Seleziona una competizione per evitare di confrontare perimetri sportivi diversi.':coverageComparable?null:'La copertura di minuti o statistiche non è sufficiente per un confronto omogeneo.'}};
+  res.json(req.query.enhanced==='1'?payload:items);
 });
 api.get('/timeline', (_req,res)=>res.json(getClubHistory().milestones));
 api.get('/methodology', (_req,res)=>res.json({lastRecalculation:getSetting('data_last_audit_at')||getSetting('last_import_at'),rules:[{name:'Punti',formula:'3 per vittoria, 1 per pareggio, 0 per sconfitta; solo gare concluse.'},{name:'Posizione',formula:'Posizione finale dalla classifica verificata della stagione.'},...[...RECORD_DEFINITIONS,...HALL_OF_FAME_DEFINITIONS].map(rule=>({name:rule.label,formula:`${rule.formula} Spareggio: ${rule.tieBreak} Soglia: ${rule.minimum}`}))],providerPriority:['Correzione manuale protetta','Fonte verificata archiviata','KickoffAPI (partite e dettagli)','API-Football (rose e statistiche)','Import storico'] }));
@@ -743,7 +838,6 @@ api.post('/kickoff/test', async(_req,res)=>res.json(await testKickoff()));
 api.post('/kickoff/current', async(req,res)=>{try{res.json({ok:true,result:await trackedProviderRun({provider:'kickoff',area:'current-season'},()=>syncKickoffCurrent(req.query.force==='1'||req.body?.force===true))});}catch(e){res.status(500).json({ok:false,error:String(e)});}});
 api.post('/kickoff/season/:season', async(req,res)=>{try{const max=Number(req.query.max??req.body?.max);res.json({ok:true,result:await trackedProviderRun({provider:'kickoff',area:'season',season:req.params.season},()=>syncKickoffSeason(req.params.season,req.query.force==='1'||req.body?.force===true,Number.isFinite(max)&&max>0?Math.trunc(max):undefined))});}catch(e){res.status(500).json({ok:false,error:String(e)});}});
 api.post('/kickoff/match/:id', async(req,res)=>{try{res.json({ok:true,result:await syncKickoffMatchDetails(Number(req.params.id),true,20)});}catch(e){res.status(500).json({ok:false,error:String(e)});}});
-api.get('/search', (req,res)=>{const q=String(req.query.q??'').trim();if(!q)return res.json({players:[],matches:[],seasons:[],opponents:[]});const like=`%${q}%`;res.json({players:db.prepare(`SELECT id,name,position FROM players WHERE name LIKE ? ORDER BY name LIMIT 8`).all(like),matches:db.prepare(`SELECT id,date,home_team,away_team,home_score,away_score FROM matches WHERE home_team LIKE ? OR away_team LIKE ? ORDER BY date DESC LIMIT 8`).all(like,like),seasons:db.prepare(`SELECT id,season,competition FROM seasons WHERE season LIKE ? OR competition LIKE ? ORDER BY season DESC LIMIT 8`).all(like,like),opponents:db.prepare(`SELECT CASE WHEN lower(home_team) LIKE '%sassuolo%' THEN away_team ELSE home_team END AS name,COUNT(*) AS matches FROM matches WHERE (home_team LIKE ? OR away_team LIKE ?) AND lower(home_team) NOT LIKE lower(?) GROUP BY name ORDER BY matches DESC,name LIMIT 8`).all(like,like,'%Sassuolo%')});});
 api.post('/import', (_req,res)=>{
   const started=nowIso();
   try{
@@ -810,6 +904,9 @@ api.post('/update/current-season', async(_req,res)=>{
 });
 api.post('/update/enrich', async(_req,res)=>res.json({ok:true,results:{apiFootball:apiFootballStatus().configured?await syncApiFootballCurrent():null,squad:apiFootballStatus().configured?null:await syncSquad(),news:await syncNews()}}));
 api.post('/update/force', async(_req,res)=>res.json({ok:true,results:await smartUpdate()}));
+api.get('/sync/jobs', (_req,res)=>res.json(getAdminScheduler().status()));
+api.post('/sync/jobs/:name/run', async(req,res)=>{try{res.json(await getAdminScheduler().run(String(req.params.name),req.body?.idempotencyKey?String(req.body.idempotencyKey):undefined));}catch(e){res.status(400).json({error:String(e)});}});
+api.patch('/sync/jobs/:name', (req,res)=>{try{res.json({ok:true,job:getAdminScheduler().configure(String(req.params.name),{enabled:req.body?.enabled,scheduleMinutes:req.body?.scheduleMinutes})});}catch(e){res.status(400).json({error:String(e)});}});
 
 api.get('/current-season', (_req,res)=>{
   try{res.json(getCurrentSeasonDashboard());}

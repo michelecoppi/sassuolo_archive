@@ -11,10 +11,12 @@ initDb();
 export const importEntities = ['seasons', 'matches', 'players', 'player-seasons'] as const;
 export type ImportEntity = typeof importEntities[number];
 export type ImportIssue = { row: number; field: string | null; code: string; message: string; critical: boolean };
+export type ImportColumnMapping = { source: string; target: string | null; recognized: boolean; required: boolean };
+export type ImportRowPreview = { row: number; status: 'valid' | 'discarded' | 'duplicate' | 'conflict'; action: 'create' | 'update' | 'skip'; issues: number };
 export type ImportPreview = {
   entity: ImportEntity; filename: string; checksum: string; format: 'csv' | 'json'; rows: number;
-  created: number; updated: number; skipped: number; conflicts: number; errors: number;
-  canApply: boolean; issues: ImportIssue[];
+  validRows: number; discardedRows: number; created: number; updated: number; skipped: number; conflicts: number; errors: number;
+  canApply: boolean; issues: ImportIssue[]; columnMappings: ImportColumnMapping[]; rowPreview: ImportRowPreview[];
 };
 
 const required: Record<ImportEntity, string[][]> = {
@@ -24,6 +26,11 @@ const required: Record<ImportEntity, string[][]> = {
   'player-seasons': [['player_name', 'playerName', 'name', 'Player'], ['season'], ['competition']],
 };
 const integerFields = new Set(['matches', 'wins', 'draws', 'losses', 'goals_for', 'goals_against', 'points', 'final_position', 'home_score', 'away_score', 'attendance', 'shots_home', 'shots_away', 'shots_on_target_home', 'shots_on_target_away', 'corners_home', 'corners_away', 'fouls_home', 'fouls_away', 'shirt_number', 'appearances', 'starts', 'minutes', 'goals', 'assists', 'yellow_cards', 'yellow_red_cards', 'red_cards', 'clean_sheets', 'captain']);
+const columnAliases: Record<string,string> = {
+  homeTeam:'home_team',awayTeam:'away_team',playerName:'player_name',Player:'player_name',
+  sourceProvider:'source_provider',sourceUrl:'source_url',sourceExternalId:'source_external_id',playerId:'player_id',
+  lastVerifiedAt:'last_verified_at',shirtNumber:'shirt_number',birthDate:'birth_date',homeScore:'home_score',awayScore:'away_score',
+};
 
 function csvRows(text: string) {
   const lines = text.replace(/^\uFEFF/, '').split(/\r?\n/).filter(line => line.trim() && !line.trim().startsWith('#'));
@@ -69,6 +76,7 @@ export function previewControlledImport(entity:ImportEntity, filename:string, co
   const checksum=crypto.createHash('sha256').update(content,'utf8').digest('hex');
   const issues:ImportIssue[]=[]; let created=0,updated=0,skipped=0,conflicts=0;
   const seen=new Set<string>();
+  const rowActions=new Map<number,'create'|'update'|'skip'>();
   rows.forEach((row,index)=>{
     const rowNumber=index+2;
     for(const alternatives of required[entity])if(valueOf(row,alternatives)===undefined)issues.push({row:rowNumber,field:alternatives[0],code:'required',message:`Campo obbligatorio mancante: ${alternatives[0]}`,critical:true});
@@ -79,20 +87,28 @@ export function previewControlledImport(entity:ImportEntity, filename:string, co
     if(row.captain!==''&&row.captain!=null&&![0,1].includes(Number(row.captain)))issues.push({row:rowNumber,field:'captain',code:'invalid_flag',message:'Il campo captain accetta solo 0 o 1',critical:true});
     if(!textOf(row,['source_url','sourceUrl'])&&!textOf(row,['source_provider','sourceProvider']))issues.push({row:rowNumber,field:'source_url',code:'missing_source',message:'Riga senza source_url o source_provider',critical:true});
     const key=entity==='seasons'?`${season}|${textOf(row,['competition'])}`:entity==='matches'?`${date.slice(0,10)}|${normalizeTeamName(textOf(row,['home_team','homeTeam']))}|${normalizeTeamName(textOf(row,['away_team','awayTeam']))}`:entity==='players'?textOf(row,['name']).toLowerCase():`${textOf(row,['player_name','playerName','name','Player']).toLowerCase()}|${season}|${textOf(row,['competition'])}`;
-    if(seen.has(key)){issues.push({row:rowNumber,field:null,code:'duplicate_in_file',message:'Identità duplicata nello stesso file',critical:true});skipped++;return;}seen.add(key);
+    if(seen.has(key)){issues.push({row:rowNumber,field:null,code:'duplicate_in_file',message:'Identità duplicata nello stesso file',critical:true});skipped++;rowActions.set(rowNumber,'skip');return;}seen.add(key);
     if(entity==='players') {
       const playerName=textOf(row,['name']);
       const normalized=playerName.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
       const surname=normalized.split(/\s+/).at(-1) ?? normalized;
       const likelyDuplicate=/^\p{L}\.\s+/u.test(playerName) || (db.prepare('SELECT 1 FROM players WHERE lower(name) LIKE ? LIMIT 1').get(`% ${surname}`));
-      if(likelyDuplicate) { const identity=resolvePlayer({name:playerName,sourceProvider:textOf(row,['source_provider','sourceProvider'])||null,sourcePlayerId:valueOf(row,['source_external_id','sourceExternalId','api_football_id','apiFootballId']) as string|number|null,sourceUrl:textOf(row,['source_url','sourceUrl'])||null,context:`controlled-import:players:${rowNumber}`,allowCreate:false}); if(identity.status==='conflict') { issues.push({row:rowNumber,field:'name',code:'player_identity_conflict',message:`Identità giocatore sospetta: revisione richiesta nel Data Manager (conflitto #${identity.conflictId})`,critical:true}); conflicts++; return; } }
+      if(likelyDuplicate) { const identity=resolvePlayer({name:playerName,sourceProvider:textOf(row,['source_provider','sourceProvider'])||null,sourcePlayerId:valueOf(row,['source_external_id','sourceExternalId','api_football_id','apiFootballId']) as string|number|null,sourceUrl:textOf(row,['source_url','sourceUrl'])||null,context:`controlled-import:players:${rowNumber}`,allowCreate:false}); if(identity.status==='conflict') { issues.push({row:rowNumber,field:'name',code:'player_identity_conflict',message:`Identità giocatore sospetta: revisione richiesta nel Data Manager (conflitto #${identity.conflictId})`,critical:true}); conflicts++; rowActions.set(rowNumber,'skip'); return; } }
     }
     const existing=existingRecord(entity,row);
-    if(existing?.source_provider==='manual'){issues.push({row:rowNumber,field:null,code:'manual_conflict',message:'Il record esistente è manuale e non verrà sovrascritto',critical:true});conflicts++;return;}
-    if(existing)updated++;else created++;
+    if(existing?.source_provider==='manual'){issues.push({row:rowNumber,field:null,code:'manual_conflict',message:'Il record esistente è manuale e non verrà sovrascritto',critical:true});conflicts++;rowActions.set(rowNumber,'skip');return;}
+    if(existing){updated++;rowActions.set(rowNumber,'update');}else{created++;rowActions.set(rowNumber,'create');}
   });
   const errors=issues.filter(issue=>issue.critical).length;
-  return {entity,filename,checksum,format,rows:rows.length,created,updated,skipped,conflicts,errors,canApply:rows.length>0&&errors===0,issues};
+  const inputColumns=[...new Set(rows.flatMap(row=>Object.keys(row)))];
+  const requiredTargets=new Set(required[entity].map(group=>group[0]));
+  const recognized=new Set([...integerFields,'season','competition','date','home_team','away_team','name','player_name','position','nationality','source_provider','source_url','source_external_id','player_id','last_verified_at','birth_date']);
+  const columnMappings=inputColumns.map(source=>{const target=entity==='player-seasons'&&['name','Player'].includes(source)?'player_name':columnAliases[source]??source;return {source,target:recognized.has(target)?target:null,recognized:recognized.has(target),required:requiredTargets.has(target)};});
+  const rowPreview=rows.map((_row,index)=>{const row=index+2;const rowIssues=issues.filter(issue=>issue.row===row);const duplicate=rowIssues.some(issue=>issue.code==='duplicate_in_file');const conflict=rowIssues.some(issue=>issue.code.includes('conflict'));return {row,status:duplicate?'duplicate':conflict?'conflict':rowIssues.some(issue=>issue.critical)?'discarded':'valid',action:rowActions.get(row)??'skip',issues:rowIssues.length} as ImportRowPreview;});
+  const discardedRows=rowPreview.filter(row=>row.status!=='valid').length;
+  created=rowPreview.filter(row=>row.status==='valid'&&row.action==='create').length;
+  updated=rowPreview.filter(row=>row.status==='valid'&&row.action==='update').length;
+  return {entity,filename,checksum,format,rows:rows.length,validRows:rows.length-discardedRows,discardedRows,created,updated,skipped,conflicts,errors,canApply:rows.length>0&&errors===0,issues,columnMappings,rowPreview};
 }
 
 export function applyControlledImport(entity:ImportEntity, filename:string, content:string) {

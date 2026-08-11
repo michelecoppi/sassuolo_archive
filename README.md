@@ -16,6 +16,14 @@ npm run dev
 
 Apri `http://localhost:5173`.
 
+Il contratto API OpenAPI 3.1 è disponibile a `http://localhost:8787/api/openapi.json`. Documenta versione, filtri, limiti/paginazione, errori, import controllati, workflow qualità e job di sincronizzazione. Il client TypeScript validato a runtime è in `src/services/adminApiClient.ts`; `npm run test:api-contract` lo verifica contro gli endpoint Express reali.
+
+Nel **Data Manager**:
+
+- **Candidati** mostra mapping colonne, righe valide/scartate, duplicati, conflitti e impatto; il file può essere corretto e rieseguito prima dell’applicazione protetta da checksum e backup.
+- **Qualità dati** ordina le anomalie per severità e conserva stato, responsabile e nota operativa.
+- **Provider** espone job pianificati con lock, chiave d’idempotenza, retry/backoff, controllo quota e avvisi azionabili.
+
 `npm run setup` importa già il riepilogo verificato delle 13 stagioni concluse 2013/14–2025/26 e crea la voce 2026/27. Per aggiungere tutte le singole partite usa il bootstrap descritto sotto.
 
 ## Importare lo storico Sassuolo

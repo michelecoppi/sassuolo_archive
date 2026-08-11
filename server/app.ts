@@ -32,6 +32,7 @@ export function createApp(options:AppOptions={}){
   app.locals.responseCache=responseCache;
   app.locals.observability=observability;
   app.use('/api',observability.middleware);
+  app.use('/api',(_req,res,next)=>{res.setHeader('X-API-Version','1.0.0');next();});
   app.use('/api',responseCache.middleware);
 
   const attempts=new Map<string,{windowStart:number,count:number}>();const limit=options.mutationLimit??60;

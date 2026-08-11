@@ -1,0 +1,17 @@
+[
+  {
+    "external_key": "lega-coppa|2026-27|2026-08-17|Sassuolo|Cesena",
+    "date": "2026-08-17T18:30:00+02:00",
+    "season": "2026/27",
+    "competition": "Coppa Italia",
+    "round": "Trentaduesimi di finale",
+    "home_team": "Sassuolo",
+    "away_team": "Cesena",
+    "home_score": null,
+    "away_score": null,
+    "stadium": "Mapei Stadium - Città del Tricolore",
+    "completeness_level": "BASIC",
+    "source_provider": "Lega Serie A",
+    "source_url": "https://www.legaseriea.it/coppa-italia/news/la-programmazione-dei-trentaduesimi"
+  }
+]

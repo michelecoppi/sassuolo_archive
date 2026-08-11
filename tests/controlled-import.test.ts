@@ -15,6 +15,8 @@ test('il dry-run blocca righe senza fonte e statistiche incompatibili', () => {
     'Giocatore Test,2025/26,Serie A,2,3',
   ].join('\n'));
   assert.equal(preview.canApply, false);
+  assert.equal(preview.validRows, 0);
+  assert.equal(preview.discardedRows, 1);
   assert.ok(preview.issues.some(issue => issue.code === 'missing_source'));
   assert.ok(preview.issues.some(issue => issue.code === 'incompatible_stat'));
 });
@@ -25,6 +27,7 @@ test('il dry-run valido produce checksum e conteggi senza scrivere nel DB', () =
   ]));
   assert.equal(preview.canApply, true);
   assert.equal(preview.created, 1);
+  assert.equal(preview.rowPreview[0].status, 'valid');
   assert.match(preview.checksum, /^[a-f0-9]{64}$/);
 });
 

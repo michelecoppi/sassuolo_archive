@@ -22,7 +22,7 @@ function player(name: string, id?: number): Row {
 }
 function refs(id: number) { const r: Record<string, number> = {}; for (const [t, c] of FKS) r[`${t}.${c}`] = Number((db.prepare(`SELECT COUNT(*) n FROM ${t} WHERE ${c}=?`).get(id) as any).n); r['player_source_ids.player_id'] = Number((db.prepare('SELECT COUNT(*) n FROM player_source_ids WHERE player_id=?').get(id) as any).n); r['player_seasons.player_id'] = Number((db.prepare('SELECT COUNT(*) n FROM player_seasons WHERE player_id=?').get(id) as any).n); return r; }
 function fillPlayer(old: Row, keep: Row, backupId: number | null) {
-  const cols = (db.prepare('PRAGMA table_info(players)').all() as any[]).map(x => x.name).filter((x: string) => !['id', 'name', 'api_football_id'].includes(x)); const set: string[] = [], values: any[] = [], before: Row = { id: keep.id, name: keep.name }, after: Row = { id: keep.id, name: keep.name };
+  const cols = (db.prepare('PRAGMA table_info(players)').all() as any[]).map(x => x.name).filter((x: string) => !['id', 'name', 'firstname', 'lastname', 'api_football_id'].includes(x)); const set: string[] = [], values: any[] = [], before: Row = { id: keep.id, name: keep.name }, after: Row = { id: keep.id, name: keep.name };
   for (const c of cols) if ((keep[c] == null || keep[c] === '') && old[c] != null && old[c] !== '') { set.push(`${c}=?`); values.push(old[c]); before[c] = keep[c]; after[c] = old[c]; }
   if (set.length) { db.prepare(`UPDATE players SET ${set.join(',')} WHERE id=?`).run(...values, keep.id); recordChange({ entityType: 'players', entityId: keep.id, action: 'update', before, after, note: `Campi recuperati dal duplicato ${old.id}`, backupId }); }
 }
@@ -34,7 +34,13 @@ function merge(pair: Pair, backupId: number | null) {
     return { skipped: true, reason: 'already-merged', newId: keep.id };
   }
   if (oldRows.length !== 1) throw new Error(`Nome/player assente o ambiguo: ${pair.oldName}`);
-  const old = oldRows[0]; if (old.id === keep.id) throw new Error('I record coincidono'); const beforeOld = refs(old.id), beforeKeep = refs(keep.id); fillPlayer(old, keep, backupId);
+  const old = oldRows[0]; if (old.id === keep.id) throw new Error('I record coincidono'); const beforeOld = refs(old.id), beforeKeep = refs(keep.id);
+  if (keep.api_football_id == null && old.api_football_id != null) {
+    db.prepare('UPDATE players SET api_football_id=NULL WHERE id=?').run(old.id);
+    db.prepare('UPDATE players SET api_football_id=? WHERE id=?').run(old.api_football_id, keep.id);
+    keep.api_football_id = old.api_football_id;
+  }
+  fillPlayer(old, keep, backupId);
   for (const row of db.prepare('SELECT * FROM player_seasons WHERE player_id=?').all(old.id) as Row[]) {
     const conflict = db.prepare('SELECT * FROM player_seasons WHERE player_id=? AND season=? AND competition=?').get(keep.id, row.season, row.competition) as Row | undefined;
     if (!conflict) { db.prepare('UPDATE player_seasons SET player_id=? WHERE id=?').run(keep.id, row.id); continue; }
@@ -55,8 +61,13 @@ function merge(pair: Pair, backupId: number | null) {
   for (const [t, c] of FKS) db.prepare(`UPDATE ${t} SET ${c}=? WHERE ${c}=?`).run(keep.id, old.id);
   for (const [t, idc, nc] of NAMES) db.prepare(`UPDATE ${t} SET ${nc}=? WHERE ${idc}=?`).run(keep.name, keep.id);
   for (const s of db.prepare('SELECT * FROM player_source_ids WHERE player_id=?').all(old.id) as any[]) { const duplicate = db.prepare('SELECT id FROM player_source_ids WHERE source_provider=? AND source_player_id=? AND player_id<>?').get(s.source_provider, s.source_player_id, old.id); if (duplicate) db.prepare('DELETE FROM player_source_ids WHERE id=?').run(s.id); else db.prepare('UPDATE player_source_ids SET player_id=? WHERE id=?').run(keep.id, s.id); }
+  for (const alias of db.prepare('SELECT * FROM player_name_aliases WHERE player_id=?').all(old.id) as any[]) {
+    db.prepare(`INSERT INTO player_name_aliases(player_id,alias,alias_normalized,source_provider,note,created_at)
+      VALUES(?,?,?,?,?,?) ON CONFLICT(alias_normalized) DO UPDATE SET player_id=excluded.player_id,source_provider=COALESCE(player_name_aliases.source_provider,excluded.source_provider),note=excluded.note`)
+      .run(keep.id, alias.alias, alias.alias_normalized, alias.source_provider, `Alias trasferito durante merge ${old.id} -> ${keep.id}`, alias.created_at ?? nowIso());
+  }
   db.prepare('INSERT INTO player_name_aliases(player_id,alias,alias_normalized,source_provider,note,created_at) VALUES(?,?,?,?,?,?) ON CONFLICT(alias_normalized) DO UPDATE SET player_id=excluded.player_id,note=excluded.note').run(keep.id, old.name, normalizeNameForMatch(old.name), 'manual_merge', `Alias ${old.id} -> ${keep.id}`, nowIso());
   const remaining = refs(old.id); if (Object.values(remaining).some(x => x !== 0)) throw new Error(`Riferimenti residui ${old.id}: ${JSON.stringify(remaining)}`); db.prepare('DELETE FROM players WHERE id=?').run(old.id); recordChange({ entityType: 'players', entityId: keep.id, action: 'update', before: { merged: old, refs: beforeOld, keepRefs: beforeKeep }, after: { playerId: keep.id, alias: old.name }, note: `Merge duplicato ${old.id} -> ${keep.id}`, backupId }); return { oldId: old.id, newId: keep.id, beforeOld, beforeKeep };
 }
-function main() { const a = parseArgs(); if ((!a.all && (!a.oldName || !a.newName)) || (!a.dryRun && !a.yes)) throw new Error('Uso: --all oppure --old "..." --new "..."; usare --dry-run o --yes'); initDb(); const pairs = a.all ? PAIRS : [{ oldName: a.oldName!, newName: a.newName! }]; const backup = a.dryRun ? null : createBackupSnapshot('merge-player-duplicates'); const tx = db.transaction(() => pairs.map(p => merge(p, backup?.id ?? null))); try { const result = tx(); if (a.dryRun) throw new Error('__DRY_RUN__'); console.log(JSON.stringify({ ok: true, backup, merged: result }, null, 2)); } catch (e) { if (e instanceof Error && e.message === '__DRY_RUN__') console.log('Dry-run completato: rollback eseguito.'); else throw e; } finally { db.close(); } }
+function main() { const a = parseArgs(); if ((!a.all && (!a.oldName || !a.newName)) || (!a.dryRun && !a.yes)) throw new Error('Uso: --all oppure --old "..." --new "..."; usare --dry-run o --yes'); initDb(); const pairs = a.all ? PAIRS : [{ oldName: a.oldName!, newName: a.newName! }]; const backup = a.dryRun ? null : createBackupSnapshot('merge-player-duplicates'); const tx = db.transaction(() => { const result = pairs.map(p => merge(p, backup?.id ?? null)); if (a.dryRun) throw new Error('__DRY_RUN__'); return result; }); try { const result = tx(); console.log(JSON.stringify({ ok: true, backup, merged: result }, null, 2)); } catch (e) { if (e instanceof Error && e.message === '__DRY_RUN__') console.log('Dry-run completato: rollback eseguito.'); else throw e; } finally { db.close(); } }
 main();

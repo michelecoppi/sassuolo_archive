@@ -61,19 +61,19 @@ export default function Methodology(){
         </dl>
       </section>
 
-      <section id="detail-levels" className={sectionClass}>
+      <section id="detail-levels" className={`${sectionClass} lg:col-span-2`}>
         <h2 className="font-bold">Livelli di dettaglio partita</h2>
-        <dl className="mt-3 space-y-3 text-sm">
-          <div><dt><span className="badge text-zinc-300">BASIC</span></dt><dd className="mt-1 text-zinc-400">Identità della gara e risultato quando conclusa; i moduli avanzati possono mancare.</dd></div>
-          <div><dt><span className="badge text-amber-200">STANDARD</span></dt><dd className="mt-1 text-zinc-400">Metadati aggiuntivi della gara, come turno, stadio, arbitro o stato, senza blocchi avanzati verificati.</dd></div>
-          <div><dt><span className="badge text-neroverde-300">DETAILED</span></dt><dd className="mt-1 text-zinc-400">È presente almeno un blocco avanzato tra eventi, formazioni, statistiche squadra o statistiche giocatore. Il badge non implica che siano presenti tutti i blocchi.</dd></div>
+        <dl className="mt-3 grid gap-3 text-sm lg:grid-cols-3">
+          <div className="rounded-xl bg-zinc-950/50 p-4"><dt><span className="badge text-zinc-300">BASIC</span></dt><dd className="mt-2 leading-6 text-zinc-400">Identità della gara e risultato quando conclusa; i moduli avanzati possono mancare.</dd></div>
+          <div className="rounded-xl bg-zinc-950/50 p-4"><dt><span className="badge text-amber-200">STANDARD</span></dt><dd className="mt-2 leading-6 text-zinc-400">Metadati aggiuntivi della gara, come turno, stadio, arbitro o stato, senza blocchi avanzati verificati.</dd></div>
+          <div className="rounded-xl bg-zinc-950/50 p-4"><dt><span className="badge text-neroverde-300">DETAILED</span></dt><dd className="mt-2 leading-6 text-zinc-400">È presente almeno un blocco avanzato tra eventi, formazioni, statistiche squadra o statistiche giocatore. Il badge non implica che siano presenti tutti i blocchi.</dd></div>
         </dl>
       </section>
 
-      <section id="formulas" className={sectionClass}>
+      <section id="formulas" className={`${sectionClass} lg:col-span-2`}>
         <h2 className="font-bold">Formule e perimetro</h2>
         <p className="mt-1 text-xs text-zinc-500">Ultimo ricalcolo: {data.lastRecalculation?new Date(data.lastRecalculation).toLocaleString('it-IT'):'N/D'}</p>
-        <dl className="mt-4 space-y-4">{data.rules.map(rule=><div key={rule.name}><dt className="font-bold text-neroverde-300">{rule.name}</dt><dd className="mt-1 text-sm text-zinc-400">{rule.formula}</dd></div>)}</dl>
+        <dl className="mt-4 grid gap-x-8 gap-y-4 md:grid-cols-2">{data.rules.map(rule=><div key={rule.name}><dt className="font-bold text-neroverde-300">{rule.name}</dt><dd className="mt-1 text-sm leading-6 text-zinc-400">{rule.formula}</dd></div>)}</dl>
       </section>
     </div>
 
