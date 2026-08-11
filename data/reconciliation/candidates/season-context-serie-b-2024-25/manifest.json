@@ -1,0 +1,53 @@
+{
+  "area": "player_seasons",
+  "season": "2024/25",
+  "competition": "Serie B",
+  "source_provider": "Lega Serie B",
+  "source_url": "https://www.legab.it/news/il-sassuolo-alza-la-coppa-nexus",
+  "verified_at": "2026-08-11",
+  "file": "data.csv",
+  "sha256": "ca13b998160d28f0cc95bbf5fb112cf51ef3699838c7a4d864988c76257b3e0d",
+  "records_total": 1,
+  "records_discarded": 0,
+  "fields_covered": [
+    "player_name",
+    "season",
+    "competition",
+    "captain",
+    "source_provider",
+    "source_url",
+    "last_verified_at"
+  ],
+  "validation": {
+    "status": "reconciled",
+    "checks": [
+      {
+        "name": "single_scope",
+        "status": "passed",
+        "note": "Una stagione e una competizione."
+      },
+      {
+        "name": "captain_primary_evidence",
+        "status": "passed",
+        "note": "Lega Serie B identifica esplicitamente capitan Berardi."
+      },
+      {
+        "name": "club_cross_check",
+        "status": "passed",
+        "note": "La premiazione è confermata dal sito ufficiale Sassuolo."
+      },
+      {
+        "name": "nullable_preservation",
+        "status": "passed",
+        "note": "I campi non coperti non sovrascrivono statistiche esistenti."
+      }
+    ],
+    "unresolved_conflicts": []
+  },
+  "notes": [
+    "Tranche iniziale per il contesto stagionale generale.",
+    "Lo staff 2024/25 usa una fonte secondaria che riproduce la comunicazione del club; il limite è dichiarato in SOURCES.md.",
+    "Richiede approvazione esplicita nel Data Manager prima dell'import.",
+    "Approvato dal Data Manager dopo revisione manuale."
+  ]
+}

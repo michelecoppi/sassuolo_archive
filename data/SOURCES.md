@@ -50,6 +50,14 @@ API responses are normalized and persisted in SQLite. The React frontend does no
 
 Historical availability depends on the subscription plan and the coverage reported by the API for each competition/season. Missing or unavailable API data must remain `NULL` / `N/D` and must not overwrite manual corrections.
 
+## UEFA Europa League 2016/17
+
+La scheda della competizione usa le pagine ufficiali UEFA per risultati corretti, classifica finale del Gruppo F, fase raggiunta e quadro delle eliminazioni fino alla finale. Le dieci partite del Sassuolo restano divise tra quattro gare di qualificazione (Luzern e Crvena zvezda) e sei gare della fase a gironi; il riepilogo aggregato è 3 vittorie, 4 pareggi, 3 sconfitte e 17-13 reti.
+
+- Club per fase e tabellone: <https://www.uefa.com/uefaeuropaleague/history/seasons/2017/clubs/>
+- Luzern-Sassuolo: <https://www.uefa.com/uefaeuropaleague/match/2020373--luzern-vs-sassuolo/>
+- Gruppo F e Sassuolo-Genk: <https://www.uefa.com/uefaeuropaleague/news/0233-0e95c1c35e88-f3edf7b19d01-1000--sassuolo-v-genk-background/>
+
 ## Pre-Serie A: Serie B 2008/09-2012/13
 
 Lo storico di campionato viene ora esteso a cinque stagioni prima del debutto in Serie A:
@@ -64,4 +72,4 @@ Eseguire `npm.cmd run data:audit` dopo un import. Il report deve avere zero `dup
 
 ## Storia del club e staff tecnico
 
-I record editoriali condivisi da pagina Club e Timeline sono in `club-history.json`; gli incarichi di allenatori e staff sono in `technical-staff.json`. Ogni voce conserva un `sourceUrl` puntuale. Le fonti primarie principali sono le sezioni ufficiali **La nostra storia**, **Mapei Stadium**, **Organigramma** e i comunicati ufficiali sugli staff 2025/26 e 2026/27 del Sassuolo Calcio. Date o termini non dichiarati restano `N/D` e non vengono inferiti dal campo `seasons.manager`.
+I record editoriali condivisi da pagina Club e Timeline sono in `club-history.json`; gli incarichi di allenatori e staff sono in `technical-staff.json`. Ogni voce conserva un `sourceUrl` puntuale. Le fonti primarie principali sono le sezioni ufficiali **La nostra storia**, **Mapei Stadium**, **Organigramma** e i comunicati ufficiali sugli staff 2025/26 e 2026/27 del Sassuolo Calcio. Per lo staff 2024/25 si usa una fonte secondaria che trascrive la comunicazione del club non più indicizzata; il limite è documentato nel pacchetto `season-context-serie-b-2024-25`. Date o termini non dichiarati restano `N/D` e non vengono inferiti dal campo `seasons.manager`.

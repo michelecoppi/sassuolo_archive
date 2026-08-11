@@ -24,6 +24,7 @@ test('archivio tecnico conserva incarichi multipli, stagioni e staff senza infer
   const archive=await (await fetch(`${base}/coaches`)).json() as any;
   const diFrancesco=archive.profiles.find((profile:any)=>profile.coach==='Eusebio Di Francesco');
   assert.equal(diFrancesco.terms.length,2);assert.ok(diFrancesco.terms.every((term:any)=>term.startDate&&term.seasons.length&&term.sourceUrl));
+  const promotion=archive.staffTerms.find((staff:any)=>staff.season==='2024/25');assert.equal(promotion.coach,'Fabio Grosso');assert.ok(promotion.members.some((member:any)=>member.name==='Paolo Orlandoni'));
   const current=archive.staffTerms.find((staff:any)=>staff.season==='2026/27');assert.equal(current.coach,'Alberto Aquilani');assert.ok(current.members.some((member:any)=>member.role==='Match analyst'));
 });
 
@@ -45,4 +46,15 @@ test('una segnalazione pubblica entra in coda e solo la revisione alimenta il ch
   const denied=await fetch(`${base}/corrections/${id}`,{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:'approved',reviewer:'X',note:'Verificata'})});assert.equal(denied.status,401);
   const approved=await fetch(`${base}/corrections/${id}`,{method:'PATCH',headers:adminHeaders,body:JSON.stringify({status:'approved',reviewer:'Archivista test',note:'Fonte verificata; applicazione separata.'})});assert.equal(approved.status,200);
   const change=db.prepare(`SELECT action,source_url,author FROM change_log WHERE entity_type='correction_request' AND entity_id=?`).get(id) as any;assert.equal(change.action,'approve-correction');assert.equal(change.author,'Archivista test');assert.equal(change.source_url,'https://example.test/source');
+});
+
+test('le partite Europa League sono separate in qualificazioni e girone con aggregati coerenti',()=>{
+  const file=path.join(process.cwd(),'data','matches','sassuolo-europa-league-2016-17.json');
+  const matches=JSON.parse(fs.readFileSync(file,'utf8')) as any[];
+  const qualifiers=matches.filter(match=>/qualificazione|play-off/i.test(match.round));
+  const group=matches.filter(match=>/gironi/i.test(match.round));
+  assert.equal(qualifiers.length,4);assert.equal(group.length,6);
+  let wins=0,draws=0,losses=0,goalsFor=0,goalsAgainst=0;
+  for(const match of matches){const home=/sassuolo/i.test(match.home_team);const scored=home?match.home_score:match.away_score;const conceded=home?match.away_score:match.home_score;goalsFor+=scored;goalsAgainst+=conceded;if(scored>conceded)wins++;else if(scored===conceded)draws++;else losses++;}
+  assert.deepEqual({wins,draws,losses,goalsFor,goalsAgainst},{wins:3,draws:4,losses:3,goalsFor:17,goalsAgainst:13});
 });

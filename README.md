@@ -29,6 +29,8 @@ Copertura:
 - 2025/26: Serie A
 - 2026/27: stagione corrente predisposta nel database; nessun risultato viene inventato prima che le partite siano disponibili
 
+La pagina **Partite e calendario** è il centro della stagione corrente: mostra ultima e prossima gara, forma recente, classifica, rosa, infortuni/squalifiche e calendario operativo. Il riquadro di freschezza indica l'ultimo sync riuscito e rende consultabili gli errori dei provider; **Aggiorna dati** registra ogni tentativo nel ledger degli import senza usare una sync incompleta per modificare le stagioni storiche.
+
 ### Metodo 1 — dal sito
 
 1. Avvia `npm run dev`.

@@ -14,7 +14,7 @@ export type Season = {
   points:number|null; own_goals_for?:number|null; own_goals_against?:number|null; manager:string|null; stadium?:string|null; top_scorer:string|null; top_assists:string|null; source_provider?:string|null; source_url?:string|null; last_verified_at?:string|null;
   home_record?:string|null; away_record?:string|null; api_football_league_id?:number|null;
   api_football_season_year?:number|null; top_scorer_player_id?:number|null; top_scorer_player_name?:string|null;
-  top_scorer_goals?:number|null; cup_exit?:string|null;
+  top_scorer_goals?:number|null; cup_exit?:string|null; competition_result?:string|null;
   declared_only?:boolean;
 };
 

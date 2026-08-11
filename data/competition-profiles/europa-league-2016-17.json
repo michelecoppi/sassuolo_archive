@@ -1,0 +1,31 @@
+{
+  "season": "2016/17",
+  "competition": "Europa League",
+  "result": "Fase a gironi · 4° posto nel Gruppo F",
+  "resultShort": "Fase a gironi",
+  "group": "F",
+  "groupPosition": 4,
+  "groupPoints": 5,
+  "groupStandings": [
+    {"rank": 1, "team_name": "Genk", "played": 6, "wins": 4, "draws": 0, "losses": 2, "goals_for": 13, "goals_against": 9, "goals_diff": 4, "points": 12, "qualified": true},
+    {"rank": 2, "team_name": "Athletic Club", "played": 6, "wins": 3, "draws": 1, "losses": 2, "goals_for": 10, "goals_against": 11, "goals_diff": -1, "points": 10, "qualified": true},
+    {"rank": 3, "team_name": "Rapid Wien", "played": 6, "wins": 1, "draws": 3, "losses": 2, "goals_for": 7, "goals_against": 8, "goals_diff": -1, "points": 6, "qualified": false},
+    {"rank": 4, "team_name": "Sassuolo", "played": 6, "wins": 1, "draws": 2, "losses": 3, "goals_for": 9, "goals_against": 11, "goals_diff": -2, "points": 5, "qualified": false}
+  ],
+  "qualifyingTies": [
+    {"round": "Terzo turno di qualificazione", "opponent": "Luzern", "aggregate": "4–1", "outcome": "Qualificato"},
+    {"round": "Play-off", "opponent": "Crvena zvezda", "aggregate": "4–1", "outcome": "Qualificato"}
+  ],
+  "knockout": {
+    "roundOf32": ["Astra", "Athletic Club", "AZ Alkmaar", "Fenerbahçe", "Fiorentina", "Hapoel Beer-Sheva", "Legia Warszawa", "Ludogorets", "Osmanlıspor", "PAOK", "Shakhtar Donetsk", "Sparta Praha", "Saint-Étienne", "Tottenham", "Villarreal", "Zenit"],
+    "roundOf16": ["APOEL", "Copenhagen", "Gent", "Krasnodar", "Borussia Mönchengladbach", "Olympiacos", "Roma", "Rostov"],
+    "quarterFinals": ["Anderlecht", "Beşiktaş", "Genk", "Schalke 04"],
+    "semiFinals": ["Celta Vigo", "Lyon"],
+    "final": {"home": "Ajax", "away": "Manchester United", "score": "0–2", "winner": "Manchester United"}
+  },
+  "sources": [
+    {"label": "UEFA · club per fase 2016/17", "url": "https://www.uefa.com/uefaeuropaleague/history/seasons/2017/clubs/"},
+    {"label": "UEFA · situazione finale Gruppo F", "url": "https://www.uefa.com/uefaeuropaleague/news/0233-0e95c1c35e88-f3edf7b19d01-1000--sassuolo-v-genk-background/"},
+    {"label": "UEFA · Sassuolo fuori nella fase a gironi", "url": "https://www.uefa.com/uefaeuropaleague/news/0234-0e95d9e2ef3c-fe1a39b6bb4b-1000--europa-league-who-is-through-who-can-join-them/"}
+  ]
+}

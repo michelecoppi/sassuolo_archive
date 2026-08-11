@@ -27,3 +27,17 @@ test('il dry-run valido produce checksum e conteggi senza scrivere nel DB', () =
   assert.equal(preview.created, 1);
   assert.match(preview.checksum, /^[a-f0-9]{64}$/);
 });
+
+test('il dry-run accetta un capitano verificato e rifiuta flag diversi da 0 o 1', () => {
+  const valid = previewControlledImport('player-seasons', 'captain.csv', [
+    'player_name,season,competition,captain,source_provider,source_url',
+    'Domenico Berardi,2024/25,Serie B,1,Lega Serie B,https://www.legab.it/news/il-sassuolo-alza-la-coppa-nexus',
+  ].join('\n'));
+  assert.equal(valid.canApply, true);
+  const invalid = previewControlledImport('player-seasons', 'captain.csv', [
+    'player_name,season,competition,captain,source_provider',
+    'Domenico Berardi,2024/25,Serie B,2,Lega Serie B',
+  ].join('\n'));
+  assert.equal(invalid.canApply, false);
+  assert.ok(invalid.issues.some(issue => issue.code === 'invalid_flag'));
+});

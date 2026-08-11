@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
-import { CompetitionBadge, Empty, Loading, PageTitle, fmt, SourceBadge } from '../components/Ui';
+import { CompetitionBadge, Empty, Loading, PageTitle, competitionAccent, fmt, SourceBadge } from '../components/Ui';
 import type { Season } from '../types';
 
 export default function Seasons() {
@@ -30,9 +30,9 @@ export default function Seasons() {
           <div className="flex flex-wrap gap-2">{rows.map(row => <Link key={row.id} to={`/seasons/${encodeURIComponent(season)}?competition=${encodeURIComponent(row.competition)}`}><CompetitionBadge competition={row.competition} /></Link>)}</div>
         </div>
         <div className="table-wrap rounded-none border-0"><table><thead><tr><th>Competizione</th><th>Partite</th><th>Pos.</th><th>V-N-P</th><th>GF-GS</th><th>Punti</th><th>Capocannoniere</th><th>Fonte</th></tr></thead><tbody>
-          {rows.filter(row => !competition || row.competition === competition).map(row => <tr key={row.id}>
-            <td><Link className="font-bold text-neroverde-400 hover:underline" to={`/seasons/${encodeURIComponent(season)}?competition=${encodeURIComponent(row.competition)}`}>{row.competition}</Link></td>
-            <td>{fmt(row.matches)}</td><td>{row.competition==='Coppa Italia'?fmt(row.cup_exit):fmt(row.final_position)}</td>
+          {rows.filter(row => !competition || row.competition === competition).map(row => <tr className={competitionAccent(row.competition).card} key={row.id}>
+            <td><Link className="hover:underline" to={`/seasons/${encodeURIComponent(season)}?competition=${encodeURIComponent(row.competition)}`}><CompetitionBadge competition={row.competition}/></Link></td>
+            <td>{fmt(row.matches)}</td><td>{row.competition==='Coppa Italia'?fmt(row.cup_exit):row.competition_result??fmt(row.final_position)}</td>
             <td>{row.wins == null ? 'N/D' : `${row.wins}-${row.draws ?? 0}-${row.losses ?? 0}`}</td>
             <td>{row.goals_for == null ? 'N/D' : `${row.goals_for}-${row.goals_against ?? 0}`}</td><td>{row.competition==='Coppa Italia'?'—':fmt(row.points)}</td>
             <td>{row.competition==='Coppa Italia'&&row.top_scorer_goals===0?'Nessun marcatore':row.top_scorer_player_id?<Link className="text-neroverde-400 hover:underline" to={`/players/${row.top_scorer_player_id}`}>{row.top_scorer_player_name} ({row.top_scorer_goals})</Link>:row.top_scorer?`${row.top_scorer} (${fmt(row.top_scorer_goals)})`:'N/D'}</td>

@@ -9,6 +9,20 @@ const technicalStaff=readJson<any>('data/technical-staff.json');
 
 export function getClubHistory(){return clubHistory;}
 
+export function getSeasonTechnicalContext(season:string){
+  const managerTerms=technicalStaff.coachTerms
+    .filter((term:any)=>term.seasons.includes(season))
+    .map((term:any)=>({
+      name:term.coach,
+      from:term.startDate??null,
+      to:term.endDate??null,
+      precision:term.startDate&&term.endDate?'exact':'season-only',
+      sourceUrl:term.sourceUrl??null,
+    }));
+  const staff=technicalStaff.staffTerms.find((term:any)=>term.season===season)??null;
+  return {managerTerms,staff};
+}
+
 export function getTechnicalArchive(){
   const terms=technicalStaff.coachTerms.map((term:any)=>{
     const matches=db.prepare(`SELECT m.id,m.home_score,m.away_score,m.home_team,m.away_team

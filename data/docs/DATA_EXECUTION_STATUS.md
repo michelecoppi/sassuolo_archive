@@ -1,6 +1,14 @@
 # Stato di esecuzione del piano dati
 
-Aggiornamento: 10 agosto 2026, dopo l'import della classifica Serie A 2021/22.
+Aggiornamento: 11 agosto 2026, dopo la preparazione della prima tranche di contesto stagionale.
+
+## Contesto stagionale generale — tranche 2024/25
+
+È registrato il candidato `season-context-serie-b-2024-25`, limitato a una stagione e una competizione. Contiene Domenico Berardi come capitano della Serie B 2024/25, attestato dalla Lega Serie B e verificato sul sito ufficiale del club. Lo staff tecnico 2024/25 è stato aggiunto all'archivio strutturato e viene ora mostrato nella scheda stagione insieme agli intervalli degli allenatori già presenti.
+
+Il candidato è `reconciled` ma non importato: deve passare da anteprima e approvazione esplicita nel Data Manager, quindi backup, import e audit. L'importatore ora accetta `captain` e preserva con `COALESCE` tutte le statistiche non incluse nella tranche.
+
+Per la Coppa Italia, il dataset OpenFootball verificato copre le edizioni dal 2013/14 in avanti; il repository locale usa già 2020/21–2025/26. La prossima tranche consigliata è quindi **Coppa Italia 2013/14**, una sola edizione, mentre 2008/09–2012/13 richiedono una fonte storica diversa e una riconciliazione separata.
 
 ## Allineamento piattaforma P0 — 11 agosto 2026
 
@@ -67,7 +75,7 @@ Conteggi principali al checkpoint: 726 partite, 469 giocatori, 808 PlayerSeason,
 - Le 14 classifiche della tranche 2008/09–2021/22 sono complete.
 - Le cinque stagioni di Serie B 2008/09–2012/13 hanno 42/42 partite e PlayerSeason riconciliate, ma non hanno ancora dettagli partita strutturati.
 - Le stagioni Serie A 2013/14–2021/22 hanno 38/38 partite e classifica completa, ma dettagli, formazioni e statistiche partita sono quasi interamente assenti.
-- Le competizioni di Coppa Italia precedenti al 2020/21 restano da ricercare/importare in modo sistematico.
+- Le competizioni di Coppa Italia 2013/14–2019/20 possono essere preparate una per volta dal dataset OpenFootball; le edizioni 2008/09–2012/13 richiedono una fonte storica alternativa e restano da ricercare/importare sistematicamente.
 - Le 837 righe trasferimenti sono presenti, ma la provenienza puntuale resta da migliorare.
 - Non trasformare valori sconosciuti in zero: `N/D` deve restare `NULL` finché non esiste una fonte verificabile.
 

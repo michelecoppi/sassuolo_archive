@@ -23,6 +23,10 @@ const i=(value:unknown)=>{const valueNumber=n(value);return valueNumber==null||!
 const text=(value:unknown)=>value==null||String(value).trim()===''?null:String(value).trim();
 const isSassuolo=(team:unknown)=>/sassuolo/i.test(String(team??''));
 const roundNumber=(round:unknown)=>{const match=String(round??'').match(/\d+/);return match?Number(match[0]):null;};
+const safeProviderError=(value:unknown)=>value==null?null:String(value)
+  .replace(/((?:api[_-]?key|token|authorization)=)[^&\s]+/gi,'$1[redacted]')
+  .replace(/\bBearer\s+[^\s,;]+/gi,'Bearer [redacted]')
+  .slice(0,300);
 
 function matchState(match:any, today:string) {
   const hasResult=match.home_score!=null&&match.away_score!=null;
@@ -65,6 +69,35 @@ export function getCurrentSeasonDashboard() {
   });
   const lastUpdated=[...matches].filter(match=>match.last_verified_at||match.home_score!=null).sort((a,b)=>String(b.last_verified_at??b.date).localeCompare(String(a.last_verified_at??a.date)))[0]??null;
   const nextAction=matches.find(match=>match.state==='to_complete'||match.state==='invalid')??matches.find(match=>match.state==='scheduled')??null;
+  const completedMatches=matches.filter(match=>match.home_score!=null&&match.away_score!=null&&String(match.date).slice(0,10)<=today).sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  const upcomingMatches=matches.filter(match=>match.home_score==null&&match.away_score==null&&String(match.date).slice(0,10)>today).sort((a,b)=>String(a.date).localeCompare(String(b.date)));
+  const form=[...completedMatches].slice(0,5).reverse().map(match=>{
+    const home=isSassuolo(match.home_team);
+    const goalsFor=home?match.home_score:match.away_score;
+    const goalsAgainst=home?match.away_score:match.home_score;
+    return {matchId:match.id,date:match.date,opponent:home?match.away_team:match.home_team,result:goalsFor>goalsAgainst?'W':goalsFor===goalsAgainst?'D':'L',goalsFor,goalsAgainst};
+  });
+  const standings=db.prepare(`SELECT * FROM season_standings WHERE season=? ORDER BY competition,group_name,rank`).all(season) as any[];
+  const squad=db.prepare(`SELECT p.id,p.name,p.position,p.shirt_number,p.photo_url,p.injured,p.source_provider,p.last_verified_at,
+      MAX(ps.appearances) AS appearances,MAX(ps.goals) AS goals,MAX(ps.assists) AS assists
+    FROM players p LEFT JOIN player_seasons ps ON ps.player_id=p.id AND ps.season=?
+    WHERE p.current_squad=1 GROUP BY p.id ORDER BY CASE p.position WHEN 'Goalkeeper' THEN 1 WHEN 'Defender' THEN 2 WHEN 'Midfielder' THEN 3 WHEN 'Attacker' THEN 4 ELSE 5 END,p.shirt_number,p.name`).all(season) as any[];
+  const nextMatch=upcomingMatches[0]??null;
+  const injuryRows=nextMatch?db.prepare(`SELECT mi.player_id,mi.player_name,mi.type,mi.reason,mi.start_date,mi.end_date,mi.source_provider
+      FROM match_injuries mi WHERE mi.match_id=? AND lower(mi.team_name) LIKE '%sassuolo%' ORDER BY mi.player_name`).all(nextMatch.id) as any[]:[];
+  const absenceByPlayer=new Map<string,any>();
+  for(const player of squad.filter(player=>player.injured))absenceByPlayer.set(`player:${player.id}`,{playerId:player.id,playerName:player.name,kind:'injury',reason:'Segnalato indisponibile nella rosa',sourceProvider:player.source_provider});
+  for(const absence of injuryRows){
+    const suspended=/suspend|squal|card/i.test(`${absence.type??''} ${absence.reason??''}`);
+    absenceByPlayer.set(absence.player_id?`player:${absence.player_id}`:`name:${String(absence.player_name).toLowerCase()}`,{playerId:absence.player_id??null,playerName:absence.player_name,kind:suspended?'suspension':'injury',reason:absence.reason??absence.type??null,startDate:absence.start_date??null,endDate:absence.end_date??null,sourceProvider:absence.source_provider});
+  }
+  const providerRows=db.prepare(`SELECT provider,resource,last_request,last_successful_sync,last_error FROM sync_state WHERE provider IN ('api-football','kickoff','football-data','thesportsdb') ORDER BY provider,resource`).all() as any[];
+  const latestRuns=db.prepare(`SELECT id,source_provider,status,started_at,finished_at,error_text FROM import_runs WHERE kind='provider_sync' AND area='current-season' ORDER BY id DESC LIMIT 8`).all() as any[];
+  const freshness={
+    lastSyncAt:[...providerRows.map(row=>row.last_successful_sync),...latestRuns.filter(row=>row.status==='succeeded'||row.status==='partial').map(row=>row.finished_at)].filter(Boolean).sort().at(-1)??null,
+    providers:providerRows.map(row=>({provider:row.provider,resource:row.resource,lastRequest:row.last_request,lastSuccess:row.last_successful_sync,lastError:safeProviderError(row.last_error)})),
+    recentRuns:latestRuns.map(row=>({id:row.id,provider:row.source_provider,status:row.status,startedAt:row.started_at,finishedAt:row.finished_at,error:safeProviderError(row.error_text)})),
+  };
   const opponents=db.prepare(`SELECT name,MAX(stadium) AS stadium FROM (
       SELECT CASE WHEN lower(home_team) LIKE '%sassuolo%' THEN away_team ELSE home_team END AS name,
         CASE WHEN lower(home_team) LIKE '%sassuolo%' THEN NULL ELSE stadium END AS stadium
@@ -73,6 +106,7 @@ export function getCurrentSeasonDashboard() {
   const stadiums=db.prepare(`SELECT stadium AS name,COUNT(*) AS uses FROM matches WHERE stadium IS NOT NULL AND trim(stadium)<>'' GROUP BY lower(stadium) ORDER BY uses DESC,name LIMIT 100`).all();
   const referees=db.prepare(`SELECT referee AS name,COUNT(*) AS uses FROM matches WHERE referee IS NOT NULL AND trim(referee)<>'' GROUP BY lower(referee) ORDER BY uses DESC,name LIMIT 100`).all();
   return {season,displaySeason:season,generatedAt:nowIso(),today,competitions,matches:[...matches].reverse(),lastUpdated,nextAction,
+    latestResult:completedMatches[0]??null,nextMatch,form,standings,squad,absences:[...absenceByPlayer.values()],freshness,
     totals:{inserted:matches.length,completed:matches.filter(match=>match.home_score!=null&&match.away_score!=null).length,scheduled:matches.filter(match=>match.state==='scheduled').length,toComplete:matches.filter(match=>match.state==='to_complete'||match.state==='invalid').length,incomplete:matches.filter(match=>match.state==='incomplete'||match.state==='invalid').length},
     suggestions:{opponents,stadiums,referees,competitions:names.length?names:['Serie A','Coppa Italia']}};
 }

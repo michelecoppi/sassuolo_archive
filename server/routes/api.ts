@@ -16,11 +16,14 @@ import { currentSeason, getCurrentSeasonDashboard, saveCurrentMatch, validateCur
 import { getCoverageMatrix } from '../services/coverage.js';
 import { getOperationalStatus } from '../services/operations.js';
 import { HALL_OF_FAME_DEFINITIONS, RECORD_DEFINITIONS } from '../services/statDefinitions.js';
-import { getClubHistory, getTechnicalArchive } from '../services/clubArchive.js';
+import { getClubHistory, getSeasonTechnicalContext, getTechnicalArchive } from '../services/clubArchive.js';
 
 type CupMetadata={exit:string;topScorer:string|null;topScorerGoals:number};
 const cupMetadataPath=path.resolve('data/cup-brackets/coppa-italia-sassuolo-metadata.json');
 const cupMetadata:Record<string,CupMetadata>=fs.existsSync(cupMetadataPath)?JSON.parse(fs.readFileSync(cupMetadataPath,'utf8')):{};
+const competitionProfilesDir=path.resolve('data/competition-profiles');
+const competitionProfiles:any[]=fs.existsSync(competitionProfilesDir)?fs.readdirSync(competitionProfilesDir).filter(file=>file.endsWith('.json')).map(file=>JSON.parse(fs.readFileSync(path.join(competitionProfilesDir,file),'utf8'))):[];
+const competitionProfileFor=(season:string,competition:string)=>competitionProfiles.find(profile=>profile.season===season&&profile.competition===competition)??null;
 
 function parseCsv(text:string) {
   const lines=text.replace(/^\uFEFF/,'').split(/\r?\n/).filter(Boolean);
@@ -68,6 +71,7 @@ async function trackedProviderRun(scope: { provider: string; area: string; seaso
       status: Array.isArray(result?.errors) && result.errors.length ? 'partial' : 'succeeded',
       startedAt: started, finishedAt: nowIso(),
       recordsSeen: Number(result?.matches ?? result?.stored ?? result?.requests ?? 0),
+      error: Array.isArray(result?.errors) && result.errors.length ? result.errors.join(' · ') : null,
       notes: `Sincronizzazione ${scope.provider} registrata dal Data Manager`,
     });
     return { ...result, importRunId: runId };
@@ -110,9 +114,10 @@ api.get('/seasons', (_req,res)=>{
     (SELECT ps.goals FROM player_seasons ps WHERE ps.season=s.season AND ps.competition=s.competition AND ps.goals IS NOT NULL ORDER BY ps.goals DESC,ps.minutes ASC LIMIT 1) AS top_scorer_goals
   FROM seasons s ORDER BY substr(s.season,1,4) DESC`).all() as any[];
   res.json(rows.map(row=>{
-    if(!/^Coppa Italia$/i.test(row.competition))return row;
+    const competitionProfile=competitionProfileFor(row.season,row.competition);
+    if(!/^Coppa Italia$/i.test(row.competition))return {...row,competition_result:competitionProfile?.result??null};
     const meta=cupMetadata[row.season];
-    return {...row,cup_exit:meta?.exit??null,top_scorer:row.top_scorer??meta?.topScorer??null,top_scorer_goals:row.top_scorer_goals??meta?.topScorerGoals??null};
+    return {...row,cup_exit:meta?.exit??null,competition_result:meta?.exit??null,top_scorer:row.top_scorer??meta?.topScorer??null,top_scorer_goals:row.top_scorer_goals??meta?.topScorerGoals??null};
   }));
 });
 api.get('/seasons/:season', (req,res)=>{
@@ -126,6 +131,8 @@ api.get('/seasons/:season', (req,res)=>{
   const competition=season?.competition;
   const coverage=coverageRows.find(row=>row.competition===competition)??null;
   const isCup=/^Coppa Italia$/i.test(competition??'');
+  const isEuropa=/^Europa League$/i.test(competition??'');
+  const competitionProfile=competition?competitionProfileFor(req.params.season,competition):null;
   const matches=competition?db.prepare(`SELECT m.*,
     CASE WHEN EXISTS (SELECT 1 FROM match_events e WHERE e.match_id=m.id)
            OR EXISTS (SELECT 1 FROM match_lineups l WHERE l.match_id=m.id)
@@ -153,7 +160,8 @@ api.get('/seasons/:season', (req,res)=>{
     ? `SELECT COUNT(*) AS in_squad, SUM(CASE WHEN appearances IS NOT NULL AND appearances > 0 THEN 1 ELSE 0 END) AS played FROM player_seasons WHERE season=? AND competition IN ('Serie A','Serie B')`
     : `SELECT COUNT(*) AS in_squad, SUM(CASE WHEN appearances IS NOT NULL AND appearances > 0 THEN 1 ELSE 0 END) AS played FROM player_seasons WHERE season=? AND competition=?`
   ).get(req.params.season,...(isCup?[]:[competition])):{in_squad:0,played:0};
-  const managerTerms=String(season?.manager??'').split('/').map((name:string)=>name.trim()).filter(Boolean).map((name:string)=>({name,from:null,to:null,precision:'season-only'}));
+  const technicalContext=getSeasonTechnicalContext(req.params.season);
+  const managerTerms=technicalContext.managerTerms.length?technicalContext.managerTerms:String(season?.manager??'').split('/').map((name:string)=>name.trim()).filter(Boolean).map((name:string)=>({name,from:null,to:null,precision:'season-only'}));
   const sourceBreakdown=competition?db.prepare(`SELECT provider,COUNT(*) AS records,MAX(verified_at) AS last_verified_at FROM (
       SELECT source_provider AS provider,last_verified_at AS verified_at FROM seasons WHERE season=? AND competition=? AND source_provider IS NOT NULL
       UNION ALL SELECT source_provider,last_verified_at FROM matches WHERE season=? AND competition=? AND source_provider IS NOT NULL
@@ -162,15 +170,16 @@ api.get('/seasons/:season', (req,res)=>{
   const gaps:Array<{field:string;label:string;reason:string}>=[];
   const inProgress=req.params.season===getSetting('current_season');
   const addGap=(field:string,label:string,reason:string)=>gaps.push({field,label,reason});
-  if(!season?.manager)addGap('manager','Allenatore','Nessun allenatore è collegato a questa competizione con una fonte verificabile.');
+  if(!managerTerms.length)addGap('manager','Allenatore','Nessun allenatore è collegato a questa competizione con una fonte verificabile.');
   else if(managerTerms.some((term:any)=>!term.from||!term.to))addGap('manager_terms','Intervalli allenatori','I nomi sono disponibili, ma le date di inizio e fine incarico non sono documentate: non vengono dedotte dalle sole presenze.');
   if(!season?.stadium)addGap('stadium','Stadio','Lo stadio non è disponibile nel riepilogo verificato della competizione.');
   if(!captain)addGap('captain','Capitano','Il dataset non identifica un capitano stagionale verificato.');
+  if(!technicalContext.staff)addGap('technical_staff','Staff tecnico','Non è disponibile un elenco stagionale dello staff tecnico con fonte verificabile.');
   if(!squad.length)addGap('squad','Rosa','Nessuna appartenenza PlayerSeason è disponibile per questa competizione.');
   else if(Number((squadCoverage as any)?.played??0)<Number((squadCoverage as any)?.in_squad??0))addGap('squad_stats','Statistiche rosa',`${Number((squadCoverage as any).in_squad)-Number((squadCoverage as any).played??0)} giocatori risultano in rosa senza presenze attestate.`);
   if(!topScorer)addGap('top_scorer','Capocannoniere','Non esistono statistiche gol sufficienti per determinare il capocannoniere.');
-  if(!isCup&&!standings.length)addGap('standings','Classifica','La classifica completa non è presente e non viene ricostruita dalle sole partite del Sassuolo.');
-  if(!isCup&&season?.final_position==null)addGap('final_position','Piazzamento',inProgress?'Stagione in corso: il piazzamento finale non è ancora applicabile.':'Il piazzamento finale non è disponibile da una fonte verificata.');
+  if(!isCup&&!isEuropa&&!standings.length)addGap('standings','Classifica','La classifica completa non è presente e non viene ricostruita dalle sole partite del Sassuolo.');
+  if(!isCup&&!isEuropa&&season?.final_position==null)addGap('final_position','Piazzamento',inProgress?'Stagione in corso: il piazzamento finale non è ancora applicabile.':'Il piazzamento finale non è disponibile da una fonte verificata.');
   if(!isCup&&season?.points==null)addGap('points','Punti',inProgress?'Stagione in corso: il totale finale non è ancora applicabile.':'Il totale punti non è disponibile da una fonte verificata.');
   if(!sourceBreakdown.length)addGap('sources','Fonti','Non risultano riferimenti di provenienza per questa competizione.');
   const reliability=coverage?.status==='complete'
@@ -178,7 +187,7 @@ api.get('/seasons/:season', (req,res)=>{
     : coverage?.status==='partial'
       ? {level:'partial',label:'Parziale',reason:'Sono presenti dati verificabili, ma almeno un blocco richiesto è incompleto.'}
       : {level:'unknown',label:'Non valutabile',reason:'Il perimetro è dichiarato, ma i record disponibili non bastano per misurare la copertura.'};
-  res.json({season:season??null,competitions,matches,bracket:isCup?coppaItaliaBracket(req.params.season,matches):[],squad,squadCoverage,standings,teamStats,transfers,topScorer:topScorer??null,topAssists:topAssists??null,profile:{coverage,reliability,managerTerms,captain,gaps,sourceBreakdown}});
+  res.json({season:season??null,competitions,matches,bracket:isCup?coppaItaliaBracket(req.params.season,matches):[],competitionProfile,squad,squadCoverage,standings,teamStats,transfers,topScorer:topScorer??null,topAssists:topAssists??null,profile:{coverage,reliability,managerTerms,staff:technicalContext.staff,captain,gaps,sourceBreakdown}});
 });
 api.get('/matches', (req,res)=>{
   const q=req.query as Record<string,string|undefined>; const where:string[]=[]; const params:any[]=[];
@@ -459,6 +468,7 @@ api.get('/data/candidates/:id', (req,res)=>{
     }
     const workflowIssues:any[]=[];
     if(manifest.validation?.status!=='reconciled')workflowIssues.push({row:0,field:null,code:'candidate_not_reconciled',message:`Validazione manifest: ${manifest.validation?.status??'N/D'}`,critical:true});
+    if(preview&&manifest.sha256&&String(manifest.sha256).toLowerCase()!==String(preview.checksum).toLowerCase())workflowIssues.push({row:0,field:null,code:'checksum_mismatch',message:'Il checksum del manifest non corrisponde al file dati',critical:true});
     if(preview&&workflowIssues.length)preview={...preview,issues:[...workflowIssues,...preview.issues],errors:preview.errors+workflowIssues.length,canApply:false};
     res.json({candidate,manifest,headers:parsed.headers,rows:parsed.rows,preview});
   }catch(e){res.status(400).json({error:String(e)});}
@@ -472,11 +482,11 @@ api.put('/data/candidates/:id/rows/:rowIndex', (req,res)=>{
     const parsed=parseCsv(fs.readFileSync(dataPath,'utf8')), index=Number(req.params.rowIndex), changes=req.body?.changes??{};
     if(!Number.isInteger(index)||index<0||index>=parsed.rows.length)return res.status(400).json({error:'Riga candidato non valida'});
     const before={...parsed.rows[index]};
-    const allowed=new Set(['player_name','position','appearances','starts','minutes','goals','assists','yellow_cards','red_cards','match_date','home_team','away_team','stadium','referee','source_url','last_verified_at']);
+    const allowed=new Set(['player_name','position','appearances','starts','minutes','goals','assists','yellow_cards','red_cards','captain','match_date','home_team','away_team','stadium','referee','source_url','last_verified_at']);
     for(const [field,value] of Object.entries(changes)){
       if(!allowed.has(field))continue;
       if(['match_date','home_team','away_team','stadium','referee','player_name'].includes(field)&&String(value??'').trim()==='')return res.status(400).json({error:`Il campo ${field} non può essere vuoto`});
-      if(['appearances','starts','minutes','goals','assists','yellow_cards','red_cards'].includes(field)&&value!==null&&value!==''&&(!Number.isInteger(Number(value))||Number(value)<0))return res.status(400).json({error:`Valore non valido per ${field}`});
+      if(['appearances','starts','minutes','goals','assists','yellow_cards','red_cards','captain'].includes(field)&&value!==null&&value!==''&&(!Number.isInteger(Number(value))||Number(value)<0||field==='captain'&&Number(value)>1))return res.status(400).json({error:`Valore non valido per ${field}`});
       parsed.rows[index][field]=value==null?'':String(value);
     }
     const row=parsed.rows[index];
@@ -587,16 +597,18 @@ api.post('/data/candidates/:id/import', (req,res)=>{
     const dir=candidateDir(candidate.candidate_path),parsed=parseCsv(fs.readFileSync(path.join(dir,'data.csv'),'utf8'));
     const backup=createBackupSnapshot(`before-candidate-${candidate.id}-import`);
     let created=0,updated=0;
-    const savePlayer=db.prepare(`INSERT INTO players(name,position,source_provider,source_url,last_verified_at) VALUES(?,?,?,?,?) ON CONFLICT(name) DO UPDATE SET position=COALESCE(excluded.position,players.position),source_url=COALESCE(excluded.source_url,players.source_url),last_verified_at=excluded.last_verified_at`);
+    const savePlayer=db.prepare(`INSERT INTO players(name,position,source_provider,source_url,last_verified_at) VALUES(?,?,?,?,?) ON CONFLICT(name) DO UPDATE SET position=COALESCE(excluded.position,players.position),source_url=COALESCE(players.source_url,excluded.source_url),last_verified_at=excluded.last_verified_at`);
     const findPlayer=db.prepare(`SELECT id FROM players WHERE lower(trim(name))=lower(trim(?)) LIMIT 1`);
-    const saveSeason=db.prepare(`INSERT INTO player_seasons(player_id,season,competition,appearances,starts,minutes,goals,assists,yellow_cards,yellow_red_cards,red_cards,source_provider,source_url,last_verified_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(player_id,season,competition) DO UPDATE SET appearances=excluded.appearances,starts=excluded.starts,minutes=excluded.minutes,goals=excluded.goals,assists=excluded.assists,yellow_cards=excluded.yellow_cards,yellow_red_cards=excluded.yellow_red_cards,red_cards=excluded.red_cards,source_provider=excluded.source_provider,source_url=excluded.source_url,last_verified_at=excluded.last_verified_at`);
+    const saveSeason=db.prepare(`INSERT INTO player_seasons(player_id,season,competition,appearances,starts,minutes,goals,assists,yellow_cards,yellow_red_cards,red_cards,captain,source_provider,source_url,last_verified_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(player_id,season,competition) DO UPDATE SET appearances=COALESCE(excluded.appearances,player_seasons.appearances),starts=COALESCE(excluded.starts,player_seasons.starts),minutes=COALESCE(excluded.minutes,player_seasons.minutes),goals=COALESCE(excluded.goals,player_seasons.goals),assists=COALESCE(excluded.assists,player_seasons.assists),yellow_cards=COALESCE(excluded.yellow_cards,player_seasons.yellow_cards),yellow_red_cards=COALESCE(excluded.yellow_red_cards,player_seasons.yellow_red_cards),red_cards=COALESCE(excluded.red_cards,player_seasons.red_cards),captain=COALESCE(excluded.captain,player_seasons.captain),source_provider=COALESCE(player_seasons.source_provider,excluded.source_provider),source_url=COALESCE(player_seasons.source_url,excluded.source_url),last_verified_at=excluded.last_verified_at`);
     db.transaction(()=>{for(const row of parsed.rows){
       if(!row.player_name||!row.season||!row.competition)continue;
       savePlayer.run(row.player_name,row.position||null,row.source_provider||candidate.source_provider||'candidate',row.source_url||candidate.source_url||null,row.last_verified_at||nowIso());
       let player=findPlayer.get(row.player_name) as {id:number}|undefined;
       if(!player)throw new Error(`Impossibile collegare ${row.player_name}`);
       const before=db.prepare(`SELECT id FROM player_seasons WHERE player_id=? AND season=? AND competition=?`).get(player.id,row.season,row.competition) as {id:number}|undefined;
-      saveSeason.run(player.id,row.season,row.competition,...(['appearances','starts','minutes','goals','assists','yellow_cards','yellow_red_cards','red_cards'].map(field=>row[field]===''||row[field]===undefined?null:Number(row[field]))),row.source_provider||candidate.source_provider||'candidate',row.source_url||candidate.source_url||null,row.last_verified_at||nowIso());
+      saveSeason.run(player.id,row.season,row.competition,...(['appearances','starts','minutes','goals','assists','yellow_cards','yellow_red_cards','red_cards','captain'].map(field=>row[field]===''||row[field]===undefined?null:Number(row[field]))),row.source_provider||candidate.source_provider||'candidate',row.source_url||candidate.source_url||null,row.last_verified_at||nowIso());
+      const savedSeason=db.prepare(`SELECT id FROM player_seasons WHERE player_id=? AND season=? AND competition=?`).get(player.id,row.season,row.competition) as {id:number};
+      if(row.captain!==''&&row.captain!==undefined)recordSourceReference({entityType:'player_seasons',entityId:savedSeason.id,field:'captain',sourceUrl:row.source_url||candidate.source_url||undefined,sourceProvider:row.source_provider||candidate.source_provider||'candidate',originalValue:row.captain,transformation:'candidate-import:season-context',verifiedAt:row.last_verified_at||nowIso()});
       if(before)updated++;else created++;
     }} )();
     const runId=recordImportRun({kind:'candidate_import',sourceProvider:candidate.source_provider,area:candidate.area,season:candidate.season,competition:candidate.competition,candidatePath:candidate.candidate_path,manifestSha256:candidate.manifest_sha256,status:'succeeded',startedAt:started,finishedAt:nowIso(),recordsSeen:parsed.rows.length,recordsCreated:created,recordsUpdated:updated,backupId:backup.id,notes:'Import candidato approvato dal Data Manager'});
@@ -783,7 +795,19 @@ api.post('/update/smart', async(_req,res)=>{try{res.json({ok:true,results:await 
 api.post('/update/matches', async(_req,res)=>res.json({ok:true,result:kickoffStatus().configured?await syncKickoffCurrent(false):await syncMatches()}));
 api.post('/update/squad', async(_req,res)=>res.json({ok:true,result:await syncSquad()}));
 api.post('/update/news', async(_req,res)=>res.json({ok:true,result:await syncNews()}));
-api.post('/update/current-season', async(_req,res)=>res.json({ok:true,results:{matches:kickoffStatus().configured?await syncKickoffCurrent(false):await syncMatches(),apiFootball:apiFootballStatus().configured?await syncApiFootballCurrent():null,squad:apiFootballStatus().configured?null:await syncSquad()}}));
+api.post('/update/current-season', async(_req,res)=>{
+  const season=currentSeason();
+  const tasks=[
+    {key:'matches',provider:kickoffStatus().configured?'kickoff':'football-data',run:()=>kickoffStatus().configured?syncKickoffCurrent(false):syncMatches()},
+    {key:apiFootballStatus().configured?'apiFootball':'squad',provider:apiFootballStatus().configured?'api-football':'thesportsdb',run:()=>apiFootballStatus().configured?syncApiFootballCurrent():syncSquad()},
+  ];
+  const results:Record<string,unknown>={};const errors:string[]=[];
+  for(const task of tasks){
+    try{results[task.key]=await trackedProviderRun({provider:task.provider,area:'current-season',season},task.run);}
+    catch(error){const message=String(error).replace(/^Error:\s*/,'');results[task.key]={errors:[message]};errors.push(`${task.provider}: ${message}`);}
+  }
+  res.status(errors.length?207:200).json({ok:errors.length===0,results,errors});
+});
 api.post('/update/enrich', async(_req,res)=>res.json({ok:true,results:{apiFootball:apiFootballStatus().configured?await syncApiFootballCurrent():null,squad:apiFootballStatus().configured?null:await syncSquad(),news:await syncNews()}}));
 api.post('/update/force', async(_req,res)=>res.json({ok:true,results:await smartUpdate()}));
 

@@ -35,7 +35,8 @@
     "matches:dedupe:apply": "tsx scripts/dedupe-football-data-matches.ts --apply",
     "matches:clean-api-football": "tsx scripts/clean-api-football-matches.ts",
     "matches:clean-bigballs": "tsx scripts/clean-bigballs-matches.ts",
-    "matches:clean-bigballs:dry": "tsx scripts/clean-bigballs-matches.ts --dry-run"
+    "matches:clean-bigballs:dry": "tsx scripts/clean-bigballs-matches.ts --dry-run",
+    "data:correct-europa-2016-17": "tsx scripts/correct-europa-league-2016-17.ts"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",

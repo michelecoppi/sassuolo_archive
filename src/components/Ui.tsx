@@ -2,8 +2,24 @@ import type { ReactNode } from 'react';
 import { Database, ExternalLink, Inbox, Sparkles, TableProperties, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-export function PageTitle({title,subtitle,action,eyebrow='Sassuolo History'}:{title:string;subtitle?:string;action?:ReactNode;eyebrow?:string}){
-  return <div className="relative mb-6 overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-br from-zinc-900 via-zinc-900 to-neroverde-900/40 px-5 py-6 shadow-panel md:px-7 md:py-7"><div className="pointer-events-none absolute -right-8 -top-10 h-40 w-40 rounded-full bg-neroverde-400/10 blur-3xl"/><div className="relative flex flex-col gap-4 md:flex-row md:items-end md:justify-between"><div><div className="mb-2 flex items-center gap-2 text-[11px] font-black uppercase tracking-[.18em] text-neroverde-300"><Sparkles className="h-3.5 w-3.5"/>{eyebrow}</div><h1 className="text-3xl font-black tracking-tight text-white md:text-4xl">{title}</h1>{subtitle&&<p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">{subtitle}</p>}</div>{action}</div></div>;
+export type PageTone='green'|'sky'|'amber'|'violet';
+const pageToneClasses:Record<PageTone,{panel:string;glow:string;eyebrow:string}>={
+  green:{panel:'from-zinc-900 via-zinc-900 to-emerald-950/70',glow:'bg-emerald-400/15',eyebrow:'text-emerald-300'},
+  sky:{panel:'from-zinc-900 via-sky-950/45 to-cyan-950/70',glow:'bg-sky-400/20',eyebrow:'text-sky-300'},
+  amber:{panel:'from-zinc-900 via-red-950/35 to-amber-950/65',glow:'bg-amber-400/20',eyebrow:'text-amber-300'},
+  violet:{panel:'from-zinc-900 via-violet-950/45 to-orange-950/55',glow:'bg-orange-400/20',eyebrow:'text-orange-300'},
+};
+export function competitionTone(competition?:string|null):PageTone{
+  const value=competition??'';
+  if(/serie b/i.test(value))return 'sky';
+  if(/coppa italia/i.test(value))return 'amber';
+  if(/europa|conference|champions/i.test(value))return 'violet';
+  return 'green';
+}
+export function PageTitle({title,subtitle,action,eyebrow='Sassuolo History',tone='green'}:{title:string;subtitle?:string;action?:ReactNode;eyebrow?:string;tone?:PageTone}){
+  const resolvedTone=tone==='green'?competitionTone(subtitle):tone;
+  const colors=pageToneClasses[resolvedTone];
+  return <div className={`relative mb-6 overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-br ${colors.panel} px-5 py-6 shadow-panel md:px-7 md:py-7`}><div className={`pointer-events-none absolute -right-8 -top-10 h-40 w-40 rounded-full ${colors.glow} blur-3xl`}/><div className="relative flex flex-col gap-4 md:flex-row md:items-end md:justify-between"><div><div className={`mb-2 flex items-center gap-2 text-[11px] font-black uppercase tracking-[.18em] ${colors.eyebrow}`}><Sparkles className="h-3.5 w-3.5"/>{eyebrow}</div><h1 className="text-3xl font-black tracking-tight text-white md:text-4xl">{title}</h1>{subtitle&&<p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">{subtitle}</p>}</div>{action}</div></div>;
 }
 export function Breadcrumb({items}:{items:{label:string;to?:string}[]}){return <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-2 text-xs font-medium text-zinc-500">{items.map((item,index)=><span className="flex items-center gap-2" key={`${item.label}-${index}`}>{index>0&&<span aria-hidden="true">/</span>}{item.to?<Link className="hover:text-neroverde-300" to={item.to}>{item.label}</Link>:<span className="text-zinc-300">{item.label}</span>}</span>)}</nav>}
 
