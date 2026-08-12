@@ -1,0 +1,59 @@
+{
+  "package_type": "historical_matches",
+  "area": "matches",
+  "season": "2009/10",
+  "competition": "Serie B playoff",
+  "source_provider": "Toro.it + Toro News + Sky + Sassuolo 2000 + Sassuolo Calcio",
+  "source_url": "https://www.toro.it/archivio/7144-2-giugno-2010-la-mancata-liberazione-granata/10238/",
+  "verified_at": "2026-08-12",
+  "file": "data.csv",
+  "sha256": "0d4effde01c0f93473be354b172d81f156ae54e663a92627538eb2614d369f30",
+  "records_total": 2,
+  "records_discarded": 0,
+  "fields_covered": [
+    "date",
+    "season",
+    "competition",
+    "round",
+    "home_team",
+    "away_team",
+    "home_score",
+    "away_score",
+    "halftime_score",
+    "scorers",
+    "cards",
+    "stadium",
+    "attendance",
+    "referee",
+    "corners_home",
+    "corners_away",
+    "source_url"
+  ],
+  "validation": {
+    "status": "reconciled",
+    "checks": [
+      {
+        "name": "single_scope",
+        "status": "passed"
+      },
+      {
+        "name": "complete_fixture_set",
+        "status": "passed"
+      },
+      {
+        "name": "two_independent_sources_per_match",
+        "status": "passed"
+      },
+      {
+        "name": "lineups_available_for_followup",
+        "status": "passed"
+      }
+    ],
+    "unresolved_conflicts": []
+  },
+  "notes": [
+    "Due semifinali separate dalla regular season.",
+    "Pacchetto candidato: richiede preview e approvazione prima dell'import.",
+    "Approvato dal Data Manager dopo revisione manuale."
+  ]
+}

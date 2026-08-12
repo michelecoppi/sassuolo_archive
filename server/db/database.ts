@@ -82,6 +82,39 @@ const schemaMigrations: SchemaMigration[] = [
       'movement_type TEXT', 'session TEXT', 'fee_amount REAL', 'fee_currency TEXT', 'fee_display TEXT'
     ]) ensureColumn('transfers', definition);
   } },
+  { version: 8, name: 'match-special-events', apply: () => {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS match_special_events (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        match_id INTEGER NOT NULL REFERENCES matches(id) ON DELETE CASCADE,
+        event_type TEXT NOT NULL CHECK(event_type IN ('POSTPONED','KICKOFF_DELAYED','SUSPENDED','RESUMED','ABANDONED','CANCELLED','AWARDED','DATE_CHANGED','VENUE_CHANGED','OTHER')),
+        effective_at TEXT NOT NULL,
+        match_minute INTEGER CHECK(match_minute IS NULL OR match_minute BETWEEN 0 AND 130),
+        remaining_minutes INTEGER CHECK(remaining_minutes IS NULL OR remaining_minutes BETWEEN 0 AND 130),
+        home_score INTEGER CHECK(home_score IS NULL OR home_score >= 0),
+        away_score INTEGER CHECK(away_score IS NULL OR away_score >= 0),
+        reason TEXT,
+        description TEXT NOT NULL,
+        authority TEXT,
+        source_provider TEXT NOT NULL,
+        source_url TEXT NOT NULL,
+        verification_note TEXT,
+        verified_by TEXT,
+        last_verified_at TEXT NOT NULL,
+        UNIQUE(match_id,event_type,effective_at)
+      );
+      CREATE INDEX IF NOT EXISTS idx_match_special_events_match ON match_special_events(match_id,effective_at,id);
+    `);
+    const verifiedAt=nowIso();
+    db.prepare(`INSERT OR IGNORE INTO match_special_events(match_id,event_type,effective_at,match_minute,remaining_minutes,home_score,away_score,reason,description,authority,source_provider,source_url,verification_note,verified_by,last_verified_at)
+      SELECT id,'SUSPENDED','2010-03-05',74,17,0,0,'Fitta nevicata e terreno impraticabile','Gara interrotta al 29'' del secondo tempo sullo 0-0 dopo il sopralluogo dell''arbitro Valeri.','Arbitro Paolo Valeri','Sky Sport','https://sport.sky.it/calcio/2010/03/05/cesena_sassuolo_sospesa_per_neve','Fonte coeva: sospensione, causa, punteggio e momento della gara.','Archivio Sassuolo History',?
+      FROM matches WHERE substr(date,1,10)='2010-03-16' AND lower(home_team) LIKE '%cesena%' AND lower(away_team) LIKE '%sassuolo%' LIMIT 1`).run(verifiedAt);
+    db.prepare(`INSERT OR IGNORE INTO match_special_events(match_id,event_type,effective_at,match_minute,remaining_minutes,home_score,away_score,reason,description,authority,source_provider,source_url,verification_note,verified_by,last_verified_at)
+      SELECT id,'RESUMED','2010-03-16',74,17,0,0,'Prosecuzione della gara sospesa','Disputati i 17 minuti residui; Nicola Donazzan segnò la rete dello 0-1 definitivo.',NULL,'Sassuolo2000','https://www.sassuolo2000.it/2010/03/16/calcio-recupero-cesena-sassuolo-0-1/','Fonte locale coeva: prosecuzione, 17 minuti residui, marcatore e risultato finale.','Archivio Sassuolo History',?
+      FROM matches WHERE substr(date,1,10)='2010-03-16' AND lower(home_team) LIKE '%cesena%' AND lower(away_team) LIKE '%sassuolo%' LIMIT 1`).run(verifiedAt);
+    const seededEvents=db.prepare(`SELECT id,event_type,source_provider,source_url,last_verified_at FROM match_special_events WHERE match_id IN (SELECT id FROM matches WHERE substr(date,1,10)='2010-03-16' AND lower(home_team) LIKE '%cesena%' AND lower(away_team) LIKE '%sassuolo%')`).all() as any[];
+    for(const event of seededEvents)recordSourceReference({entityType:'match_special_event',entityId:event.id,field:null,sourceUrl:event.source_url,note:event.event_type==='SUSPENDED'?'Fonte coeva della sospensione':'Fonte locale coeva della prosecuzione',author:'Archivio Sassuolo History',sourceProvider:event.source_provider,verifiedAt:event.last_verified_at});
+  } },
 ];
 
 function runSchemaMigrations() {
@@ -449,6 +482,28 @@ export function initDb() {
     );
 
     CREATE INDEX IF NOT EXISTS idx_match_events_match ON match_events(match_id, minute, extra_minute);
+
+    CREATE TABLE IF NOT EXISTS match_special_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      match_id INTEGER NOT NULL REFERENCES matches(id) ON DELETE CASCADE,
+      event_type TEXT NOT NULL CHECK(event_type IN ('POSTPONED','KICKOFF_DELAYED','SUSPENDED','RESUMED','ABANDONED','CANCELLED','AWARDED','DATE_CHANGED','VENUE_CHANGED','OTHER')),
+      effective_at TEXT NOT NULL,
+      match_minute INTEGER CHECK(match_minute IS NULL OR match_minute BETWEEN 0 AND 130),
+      remaining_minutes INTEGER CHECK(remaining_minutes IS NULL OR remaining_minutes BETWEEN 0 AND 130),
+      home_score INTEGER CHECK(home_score IS NULL OR home_score >= 0),
+      away_score INTEGER CHECK(away_score IS NULL OR away_score >= 0),
+      reason TEXT,
+      description TEXT NOT NULL,
+      authority TEXT,
+      source_provider TEXT NOT NULL,
+      source_url TEXT NOT NULL,
+      verification_note TEXT,
+      verified_by TEXT,
+      last_verified_at TEXT NOT NULL,
+      UNIQUE(match_id,event_type,effective_at)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_match_special_events_match ON match_special_events(match_id,effective_at,id);
 
     CREATE TABLE IF NOT EXISTS match_lineups (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1022,13 +1077,19 @@ export function initDb() {
     UPDATE players SET position = CASE lower(trim(position))
       WHEN 'g' THEN 'Goalkeeper' WHEN 'gk' THEN 'Goalkeeper' WHEN 'goalkeeper' THEN 'Goalkeeper' WHEN 'goal keeper' THEN 'Goalkeeper' WHEN 'keeper' THEN 'Goalkeeper'
       WHEN 'd' THEN 'Defender' WHEN 'defender' THEN 'Defender' WHEN 'defence' THEN 'Defender' WHEN 'defense' THEN 'Defender'
-      WHEN 'm' THEN 'Midfielder' WHEN 'midfielder' THEN 'Midfielder' WHEN 'midfield' THEN 'Midfielder'
+      WHEN 'm' THEN 'Midfielder' WHEN 'mf' THEN 'Midfielder' WHEN 'midfielder' THEN 'Midfielder' WHEN 'midfield' THEN 'Midfielder'
       WHEN 'f' THEN 'Attacker' WHEN 'fw' THEN 'Attacker' WHEN 'forward' THEN 'Attacker' WHEN 'attacker' THEN 'Attacker' WHEN 'striker' THEN 'Attacker'
       ELSE position END WHERE position IS NOT NULL;
     UPDATE player_seasons SET position = CASE lower(trim(position))
       WHEN 'g' THEN 'Goalkeeper' WHEN 'gk' THEN 'Goalkeeper' WHEN 'goalkeeper' THEN 'Goalkeeper' WHEN 'goal keeper' THEN 'Goalkeeper' WHEN 'keeper' THEN 'Goalkeeper'
       WHEN 'd' THEN 'Defender' WHEN 'defender' THEN 'Defender' WHEN 'defence' THEN 'Defender' WHEN 'defense' THEN 'Defender'
-      WHEN 'm' THEN 'Midfielder' WHEN 'midfielder' THEN 'Midfielder' WHEN 'midfield' THEN 'Midfielder'
+      WHEN 'm' THEN 'Midfielder' WHEN 'mf' THEN 'Midfielder' WHEN 'midfielder' THEN 'Midfielder' WHEN 'midfield' THEN 'Midfielder'
+      WHEN 'f' THEN 'Attacker' WHEN 'fw' THEN 'Attacker' WHEN 'forward' THEN 'Attacker' WHEN 'attacker' THEN 'Attacker' WHEN 'striker' THEN 'Attacker'
+      ELSE position END WHERE position IS NOT NULL;
+    UPDATE match_player_stats SET position = CASE lower(trim(position))
+      WHEN 'g' THEN 'Goalkeeper' WHEN 'gk' THEN 'Goalkeeper' WHEN 'goalkeeper' THEN 'Goalkeeper' WHEN 'goal keeper' THEN 'Goalkeeper' WHEN 'keeper' THEN 'Goalkeeper'
+      WHEN 'd' THEN 'Defender' WHEN 'defender' THEN 'Defender' WHEN 'defence' THEN 'Defender' WHEN 'defense' THEN 'Defender'
+      WHEN 'm' THEN 'Midfielder' WHEN 'mf' THEN 'Midfielder' WHEN 'midfielder' THEN 'Midfielder' WHEN 'midfield' THEN 'Midfielder'
       WHEN 'f' THEN 'Attacker' WHEN 'fw' THEN 'Attacker' WHEN 'forward' THEN 'Attacker' WHEN 'attacker' THEN 'Attacker' WHEN 'striker' THEN 'Attacker'
       ELSE position END WHERE position IS NOT NULL;
   `);
@@ -1079,7 +1140,7 @@ export function normalizeTeamName(name: string) {
 export function normalizePlayerPosition(value: unknown): string | null {
   if (value == null || String(value).trim() === '') return null;
   const key=String(value).trim().toLowerCase();
-  const roles:Record<string,string>={g:'Goalkeeper',gk:'Goalkeeper',goalkeeper:'Goalkeeper','goal keeper':'Goalkeeper',keeper:'Goalkeeper',d:'Defender',defender:'Defender',defence:'Defender',defense:'Defender',m:'Midfielder',midfielder:'Midfielder',midfield:'Midfielder',f:'Attacker',fw:'Attacker',forward:'Attacker',attacker:'Attacker',striker:'Attacker'};
+  const roles:Record<string,string>={g:'Goalkeeper',gk:'Goalkeeper',goalkeeper:'Goalkeeper','goal keeper':'Goalkeeper',keeper:'Goalkeeper',d:'Defender',defender:'Defender',defence:'Defender',defense:'Defender',m:'Midfielder',mf:'Midfielder',midfielder:'Midfielder',midfield:'Midfielder',f:'Attacker',fw:'Attacker',forward:'Attacker',attacker:'Attacker',striker:'Attacker'};
   return roles[key] ?? String(value).trim();
 }
 
@@ -1212,7 +1273,7 @@ export function verifyBackupFile(filePath: string) {
 
 const restorableTables = [
   'teams','team_aliases','seasons','matches','players','player_source_ids','player_seasons',
-  'season_standings','team_season_stats','transfers','match_details','match_events',
+  'season_standings','team_season_stats','transfers','match_details','match_events','match_special_events',
   'match_lineups','match_team_stats','match_player_stats','match_injuries','news_articles',
   'sync_state','player_name_aliases','player_match_conflicts','app_settings','data_conflicts',
   'source_references','research_candidates','correction_requests',

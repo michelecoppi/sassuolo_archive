@@ -1,0 +1,30 @@
+{
+  "package_type": "historical_match_events",
+  "area": "match_events",
+  "season": "2014/15",
+  "competition": "Coppa Italia",
+  "source_provider": "Lega Serie A + AC Milan + ANSA + Sky + La Gazzetta dello Sport",
+  "source_url": "https://www.acmilan.com/it/news/articoli/coppa-italia/2024-12-03/milan-sassuolo-match-preview",
+  "verified_at": "2026-08-12",
+  "file": "data.json",
+  "sha256": "cf616fc3ba7ea4d644ed2252e105d91f609159f8876fa8352f494b0debf05f88",
+  "records_total": 10,
+  "records_discarded": 0,
+  "fields_covered": ["match_events", "player_id", "player_seasons.goals"],
+  "validation": {
+    "status": "reconciled",
+    "checks": [
+      {"name": "all_fixture_goals_structured", "status": "passed"},
+      {"name": "canonical_player_ids_verified", "status": "passed"},
+      {"name": "unknown_player_stats_preserved_as_null", "status": "passed"},
+      {"name": "idempotent_import", "status": "passed"}
+    ],
+    "unresolved_conflicts": []
+  },
+  "notes": [
+    "Nove eventi-gol e un record PlayerSeason.",
+    "Nicola Sansone è collegato al giocatore canonico 3312 in tre eventi.",
+    "Le statistiche PlayerSeason diverse dai tre gol verificati restano NULL.",
+    "Importato con backup #74 e import run #38."
+  ]
+}

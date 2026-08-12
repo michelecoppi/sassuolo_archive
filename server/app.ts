@@ -1,4 +1,6 @@
 import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
 import express, { type NextFunction, type Request, type Response } from 'express';
 import cors from 'cors';
 import { api } from './routes/api.js';
@@ -6,6 +8,7 @@ import { db, initDb, nowIso } from './db/database.js';
 import { createApiResponseCache, createRequestObservability } from './services/operations.js';
 
 type AppOptions={adminToken?:string|null;nodeEnv?:string;corsOrigins?:string[];mutationLimit?:number;cacheTtlMs?:number};
+type CachedImage={body:Buffer;contentType:string;expiresAt:number};
 
 const safeEqual=(left:string,right:string)=>{
   const a=Buffer.from(left);const b=Buffer.from(right);
@@ -26,6 +29,49 @@ export function createApp(options:AppOptions={}){
   app.use((_req,res,next)=>{res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('X-Frame-Options','DENY');res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');res.setHeader('Permissions-Policy','camera=(), microphone=(), geolocation=()');next();});
   app.use(cors({origin(origin,callback){if(!origin||allowedOrigins.has(origin))return callback(null,true);callback(new Error('Origine CORS non autorizzata'));},methods:['GET','HEAD','POST','PUT','PATCH','DELETE'],allowedHeaders:['Content-Type','Authorization','X-Admin-Name']}));
   app.use(express.json({limit:'2mb',strict:true}));
+
+  const imageCache=new Map<string,CachedImage>();
+  const defaultImageHosts=['media.api-sports.io','images.kickoffapi.com','www.thesportsdb.com','r2.thesportsdb.com'];
+  const imageHosts=new Set([...defaultImageHosts,...String(process.env.IMAGE_PROXY_HOSTS??'').split(',').map(value=>value.trim().toLowerCase()).filter(Boolean)]);
+  const imageFallback=(res:Response)=>{res.type('image/svg+xml');res.setHeader('Cache-Control','public, max-age=300');return res.send('<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96"><rect width="96" height="96" rx="12" fill="#27272a"/><path d="M29 68l13-16 9 10 7-8 12 14H29zm12-28a7 7 0 1 1-14 0 7 7 0 0 1 14 0z" fill="#71717a"/></svg>');};
+  app.get('/api/assets/image',async(req,res)=>{
+    try{
+      const target=new URL(String(req.query.url??''));
+      if(target.protocol!=='https:'||!imageHosts.has(target.hostname.toLowerCase()))return imageFallback(res);
+      const key=target.toString(),cached=imageCache.get(key);
+      if(cached&&cached.expiresAt>Date.now()){res.setHeader('Content-Type',cached.contentType);res.setHeader('Cache-Control','public, max-age=86400, stale-if-error=604800');return res.send(cached.body);}
+      const upstream=await fetch(key,{headers:{Accept:'image/avif,image/webp,image/*;q=0.8'},signal:AbortSignal.timeout(5_000),redirect:'follow'});
+      const contentType=upstream.headers.get('content-type')??'';const length=Number(upstream.headers.get('content-length')??0);
+      if(!upstream.ok||!contentType.startsWith('image/')||length>5_000_000)return imageFallback(res);
+      const body=Buffer.from(await upstream.arrayBuffer());if(body.length>5_000_000)return imageFallback(res);
+      imageCache.set(key,{body,contentType,expiresAt:Date.now()+86_400_000});
+      res.setHeader('Content-Type',contentType);res.setHeader('Cache-Control','public, max-age=86400, stale-if-error=604800');res.setHeader('Vary','Accept');return res.send(body);
+    }catch{
+      // In ambienti locali o gestiti il processo Node può non avere accesso
+      // HTTPS in uscita mentre il browser sì. L'URL è già stato validato
+      // contro protocollo e allowlist: il redirect conserva quel confine e
+      // lascia che il browser applichi il normale fallback su errore.
+      const target=new URL(String(req.query.url??''));
+      if(target.protocol==='https:'&&imageHosts.has(target.hostname.toLowerCase())){
+        res.setHeader('Cache-Control','no-store');
+        return res.redirect(307,target.toString());
+      }
+      return imageFallback(res);
+    }
+  });
+  app.use('/api',(_req,res,next)=>{
+    const sendJson=res.json.bind(res);
+    res.json=((body:unknown)=>{
+      const rewrite=(value:unknown,key=''):unknown=>{
+        if(typeof value==='string'&&/^https:\/\//i.test(value)&&/(?:photo|image|logo)(?:_url)?$/i.test(key))return `/api/assets/image?url=${encodeURIComponent(value)}`;
+        if(Array.isArray(value))return value.map(item=>rewrite(item));
+        if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).map(([name,item])=>[name,rewrite(item,name)]));
+        return value;
+      };
+      return sendJson(rewrite(body));
+    }) as Response['json'];
+    next();
+  });
 
   const responseCache=createApiResponseCache(options.cacheTtlMs??30_000);
   const observability=createRequestObservability();
@@ -50,6 +96,13 @@ export function createApp(options:AppOptions={}){
     next();
   });
   app.use('/api',api);
+  if(nodeEnv==='production'){
+    const dist=path.resolve('dist');
+    if(fs.existsSync(dist)){
+      app.use(express.static(dist,{index:false,maxAge:'1h'}));
+      app.use((req,res,next)=>req.method==='GET'&&!req.path.startsWith('/api/')?res.sendFile(path.join(dist,'index.html')):next());
+    }
+  }
   app.use((error:unknown,_req:Request,res:Response,_next:NextFunction)=>res.status(400).json({error:error instanceof Error?error.message:'Richiesta non valida'}));
   return app;
 }

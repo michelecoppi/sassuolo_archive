@@ -9,7 +9,7 @@ type D={biggestWin:Match|null;biggestHomeWin:Match|null;biggestAwayWin:Match|nul
 const match=(m:Match|null)=>m?`${m.home_team} ${m.home_score ?? '?'}–${m.away_score ?? '?'} ${m.away_team}`:'N/D';
 
 function RecordCard({label,value,definition}:{label:string;value:string|number|null;definition?:StatisticDefinition}){
-  return <article className="card p-4"><div className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">{label}</div><div className="mt-3 text-xl font-black tracking-tight text-white">{fmt(value)}</div><MetricMethod definition={definition}/></article>;
+  return <article className="card p-4"><div className="text-[11px] font-bold uppercase tracking-wider text-zinc-400">{label}</div><div className="mt-3 text-xl font-black tracking-tight text-white">{fmt(value)}</div><MetricMethod definition={definition}/></article>;
 }
 
 export default function Records(){

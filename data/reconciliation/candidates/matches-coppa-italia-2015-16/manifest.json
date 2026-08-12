@@ -1,0 +1,63 @@
+{
+  "package_type": "historical_matches",
+  "area": "matches",
+  "season": "2015/16",
+  "competition": "Coppa Italia",
+  "source_provider": "FBref + Sassuolo 2000 + Rai News + Gazzetta + Transfermarkt",
+  "source_url": "https://www.sassuolo2000.it/2015/08/15/calcio-sassuolo-modena-2-0/",
+  "verified_at": "2026-08-12",
+  "file": "data.csv",
+  "sha256": "1e20c59a9ef21dfb6eb42db0523c8107f61c6e08826824dd155533d99fc7b6bd",
+  "records_total": 2,
+  "records_discarded": 0,
+  "fields_covered": [
+    "date",
+    "season",
+    "competition",
+    "round",
+    "home_team",
+    "away_team",
+    "home_score",
+    "away_score",
+    "halftime_score",
+    "scorers",
+    "cards",
+    "stadium",
+    "attendance",
+    "referee",
+    "source_url"
+  ],
+  "validation": {
+    "status": "reconciled",
+    "checks": [
+      {
+        "name": "single_scope",
+        "status": "passed"
+      },
+      {
+        "name": "complete_fixture_set",
+        "status": "passed"
+      },
+      {
+        "name": "two_independent_sources_per_match",
+        "status": "passed"
+      },
+      {
+        "name": "halftime_scores_reconciled",
+        "status": "passed"
+      },
+      {
+        "name": "editorial_discrepancies_resolved",
+        "status": "passed"
+      }
+    ],
+    "unresolved_conflicts": []
+  },
+  "notes": [
+    "Una sola stagione e competizione.",
+    "Copertura completa delle due fixture disputate dal Sassuolo.",
+    "Campi non verificati lasciati vuoti/NULL.",
+    "Pacchetto candidato: richiede preview e approvazione prima dell'import.",
+    "Approvato dal Data Manager dopo revisione manuale."
+  ]
+}

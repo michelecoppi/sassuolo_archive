@@ -11,7 +11,7 @@ type CountRow = { total: number };
 const tables = [
   'teams', 'team_aliases', 'seasons', 'matches', 'players', 'player_source_ids',
   'player_seasons', 'season_standings', 'team_season_stats', 'transfers',
-  'match_details', 'match_events', 'match_lineups', 'match_team_stats',
+  'match_details', 'match_events', 'match_special_events', 'match_lineups', 'match_team_stats',
   'match_player_stats', 'match_injuries', 'news_articles', 'sync_state',
   'data_conflicts', 'app_settings', 'source_references', 'change_log', 'backup_runs',
   'import_runs', 'audit_runs', 'research_candidates', 'schema_migrations', 'security_audit_log',
@@ -133,6 +133,14 @@ const report = {
       FROM match_events
       WHERE minute<0 OR minute>130 OR extra_minute<0 OR extra_minute>30 OR sequence_number<0
     `),
+    invalidSpecialEvents: rows<unknown>(`
+      SELECT id,match_id,event_type,effective_at,match_minute,remaining_minutes,source_url
+      FROM match_special_events
+      WHERE event_type NOT IN ('POSTPONED','KICKOFF_DELAYED','SUSPENDED','RESUMED','ABANDONED','CANCELLED','AWARDED','DATE_CHANGED','VENUE_CHANGED','OTHER')
+        OR trim(effective_at)='' OR match_minute<0 OR match_minute>130
+        OR remaining_minutes<0 OR remaining_minutes>130
+        OR home_score<0 OR away_score<0 OR trim(description)='' OR trim(source_url)=''
+    `),
     eventsWithoutMinute: rows<unknown>(`
       SELECT id,match_id,type,detail,player_name FROM match_events WHERE minute IS NULL
     `),
@@ -170,6 +178,7 @@ const blockingIssueCount = report.integrity.foreignKeyViolations.length
   + report.integrity.invalidMatches.length
   + report.integrity.invalidPlayerSeasons.length
   + report.integrity.invalidEvents.length
+  + report.integrity.invalidSpecialEvents.length
   + report.integrity.duplicateEvents.length
   + report.integrity.duplicateTransfers.length;
 const auditRunId = recordAuditRun({

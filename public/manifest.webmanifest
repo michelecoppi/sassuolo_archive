@@ -1,0 +1,10 @@
+{
+  "name":"Sassuolo History & Stats",
+  "short_name":"Sassuolo History",
+  "lang":"it",
+  "start_url":"/",
+  "display":"standalone",
+  "background_color":"#080a09",
+  "theme_color":"#07110b",
+  "icons":[{"src":"/logos/stemma_sassuolo.webp","sizes":"any","type":"image/webp","purpose":"any maskable"}]
+}

@@ -1,8 +1,21 @@
 {
+  "2008/09": { "exit": "4° turno", "topScorer": null, "topScorerGoals": null, "sourceProvider": "Transfermarkt", "sourceUrl": "https://www.transfermarkt.it/us-sassuolo/pokalhistorie/verein/6574" },
+  "2009/10": { "exit": "4° turno", "topScorer": null, "topScorerGoals": null, "sourceProvider": "Transfermarkt", "sourceUrl": "https://www.transfermarkt.it/us-sassuolo/pokalhistorie/verein/6574" },
+  "2010/11": { "exit": "3° turno", "topScorer": null, "topScorerGoals": null, "sourceProvider": "Transfermarkt", "sourceUrl": "https://www.transfermarkt.it/us-sassuolo/pokalhistorie/verein/6574" },
+  "2011/12": { "exit": "3° turno", "topScorer": null, "topScorerGoals": null, "sourceProvider": "Transfermarkt", "sourceUrl": "https://www.transfermarkt.it/us-sassuolo/pokalhistorie/verein/6574" },
+  "2012/13": { "exit": "3° turno", "topScorer": null, "topScorerGoals": null, "sourceProvider": "Transfermarkt", "sourceUrl": "https://www.transfermarkt.it/us-sassuolo/pokalhistorie/verein/6574" },
+  "2013/14": { "exit": "4° turno", "topScorer": null, "topScorerGoals": null, "sourceProvider": "Transfermarkt", "sourceUrl": "https://www.transfermarkt.it/us-sassuolo/pokalhistorie/verein/6574" },
+  "2014/15": { "exit": "Ottavi", "topScorer": null, "topScorerGoals": null, "sourceProvider": "Transfermarkt", "sourceUrl": "https://www.transfermarkt.it/us-sassuolo/pokalhistorie/verein/6574" },
+  "2015/16": { "exit": "4° turno", "topScorer": null, "topScorerGoals": null, "sourceProvider": "Transfermarkt", "sourceUrl": "https://www.transfermarkt.it/us-sassuolo/pokalhistorie/verein/6574" },
+  "2016/17": { "exit": "Ottavi", "topScorer": null, "topScorerGoals": null, "sourceProvider": "Transfermarkt", "sourceUrl": "https://www.transfermarkt.it/us-sassuolo/pokalhistorie/verein/6574" },
+  "2017/18": { "exit": "Ottavi", "topScorer": null, "topScorerGoals": null, "sourceProvider": "Transfermarkt", "sourceUrl": "https://www.transfermarkt.it/us-sassuolo/pokalhistorie/verein/6574" },
+  "2018/19": { "exit": "Ottavi", "topScorer": null, "topScorerGoals": null, "sourceProvider": "Transfermarkt", "sourceUrl": "https://www.transfermarkt.it/us-sassuolo/pokalhistorie/verein/6574" },
+  "2019/20": { "exit": "4° turno", "topScorer": null, "topScorerGoals": null, "sourceProvider": "Transfermarkt", "sourceUrl": "https://www.transfermarkt.it/us-sassuolo/pokalhistorie/verein/6574" },
   "2020/21": { "exit": "Ottavi", "topScorer": null, "topScorerGoals": 0 },
   "2021/22": { "exit": "Quarti", "topScorer": "Abdou Harroui · Hamed Junior Traorè", "topScorerGoals": 1 },
   "2022/23": { "exit": "1° turno", "topScorer": "Domenico Berardi · Kaan Ayhan", "topScorerGoals": 1 },
   "2023/24": { "exit": "Ottavi", "topScorer": "Samuele Mulattieri", "topScorerGoals": 2 },
   "2024/25": { "exit": "Ottavi", "topScorer": "Samuele Mulattieri", "topScorerGoals": 2 },
-  "2025/26": { "exit": "Sedicesimi", "topScorer": "Josh Doig", "topScorerGoals": 1 }
+  "2025/26": { "exit": "Sedicesimi", "topScorer": "Josh Doig", "topScorerGoals": 1 },
+  "2026/27": { "exit": "1° turno", "topScorer": null, "topScorerGoals": null, "sourceProvider": "Lega Serie A", "sourceUrl": "https://www.legaseriea.it/it/coppa-italia" }
 }

@@ -9,6 +9,8 @@ dist/
 server/db/backups/
 .tmp/
 coverage/
+test-results/
+playwright-report/
 .vite/
 .cache/
 *.log

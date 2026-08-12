@@ -1,14 +1,14 @@
 # Stato di esecuzione del piano dati
 
-Aggiornamento: 11 agosto 2026, dopo la preparazione della prima tranche di contesto stagionale.
+Aggiornamento: 12 agosto 2026, dopo l'import della Coppa Italia 2014/15.
 
 ## Contesto stagionale generale — tranche 2024/25
 
 È registrato il candidato `season-context-serie-b-2024-25`, limitato a una stagione e una competizione. Contiene Domenico Berardi come capitano della Serie B 2024/25, attestato dalla Lega Serie B e verificato sul sito ufficiale del club. Lo staff tecnico 2024/25 è stato aggiunto all'archivio strutturato e viene ora mostrato nella scheda stagione insieme agli intervalli degli allenatori già presenti.
 
-Il candidato è `reconciled` ma non importato: deve passare da anteprima e approvazione esplicita nel Data Manager, quindi backup, import e audit. L'importatore ora accetta `captain` e preserva con `COALESCE` tutte le statistiche non incluse nella tranche.
+Il candidato è `imported`: Domenico Berardi conserva 29 presenze e 6 gol e ha `captain=1`. L'import è stato protetto dal backup #59 e l'importatore preserva con `COALESCE` tutte le statistiche non incluse nella tranche.
 
-Per la Coppa Italia, il dataset OpenFootball verificato copre le edizioni dal 2013/14 in avanti; il repository locale usa già 2020/21–2025/26. La prossima tranche consigliata è quindi **Coppa Italia 2013/14**, una sola edizione, mentre 2008/09–2012/13 richiedono una fonte storica diversa e una riconciliazione separata.
+Le Coppe Italia 2013/14 e 2014/15 sono importate con fonti incrociate. Il checkout ufficiale OpenFootball verificato contiene `cup.txt` soltanto dal 2020/21 al 2024/25, correggendo la precedente indicazione di copertura dal 2013/14. Le edizioni 2015/16–2019/20 e 2008/09–2012/13 richiedono quindi fonti storiche alternative e riconciliazioni separate.
 
 ## Allineamento piattaforma P0 — 11 agosto 2026
 
@@ -29,7 +29,7 @@ Audit di verifica: run `#24`, `2026-08-11T14:08:58.013Z`, zero problemi bloccant
 
 La tranche **PlayerSeason Serie B 2008/09–2012/13** e la tranche **classifiche storiche 2008/09–2021/22** sono concluse. Tutti i pacchetti elencati sotto risultano `imported` nel database e dispongono di backup pre-import.
 
-Alla prossima sessione non ricominciare dalle classifiche già trattate. La priorità consigliata è la copertura storica dei **dettagli partita** (eventi, formazioni e statistiche), iniziando dalla Serie B 2008/09; in alternativa si può completare la Coppa Italia storica.
+Alla prossima sessione non ricominciare dalle classifiche, dal contesto 2024/25, dai match-details Serie B 2008/09 o dalle Coppe Italia 2013/14–2014/15. La prossima tranche consigliata è **Coppa Italia 2015/16** con fonti alternative incrociate; in alternativa proseguire sui dettagli strutturati delle gare storiche.
 
 ## Importazioni completate
 
@@ -57,25 +57,28 @@ Il database contiene inoltre classifiche complete già presenti per Serie A 2022
 ### Altri pacchetti
 
 - Europa League 2016/17: pacchetto `match-details`, 10 partite importate.
+- Serie B 2008/09: pacchetto `match-details`, 42 partite importate.
+- Coppa Italia 2013/14: 2 fixture importate, backup #68, import run #34, 22 riferimenti di provenienza; ZIP `data/reconciliation/packages/matches-coppa-italia-2013-14.zip` con checksum affiancato.
+- Coppa Italia 2014/15: 3 fixture STANDARD importate, backup #72, import run #36, 49 riferimenti di provenienza; aggregato stagionale 3 gare, 2 vittorie, 1 sconfitta, 6–3 gol e Nicola Sansone capocannoniere (3), backup #73, import run #37 e 11 riferimenti. I nove gol sono ora eventi strutturati; i tre di Sansone puntano al giocatore canonico #3312 e la sua PlayerSeason di coppa conserva `goals=3` con le altre statistiche non note a `NULL` (backup #74, import run #38, 10 riferimenti). ZIP fixture ed eventi con checksum affiancati sotto `data/reconciliation/packages/`.
 
 ## Audit conclusivo
 
-- Audit run: `#22`.
-- Generato: `2026-08-10T01:48:15.776Z`.
-- Report: `data/reconciliation/audits/audit-full-2026-08-10T01-48-15-776Z.json`.
-- SHA-256: `fd0ec2c0fa6a59509572d1d3a5780b5d10ffde4025eee42575c5c0856fad5a65`.
+- Audit run: `#30`.
+- Generato: `2026-08-12T16:23:07.534Z`.
+- Report: `data/reconciliation/audits/audit-full-2026-08-12T16-23-07-534Z.json`.
+- SHA-256: `3db446ea001f3a5af407b860b8cf38a1752caaac70083cd652f841492f707f59`.
 - Esito: nessuna violazione FK, fixture duplicata, PlayerSeason invalida, evento invalido o trasferimento duplicato; nessun problema bloccante.
 - Unico conflitto registrato: risolto.
 - Residuo non bloccante: tre news RSS con lo stesso titolo normalizzato.
 
-Conteggi principali al checkpoint: 726 partite, 469 giocatori, 808 PlayerSeason, 350 righe classifica, 837 trasferimenti, 22 candidati censiti, 20 candidati importati, 35 backup e 22 audit.
+Conteggi principali al checkpoint: 770 partite, 336 giocatori canonici, 809 PlayerSeason, 350 righe classifica, 848 trasferimenti, 26 candidati censiti, 73 backup e 29 audit.
 
 ## Copertura e lavoro ancora aperto
 
 - Le 14 classifiche della tranche 2008/09–2021/22 sono complete.
-- Le cinque stagioni di Serie B 2008/09–2012/13 hanno 42/42 partite e PlayerSeason riconciliate, ma non hanno ancora dettagli partita strutturati.
+- Le cinque stagioni di Serie B 2008/09–2012/13 hanno 42/42 partite e PlayerSeason riconciliate; il 2008/09 ha anche stadio e arbitro per 42/42, mentre le stagioni successive non hanno ancora dettagli partita strutturati.
 - Le stagioni Serie A 2013/14–2021/22 hanno 38/38 partite e classifica completa, ma dettagli, formazioni e statistiche partita sono quasi interamente assenti.
-- Le competizioni di Coppa Italia 2013/14–2019/20 possono essere preparate una per volta dal dataset OpenFootball; le edizioni 2008/09–2012/13 richiedono una fonte storica alternativa e restano da ricercare/importare sistematicamente.
+- Le Coppe Italia 2013/14 e 2014/15 sono complete a livello fixture; per il 2014/15 sono presenti anche parziali, marcatori, stadi, arbitri, presenze e gli angoli disponibili. Le edizioni 2015/16–2019/20 e 2008/09–2012/13 richiedono fonti storiche alternative e restano da ricercare/importare sistematicamente.
 - Le 837 righe trasferimenti sono presenti, ma la provenienza puntuale resta da migliorare.
 - Non trasformare valori sconosciuti in zero: `N/D` deve restare `NULL` finché non esiste una fonte verificabile.
 
@@ -83,7 +86,7 @@ Conteggi principali al checkpoint: 726 partite, 469 giocatori, 808 PlayerSeason,
 
 1. Aprire questo file e l'ultimo audit indicato sopra.
 2. Eseguire `npm.cmd run data:registry` per riallineare i candidati presenti su disco.
-3. Scegliere una sola nuova tranche, preferibilmente `match_details` Serie B 2008/09.
+3. Scegliere una sola nuova tranche, preferibilmente Coppa Italia 2015/16 o `match_details` Serie B 2009/10.
 4. Preparare un pacchetto candidato con `data.csv`, `manifest.json`, `SOURCES.md` e discrepanze esplicite.
 5. Seguire `validate → review → approve → backup → import → audit` dal Data Manager.
 

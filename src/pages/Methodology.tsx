@@ -31,18 +31,18 @@ export default function Methodology(){
         <p className="mt-2 text-sm leading-6 text-zinc-400">Il perimetro dichiarato va dal <strong className="text-zinc-200">{coverage.scope.startSeason}</strong> al <strong className="text-zinc-200">{coverage.scope.endSeason}</strong>. {coverage.scope.inclusionPolicy}</p>
         <p className="mt-2 text-sm leading-6 text-zinc-400">La copertura è misurata per stagione e competizione sui record realmente presenti, non stimata dal nome della stagione. {coverage.definition}</p>
         <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3">
-          <div><dt className="font-bold text-neroverde-300">Completa</dt><dd className="mt-1 text-zinc-500">Soddisfa tutti i requisiti indicati.</dd></div>
-          <div><dt className="font-bold text-amber-200">Parziale</dt><dd className="mt-1 text-zinc-500">Esistono dati, ma manca almeno un requisito.</dd></div>
-          <div><dt className="font-bold text-zinc-300">Non valutabile</dt><dd className="mt-1 text-zinc-500">Non ci sono dati sufficienti per misurarla.</dd></div>
+          <div><dt className="font-bold text-neroverde-300">Completa</dt><dd className="mt-1 text-zinc-400">Soddisfa tutti i requisiti indicati.</dd></div>
+          <div><dt className="font-bold text-amber-200">Parziale</dt><dd className="mt-1 text-zinc-400">Esistono dati, ma manca almeno un requisito.</dd></div>
+          <div><dt className="font-bold text-zinc-300">Non valutabile</dt><dd className="mt-1 text-zinc-400">Non ci sono dati sufficienti per misurarla.</dd></div>
         </dl>
-        <p className="mt-4 text-xs text-zinc-500">Ultimo audit: {coverage.lastAuditAt?new Date(coverage.lastAuditAt).toLocaleString('it-IT'):'N/D'} · matrice generata: {new Date(coverage.generatedAt).toLocaleString('it-IT')}</p>
+        <p className="mt-4 text-xs text-zinc-400">Ultimo audit: {coverage.lastAuditAt?new Date(coverage.lastAuditAt).toLocaleString('it-IT'):'N/D'} · matrice generata: {new Date(coverage.generatedAt).toLocaleString('it-IT')}</p>
       </section>
 
       <section id="sources" className={sectionClass}>
         <h2 className="font-bold">Fonti e ordine di priorità</h2>
         <p className="mt-2 text-sm leading-6 text-zinc-400">Il badge mostra il provider e, quando disponibile, la data dell’ultima verifica. L’icona esterna apre la pagina puntuale; la data non garantisce che tutti i campi del record abbiano la stessa fonte.</p>
         <ol className="mt-4 space-y-3">{data.providerPriority.map((item,i)=><li className="flex gap-3 text-sm" key={item}><span className="font-black text-neroverde-300">{i+1}</span><span>{item}</span></li>)}</ol>
-        <p className="mt-4 text-xs leading-5 text-zinc-500">L’ordine è una regola di precedenza, non un voto assoluto: una fonte più in alto sostituisce un valore solo con identità e perimetro compatibili e con evidenza conservata.</p>
+        <p className="mt-4 text-xs leading-5 text-zinc-400">L’ordine è una regola di precedenza, non un voto assoluto: una fonte più in alto sostituisce un valore solo con identità e perimetro compatibili e con evidenza conservata.</p>
       </section>
 
       <section id="conflicts" className={sectionClass}>
@@ -72,14 +72,14 @@ export default function Methodology(){
 
       <section id="formulas" className={`${sectionClass} lg:col-span-2`}>
         <h2 className="font-bold">Formule e perimetro</h2>
-        <p className="mt-1 text-xs text-zinc-500">Ultimo ricalcolo: {data.lastRecalculation?new Date(data.lastRecalculation).toLocaleString('it-IT'):'N/D'}</p>
+        <p className="mt-1 text-xs text-zinc-400">Ultimo ricalcolo: {data.lastRecalculation?new Date(data.lastRecalculation).toLocaleString('it-IT'):'N/D'}</p>
         <dl className="mt-4 grid gap-x-8 gap-y-4 md:grid-cols-2">{data.rules.map(rule=><div key={rule.name}><dt className="font-bold text-neroverde-300">{rule.name}</dt><dd className="mt-1 text-sm leading-6 text-zinc-400">{rule.formula}</dd></div>)}</dl>
       </section>
     </div>
 
     <section className="card mt-5 p-5" aria-labelledby="coverage-matrix-title">
       <div className="flex flex-wrap items-start justify-between gap-2"><div><h2 id="coverage-matrix-title" className="font-bold">Matrice di copertura canonica</h2><p className="mt-1 max-w-4xl text-sm text-zinc-400">Ogni riga mantiene separate campionato, playoff/playout e coppe. Anche una competizione senza record resta visibile con la motivazione della lacuna.</p></div><a className="text-xs font-bold text-neroverde-300 hover:underline" href="#coverage">Come si legge ↑</a></div>
-      <div className="mt-4 max-h-[34rem] overflow-auto"><DataTable label="Matrice di copertura per stagione e competizione"><table><thead><tr><th>Stagione</th><th>Ambito</th><th>Partite</th><th>Rosa</th><th>Con statistiche</th><th>Classifica</th><th>Fonti</th><th>Stato e lacuna</th></tr></thead><tbody>{coverage.rows.map(row=><tr key={`${row.season}-${row.competition}`}><td><span className="font-bold text-white">{row.season}</span><br/><span className="text-xs text-zinc-400">{row.competition}</span></td><td><span className="badge text-zinc-300">{kindLabel[row.competition_kind]}</span></td><td>{row.found_matches}/{row.expected_matches??'N/D'}</td><td>{row.squad_players}</td><td>{row.player_seasons_with_stats}</td><td>{row.standing_rows}</td><td>{row.source_records}</td><td className="min-w-64"><a aria-label={`${statusLabel[row.status]}: leggi la definizione`} className={`badge hover:border-neroverde-400/50 ${statusClass[row.status]}`} href="#coverage">{statusLabel[row.status]}</a>{row.gap_reason&&<p className="mt-2 text-xs leading-5 text-zinc-500">{row.gap_reason}</p>}{!row.declared_in_scope&&<p className="mt-1 text-xs font-bold text-red-300">Fuori dal manifesto</p>}</td></tr>)}</tbody></table></DataTable></div>
+      <div className="mt-4 max-h-[34rem] overflow-auto"><DataTable label="Matrice di copertura per stagione e competizione"><table><thead><tr><th>Stagione</th><th>Ambito</th><th>Partite</th><th>Rosa</th><th>Con statistiche</th><th>Classifica</th><th>Fonti</th><th>Stato e lacuna</th></tr></thead><tbody>{coverage.rows.map(row=><tr key={`${row.season}-${row.competition}`}><td><span className="font-bold text-white">{row.season}</span><br/><span className="text-xs text-zinc-400">{row.competition}</span></td><td><span className="badge text-zinc-300">{kindLabel[row.competition_kind]}</span></td><td>{row.found_matches}/{row.expected_matches??'N/D'}</td><td>{row.squad_players}</td><td>{row.player_seasons_with_stats}</td><td>{row.standing_rows}</td><td>{row.source_records}</td><td className="min-w-64"><a aria-label={`${statusLabel[row.status]}: leggi la definizione`} className={`badge hover:border-neroverde-400/50 ${statusClass[row.status]}`} href="#coverage">{statusLabel[row.status]}</a>{row.gap_reason&&<p className="mt-2 text-xs leading-5 text-zinc-400">{row.gap_reason}</p>}{!row.declared_in_scope&&<p className="mt-1 text-xs font-bold text-red-300">Fuori dal manifesto</p>}</td></tr>)}</tbody></table></DataTable></div>
     </section>
   </>;
 }

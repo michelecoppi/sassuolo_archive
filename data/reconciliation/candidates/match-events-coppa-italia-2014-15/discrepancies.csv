@@ -1,0 +1,4 @@
+field,decision,note
+sansone_identity,3312,"Identità canonica e alias N. Sansone già presenti nel database."
+opponent_player_ids,NULL,"Claudio Coralli, Giampaolo Pazzini e Nigel de Jong non sono presenti nell'archivio giocatori Sassuolo; il nome è conservato senza creare identità estranee."
+player_season_unknown_fields,NULL,"Presenze, minuti, assist e cartellini Coppa Italia non sono attestati da questa tranche e non vengono convertiti in zero."

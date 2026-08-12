@@ -1,0 +1,23 @@
+services:
+  app:
+    image: ghcr.io/OWNER/sassuolo-history:${APP_VERSION:-latest}
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 8787
+      SASSUOLO_DB_PATH: /data/sassuolo.db
+      SASSUOLO_BACKUPS_DIR: /data/backups
+      ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:?required}
+      CORS_ORIGINS: ${CORS_ORIGINS:?required}
+    ports:
+      - "8787:8787"
+    volumes:
+      - sassuolo_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://127.0.0.1:8787/api/health').then(r=>{if(!r.ok)process.exit(1)})\""]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+volumes:
+  sassuolo_data:

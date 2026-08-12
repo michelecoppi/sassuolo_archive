@@ -29,6 +29,27 @@ test('a declared season remains consultable when every record is missing',async(
   assert.ok(body.competitions.some((row:any)=>row.competition==='Coppa Italia Serie C'));
 });
 
+test('all declared Coppa Italia editions are listed and have a sourced base page',async()=>{
+  const listResponse=await fetch(`${base}/seasons`);
+  assert.equal(listResponse.status,200);
+  const seasons=await listResponse.json() as any[];
+  const cupEditions=seasons.filter(row=>row.competition==='Coppa Italia');
+  for(let year=2008;year<=2026;year++){
+    const edition=`${year}/${String(year+1).slice(-2)}`;
+    assert.ok(cupEditions.some(row=>row.season===edition),`missing Coppa Italia ${edition}`);
+  }
+
+  const detailResponse=await fetch(`${base}/seasons/2014%2F15?competition=Coppa%20Italia`);
+  assert.equal(detailResponse.status,200);
+  const detail=await detailResponse.json() as any;
+  assert.equal(detail.season.competition,'Coppa Italia');
+  assert.equal(detail.season.declared_only,true);
+  assert.equal(detail.season.cup_exit,'Ottavi');
+  assert.equal(detail.season.source_provider,'Transfermarkt');
+  assert.equal(detail.topScorer,null);
+  assert.ok(!detail.profile.gaps.some((gap:any)=>gap.field==='sources'));
+});
+
 test('season profile reuses verified coach terms and seasonal staff',async()=>{
   const response=await fetch(`${base}/seasons/2024%2F25?competition=Serie%20B`);
   assert.equal(response.status,200);

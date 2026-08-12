@@ -20,7 +20,7 @@ import { getClubHistory, getSeasonTechnicalContext, getTechnicalArchive } from '
 import { getAdminScheduler } from '../services/adminScheduler.js';
 import { openApiDocument } from '../openapi.js';
 
-type CupMetadata={exit:string;topScorer:string|null;topScorerGoals:number};
+type CupMetadata={exit:string;topScorer:string|null;topScorerGoals:number|null;sourceProvider?:string;sourceUrl?:string};
 const cupMetadataPath=path.resolve('data/cup-brackets/coppa-italia-sassuolo-metadata.json');
 const cupMetadata:Record<string,CupMetadata>=fs.existsSync(cupMetadataPath)?JSON.parse(fs.readFileSync(cupMetadataPath,'utf8')):{};
 const competitionProfilesDir=path.resolve('data/competition-profiles');
@@ -64,6 +64,10 @@ function coppaItaliaBracket(season:string, sassuoloMatches:any[]) {
 
 export const api = Router();
 api.get('/openapi.json', (_req,res)=>res.json(openApiDocument));
+const pagination=(query:Record<string,unknown>,defaultSize=50)=>({
+  page:Math.max(1,Math.trunc(Number(query.page)||1)),
+  pageSize:Math.min(100,Math.max(10,Math.trunc(Number(query.pageSize)||defaultSize)))
+});
 function editDistance(a:string,b:string){
   const previous=Array.from({length:b.length+1},(_,index)=>index);
   for(let i=1;i<=a.length;i++){
@@ -160,12 +164,20 @@ api.get('/charts/seasons', (req,res)=>{
   res.json(db.prepare(`SELECT season,competition,final_position,wins,draws,losses,goals_for,goals_against,points FROM seasons ${where.length?`WHERE ${where.join(' AND ')}`:''} ORDER BY season,competition`).all(...params));
 });
 api.get('/seasons', (_req,res)=>{
-  const rows=db.prepare(`
+  const storedRows=db.prepare(`
   SELECT s.*,
     (SELECT ps.player_id FROM player_seasons ps WHERE ps.season=s.season AND ps.competition=s.competition AND ps.goals IS NOT NULL ORDER BY ps.goals DESC,ps.minutes ASC LIMIT 1) AS top_scorer_player_id,
     (SELECT p.name FROM player_seasons ps JOIN players p ON p.id=ps.player_id WHERE ps.season=s.season AND ps.competition=s.competition AND ps.goals IS NOT NULL ORDER BY ps.goals DESC,ps.minutes ASC LIMIT 1) AS top_scorer_player_name,
     (SELECT ps.goals FROM player_seasons ps WHERE ps.season=s.season AND ps.competition=s.competition AND ps.goals IS NOT NULL ORDER BY ps.goals DESC,ps.minutes ASC LIMIT 1) AS top_scorer_goals
   FROM seasons s ORDER BY substr(s.season,1,4) DESC`).all() as any[];
+  const storedKeys=new Set(storedRows.map(row=>`${row.season}|${row.competition}`));
+  const declaredRows=getCoverageMatrix().rows
+    .filter(row=>!storedKeys.has(`${row.season}|${row.competition}`))
+    .map((row,index)=>{
+      const meta=/^Coppa Italia$/i.test(row.competition)?cupMetadata[row.season]:null;
+      return {id:-(index+1),season:row.season,competition:row.competition,final_position:null,matches:null,wins:null,draws:null,losses:null,goals_for:null,goals_against:null,points:null,manager:null,stadium:null,top_scorer:null,top_assists:null,home_record:null,away_record:null,source_provider:meta?.sourceProvider??null,source_url:meta?.sourceUrl??null,last_verified_at:null,declared_only:true};
+    });
+  const rows=[...storedRows,...declaredRows].sort((a,b)=>String(b.season).localeCompare(String(a.season))||String(a.competition).localeCompare(String(b.competition)));
   res.json(rows.map(row=>{
     const competitionProfile=competitionProfileFor(row.season,row.competition);
     if(!/^Coppa Italia$/i.test(row.competition))return {...row,competition_result:competitionProfile?.result??null};
@@ -178,7 +190,7 @@ api.get('/seasons/:season', (req,res)=>{
   const storedCompetitions=db.prepare(`SELECT * FROM seasons WHERE season=? ORDER BY CASE competition WHEN 'Serie A' THEN 0 WHEN 'Serie B' THEN 1 ELSE 2 END,competition`).all(req.params.season) as any[];
   const coverageRows=getCoverageMatrix().rows.filter(row=>row.season===req.params.season);
   const storedNames=new Set(storedCompetitions.map(row=>row.competition));
-  const declaredOnly=coverageRows.filter(row=>!storedNames.has(row.competition)).map((row,index)=>({id:-(index+1),season:row.season,competition:row.competition,final_position:null,matches:null,wins:null,draws:null,losses:null,goals_for:null,goals_against:null,points:null,manager:null,stadium:null,top_scorer:null,top_assists:null,home_record:null,away_record:null,source_provider:null,source_url:null,last_verified_at:null,declared_only:true}));
+  const declaredOnly=coverageRows.filter(row=>!storedNames.has(row.competition)).map((row,index)=>{const meta=/^Coppa Italia$/i.test(row.competition)?cupMetadata[row.season]:null;return {id:-(index+1),season:row.season,competition:row.competition,final_position:null,matches:null,wins:null,draws:null,losses:null,goals_for:null,goals_against:null,points:null,manager:null,stadium:null,top_scorer:null,top_assists:null,home_record:null,away_record:null,source_provider:meta?.sourceProvider??null,source_url:meta?.sourceUrl??null,last_verified_at:null,declared_only:true};});
   const competitions=[...storedCompetitions,...declaredOnly];
   const season=requestedCompetition?competitions.find(x=>x.competition===requestedCompetition):storedCompetitions[0]??competitions.find(x=>coverageRows.find(row=>row.competition===x.competition)?.competition_kind==='league')??competitions[0];
   const competition=season?.competition;
@@ -187,6 +199,7 @@ api.get('/seasons/:season', (req,res)=>{
   const isEuropa=/^Europa League$/i.test(competition??'');
   const competitionProfile=competition?competitionProfileFor(req.params.season,competition):null;
   const matches=competition?db.prepare(`SELECT m.*,
+    EXISTS (SELECT 1 FROM match_special_events se WHERE se.match_id=m.id) AS has_special_events,
     CASE WHEN EXISTS (SELECT 1 FROM match_events e WHERE e.match_id=m.id)
            OR EXISTS (SELECT 1 FROM match_lineups l WHERE l.match_id=m.id)
            OR EXISTS (SELECT 1 FROM match_team_stats ts WHERE ts.match_id=m.id)
@@ -205,7 +218,7 @@ api.get('/seasons/:season', (req,res)=>{
   const transfers=db.prepare(`SELECT * FROM transfers WHERE season=? ORDER BY date DESC,id DESC`).all(req.params.season);
   const topScorerFromStats=competition?db.prepare(`SELECT p.id,p.name,p.photo_url,p.position,ps.goals,ps.appearances,ps.minutes FROM player_seasons ps JOIN players p ON p.id=ps.player_id WHERE ps.season=? AND ps.competition=? AND ps.goals IS NOT NULL ORDER BY ps.goals DESC,COALESCE(ps.minutes,999999) ASC LIMIT 1`).get(req.params.season,competition):null;
   const cupMeta=cupMetadata[req.params.season];
-  const cupScorerFallback=isCup&&cupMeta?{id:null,name:cupMeta.topScorer??'Nessun marcatore',photo_url:null,position:null,goals:cupMeta.topScorerGoals,appearances:null,minutes:null}:null;
+  const cupScorerFallback=isCup&&cupMeta?.topScorerGoals!=null?{id:null,name:cupMeta.topScorer??'Nessun marcatore',photo_url:null,position:null,goals:cupMeta.topScorerGoals,appearances:null,minutes:null}:null;
   const topScorer=topScorerFromStats??cupScorerFallback;
   const topAssists=competition?db.prepare(`SELECT p.id,p.name,p.photo_url,p.position,ps.assists,ps.appearances,ps.minutes FROM player_seasons ps JOIN players p ON p.id=ps.player_id WHERE ps.season=? AND ps.competition=? AND ps.assists IS NOT NULL ORDER BY ps.assists DESC,COALESCE(ps.minutes,999999) ASC LIMIT 1`).get(req.params.season,competition):null;
   const captain=competition?db.prepare(`SELECT p.id,p.name,p.photo_url,p.position,ps.appearances,ps.minutes FROM player_seasons ps JOIN players p ON p.id=ps.player_id WHERE ps.season=? AND ps.competition=? AND ps.captain=1 ORDER BY COALESCE(ps.appearances,0) DESC,p.name LIMIT 1`).get(req.params.season,competition)??null:null;
@@ -215,11 +228,12 @@ api.get('/seasons/:season', (req,res)=>{
   ).get(req.params.season,...(isCup?[]:[competition])):{in_squad:0,played:0};
   const technicalContext=getSeasonTechnicalContext(req.params.season);
   const managerTerms=technicalContext.managerTerms.length?technicalContext.managerTerms:String(season?.manager??'').split('/').map((name:string)=>name.trim()).filter(Boolean).map((name:string)=>({name,from:null,to:null,precision:'season-only'}));
-  const sourceBreakdown=competition?db.prepare(`SELECT provider,COUNT(*) AS records,MAX(verified_at) AS last_verified_at FROM (
+  const storedSourceBreakdown=competition?db.prepare(`SELECT provider,COUNT(*) AS records,MAX(verified_at) AS last_verified_at FROM (
       SELECT source_provider AS provider,last_verified_at AS verified_at FROM seasons WHERE season=? AND competition=? AND source_provider IS NOT NULL
       UNION ALL SELECT source_provider,last_verified_at FROM matches WHERE season=? AND competition=? AND source_provider IS NOT NULL
       UNION ALL SELECT source_provider,last_verified_at FROM player_seasons WHERE season=? AND competition=? AND source_provider IS NOT NULL
     ) GROUP BY provider ORDER BY records DESC,provider`).all(req.params.season,competition,req.params.season,competition,req.params.season,competition):[];
+  const sourceBreakdown=(storedSourceBreakdown as any[]).length?storedSourceBreakdown:season?.source_provider?[{provider:season.source_provider,records:1,last_verified_at:season.last_verified_at??null}]:[];
   const gaps:Array<{field:string;label:string;reason:string}>=[];
   const inProgress=req.params.season===getSetting('current_season');
   const addGap=(field:string,label:string,reason:string)=>gaps.push({field,label,reason});
@@ -240,7 +254,7 @@ api.get('/seasons/:season', (req,res)=>{
     : coverage?.status==='partial'
       ? {level:'partial',label:'Parziale',reason:'Sono presenti dati verificabili, ma almeno un blocco richiesto è incompleto.'}
       : {level:'unknown',label:'Non valutabile',reason:'Il perimetro è dichiarato, ma i record disponibili non bastano per misurare la copertura.'};
-  res.json({season:season??null,competitions,matches,bracket:isCup?coppaItaliaBracket(req.params.season,matches):[],competitionProfile,squad,squadCoverage,standings,teamStats,transfers,topScorer:topScorer??null,topAssists:topAssists??null,profile:{coverage,reliability,managerTerms,staff:technicalContext.staff,captain,gaps,sourceBreakdown}});
+  res.json({season:season?{...season,cup_exit:isCup?cupMeta?.exit??null:null}:null,competitions,matches,bracket:isCup?coppaItaliaBracket(req.params.season,matches):[],competitionProfile,squad,squadCoverage,standings,teamStats,transfers,topScorer:topScorer??null,topAssists:topAssists??null,profile:{coverage,reliability,managerTerms,staff:technicalContext.staff,captain,gaps,sourceBreakdown}});
 });
 api.get('/matches', (req,res)=>{
   const q=req.query as Record<string,string|undefined>; const where:string[]=[]; const params:any[]=[];
@@ -249,6 +263,7 @@ api.get('/matches', (req,res)=>{
   const sqlWhere=where.length?'WHERE '+where.join(' AND '):'';
   const total=(db.prepare(`SELECT COUNT(*) AS total FROM matches ${sqlWhere}`).get(...params) as any).total;
   const rows=db.prepare(`SELECT m.*,
+    EXISTS (SELECT 1 FROM match_special_events se WHERE se.match_id=m.id) AS has_special_events,
     CASE WHEN EXISTS (SELECT 1 FROM match_events e WHERE e.match_id=m.id)
            OR EXISTS (SELECT 1 FROM match_lineups l WHERE l.match_id=m.id)
            OR EXISTS (SELECT 1 FROM match_team_stats ts WHERE ts.match_id=m.id)
@@ -264,6 +279,7 @@ api.get('/matches/:id', (req,res)=>{
   if(!match)return res.status(404).json({error:'Partita non trovata'});
   const details=db.prepare(`SELECT * FROM match_details WHERE match_id=?`).get(req.params.id) as any;
   const events=db.prepare(`SELECT * FROM match_events WHERE match_id=? ORDER BY COALESCE(minute,0),COALESCE(extra_minute,0),id`).all(req.params.id) as any[];
+  const specialEvents=db.prepare(`SELECT * FROM match_special_events WHERE match_id=? ORDER BY effective_at,id`).all(req.params.id) as any[];
   const lineups=(db.prepare(`SELECT * FROM match_lineups WHERE match_id=? ORDER BY id`).all(req.params.id) as any[]).map(x=>({
     ...x,
     colors:x.colors_json?JSON.parse(x.colors_json):null,
@@ -286,7 +302,8 @@ api.get('/matches/:id', (req,res)=>{
     substitutions:events.some(event=>/sub/i.test(`${event.type??''} ${event.detail??''}`)),
     teamStats:teamStats.length>0||legacyTeamStats,
     playerStats:playerStats.length>0,
-    injuries:injuries.length>0
+    injuries:injuries.length>0,
+    specialEvents:specialEvents.length>0
   };
   const hasStandardData=Boolean(match.halftime_score||match.stadium||match.referee||match.attendance!=null||details?.extratime_home!=null||details?.penalty_home!=null);
   const hasDetailedData=modules.events||modules.lineups||modules.teamStats||modules.playerStats;
@@ -297,7 +314,7 @@ api.get('/matches/:id', (req,res)=>{
     extraTime:details?.extratime_home!=null&&details?.extratime_away!=null?`${details.extratime_home}-${details.extratime_away}`:null,
     penalties:details?.penalty_home!=null&&details?.penalty_away!=null?`${details.penalty_home}-${details.penalty_away}`:null
   };
-  res.json({match,details:details??null,outcome,modules,events,lineups,teamStats,playerStats,injuries,sources});
+  res.json({match,details:details??null,outcome,modules,events,specialEvents,lineups,teamStats,playerStats,injuries,sources});
 });
 
 const canonicalPlayerStatFields=['appearances','starts','minutes','goals','own_goals','assists','yellow_cards','yellow_red_cards','red_cards','clean_sheets'] as const;
@@ -316,6 +333,10 @@ api.get('/players', (req,res)=>{
   const allowed=['appearances','goals','assists','minutes','name']; const sort=allowed.includes(q.sort??'')?q.sort!:'appearances';
   const direction=q.direction==='asc'?'ASC':'DESC';
   const sortExpression=sort==='name'?'players.name':`totals.${sort}`;
+  const {page,pageSize}=pagination(q);
+  const sqlWhere=where.length?'WHERE '+where.join(' AND '):'';
+  const total=Number((db.prepare(`WITH totals AS (SELECT player_id,${canonicalPlayerStatProjection} FROM player_seasons GROUP BY player_id) SELECT COUNT(*) AS total FROM players LEFT JOIN totals ON totals.player_id=players.id ${sqlWhere}`).get(...params) as any).total);
+  const resultSize=q.all==='1'&&!q.page&&!q.pageSize?Math.max(total,1):pageSize;
   const rows=db.prepare(`WITH totals AS (
     SELECT player_id,${canonicalPlayerStatProjection}
     FROM player_seasons GROUP BY player_id
@@ -327,17 +348,22 @@ api.get('/players', (req,res)=>{
     totals.yellow_cards AS aggregate_yellow_cards,totals.red_cards AS aggregate_red_cards,
     totals.clean_sheets AS aggregate_clean_sheets
   FROM players LEFT JOIN totals ON totals.player_id=players.id
-  ${where.length?'WHERE '+where.join(' AND '):''}
-  ORDER BY ${sortExpression} ${direction} NULLS LAST, players.name`).all(...params) as any[];
-  res.json(rows.map(row=>{
+  ${sqlWhere}
+  ORDER BY ${sortExpression} ${direction} NULLS LAST, players.name LIMIT ? OFFSET ?`).all(...params,resultSize,(page-1)*pageSize) as any[];
+  const mapped=rows.map(row=>{
     const player={...row};
     for(const field of canonicalPlayerStatFields){
       player[field]=row[`aggregate_${field}`];
       delete player[`aggregate_${field}`];
     }
     return player;
-  }));
+  });
+  res.json(q.page||q.pageSize?{rows:mapped,total,page,pageSize}:mapped);
 });
+api.get('/player-facets', (_req,res)=>res.json({
+  positions:(db.prepare(`SELECT DISTINCT position AS value FROM players WHERE position IS NOT NULL AND trim(position)<>'' ORDER BY position`).all() as any[]).map(row=>row.value),
+  nationalities:(db.prepare(`SELECT DISTINCT nationality AS value FROM players WHERE nationality IS NOT NULL AND trim(nationality)<>'' ORDER BY nationality`).all() as any[]).map(row=>row.value)
+}));
 api.get('/players/:id', (req,res)=>{
   const p=canonicalPlayer(Number(req.params.id));
   const seasons=db.prepare(`SELECT * FROM player_seasons WHERE player_id=? ORDER BY substr(season,1,4) DESC,competition`).all(req.params.id) as any[];
@@ -389,7 +415,10 @@ api.get('/transfers', (req,res)=>{
   const type=String(req.query.type??'').trim();
   const session=String(req.query.session??'').trim().toUpperCase();const direction=String(req.query.direction??'').trim().toUpperCase();const movement=String(req.query.movement??'').trim().toUpperCase();
   const where:string[]=[]; const params:any[]=[]; if(season){where.push('season=?');params.push(season);} if(type){where.push('lower(type)=lower(?)');params.push(type);}if(session){where.push('session=?');params.push(session);}if(direction){where.push('direction=?');params.push(direction);}if(movement){where.push('movement_type=?');params.push(movement);}
-  res.json(db.prepare(`SELECT transfers.*,CASE WHEN player_id IS NULL THEN 'unresolved' ELSE 'reconciled' END AS identity_status FROM transfers ${where.length?'WHERE '+where.join(' AND '):''} ORDER BY date DESC,id DESC LIMIT 2000`).all(...params));
+  const {page,pageSize}=pagination(req.query as Record<string,unknown>);const sqlWhere=where.length?'WHERE '+where.join(' AND '):'';
+  const total=Number((db.prepare(`SELECT COUNT(*) AS total FROM transfers ${sqlWhere}`).get(...params) as any).total);
+  const rows=db.prepare(`SELECT transfers.*,CASE WHEN player_id IS NULL THEN 'unresolved' ELSE 'reconciled' END AS identity_status FROM transfers ${sqlWhere} ORDER BY date DESC,id DESC LIMIT ? OFFSET ?`).all(...params,pageSize,(page-1)*pageSize);
+  res.json(req.query.page||req.query.pageSize?{rows,total,page,pageSize}:rows);
 });
 api.get('/club-history',(_req,res)=>res.json(getClubHistory()));
 api.get('/coaches',(_req,res)=>res.json(getTechnicalArchive()));
@@ -510,6 +539,8 @@ api.get('/data/candidates/:id', (req,res)=>{
     let preview:any=null;
     if(candidate.area==='player_seasons'&&fs.existsSync(dataPath)){
       preview=previewControlledImport('player-seasons','data.csv',fs.readFileSync(dataPath,'utf8'));
+    }else if(candidate.area==='matches'&&fs.existsSync(dataPath)){
+      preview=previewControlledImport('matches','data.csv',fs.readFileSync(dataPath,'utf8'));
     }else if(candidate.area==='match_details'&&fs.existsSync(dataPath)){
       const allMatches=db.prepare(`SELECT id,date,home_team,away_team,source_provider FROM matches WHERE season=? AND competition=?`).all(candidate.season,candidate.competition) as any[];
       const issues:any[]=[];let updated=0,conflicts=0,skipped=0;
@@ -652,6 +683,17 @@ api.post('/data/candidates/:id/import', (req,res)=>{
       db.prepare(`UPDATE research_candidates SET status='imported',imported_at=?,last_seen_at=? WHERE id=?`).run(nowIso(),nowIso(),candidate.id);
       recordChange({entityType:'research_candidate',entityId:candidate.id,action:'update',before:{status:candidate.status,standings:before,season,competition},after:{status:'imported',importRunId:runId,standings:after,season,competition},backupId:backup.id,note:'Import season standings candidato approvato'});
       return res.json({ok:true,importRunId:runId,backupId:backup.id,created:Math.max(0,after.length-before.length),updated:Math.min(before.length,after.length)});
+    }
+    if(candidate.area==='matches'){
+      const dir=candidateDir(candidate.candidate_path),content=fs.readFileSync(path.join(dir,'data.csv'),'utf8');
+      const preview=previewControlledImport('matches','data.csv',content);if(!preview.canApply)throw new Error(`Import bloccato: ${preview.errors} errori critici`);
+      const backup=createBackupSnapshot(`before-candidate-${candidate.id}-import`);
+      const applied=applyControlledImport('matches','data.csv',content);
+      const runId=recordImportRun({kind:'candidate_import',sourceProvider:candidate.source_provider,area:candidate.area,season:candidate.season,competition:candidate.competition,candidatePath:candidate.candidate_path,manifestSha256:candidate.manifest_sha256,status:'succeeded',startedAt:started,finishedAt:nowIso(),recordsSeen:preview.rows,recordsCreated:preview.created,recordsUpdated:preview.updated,backupId:backup.id,diff:preview,notes:'Import fixture storiche da candidato approvato'});
+      const provenanceReferences=recordControlledImportProvenance('matches','data.csv',content,runId,candidate.candidate_path);
+      db.prepare(`UPDATE research_candidates SET status='imported',imported_at=?,last_seen_at=? WHERE id=?`).run(nowIso(),nowIso(),candidate.id);
+      recordChange({entityType:'research_candidate',entityId:candidate.id,action:'update',before:{status:candidate.status},after:{status:'imported',importRunId:runId,created:preview.created,updated:preview.updated},backupId:backup.id,note:'Import fixture storiche candidato approvato'});
+      return res.json({ok:true,importRunId:runId,backupId:backup.id,created:preview.created,updated:preview.updated,provenanceReferences,result:applied.result});
     }
     if(candidate.area!=='player_seasons')return res.status(400).json({error:'Import candidato non ancora disponibile per questa area'});
     const dir=candidateDir(candidate.candidate_path),parsed=parseCsv(fs.readFileSync(path.join(dir,'data.csv'),'utf8'));
@@ -950,7 +992,8 @@ function asNum(v:any){ const n=Number(v); return v==null||v===''||Number.isNaN(n
 function boolInt(v:any){ return v===true||v===1||v==='1'||v==='true'?1:0; }
 
 const manualTables:Record<string,string>={
-  seasons:'seasons', matches:'matches', players:'players', 'player-seasons':'player_seasons', transfers:'transfers', 'match-events':'match_events', match_event:'match_events'
+  seasons:'seasons', matches:'matches', players:'players', 'player-seasons':'player_seasons', transfers:'transfers', 'match-events':'match_events', match_event:'match_events',
+  'match-special-events':'match_special_events', match_special_event:'match_special_events'
 };
 
 function manualDeleteImpact(entity:string,id:number){
@@ -958,7 +1001,7 @@ function manualDeleteImpact(entity:string,id:number){
   if(!table)return null;
   const exists=db.prepare(`SELECT 1 FROM ${table} WHERE id=?`).get(id);
   if(!exists)return null;
-  if(entity==='matches')return {record:true,cascades:{events:(db.prepare(`SELECT count(*) AS c FROM match_events WHERE match_id=?`).get(id) as any).c,lineups:(db.prepare(`SELECT count(*) AS c FROM match_lineups WHERE match_id=?`).get(id) as any).c,teamStats:(db.prepare(`SELECT count(*) AS c FROM match_team_stats WHERE match_id=?`).get(id) as any).c,playerStats:(db.prepare(`SELECT count(*) AS c FROM match_player_stats WHERE match_id=?`).get(id) as any).c,injuries:(db.prepare(`SELECT count(*) AS c FROM match_injuries WHERE match_id=?`).get(id) as any).c}};
+  if(entity==='matches')return {record:true,cascades:{events:(db.prepare(`SELECT count(*) AS c FROM match_events WHERE match_id=?`).get(id) as any).c,specialEvents:(db.prepare(`SELECT count(*) AS c FROM match_special_events WHERE match_id=?`).get(id) as any).c,lineups:(db.prepare(`SELECT count(*) AS c FROM match_lineups WHERE match_id=?`).get(id) as any).c,teamStats:(db.prepare(`SELECT count(*) AS c FROM match_team_stats WHERE match_id=?`).get(id) as any).c,playerStats:(db.prepare(`SELECT count(*) AS c FROM match_player_stats WHERE match_id=?`).get(id) as any).c,injuries:(db.prepare(`SELECT count(*) AS c FROM match_injuries WHERE match_id=?`).get(id) as any).c}};
   if(entity==='players')return {record:true,cascades:{playerSeasons:(db.prepare(`SELECT count(*) AS c FROM player_seasons WHERE player_id=?`).get(id) as any).c,eventLinks:(db.prepare(`SELECT count(*) AS c FROM match_events WHERE player_id=? OR assist_player_id=?`).get(id,id) as any).c,transferLinks:(db.prepare(`SELECT count(*) AS c FROM transfers WHERE player_id=?`).get(id) as any).c}};
   if(entity==='seasons')return {record:true,related:{matches:(db.prepare(`SELECT count(*) AS c FROM matches WHERE season=(SELECT season FROM seasons WHERE id=?) AND competition=(SELECT competition FROM seasons WHERE id=?)`).get(id,id) as any).c}};
   return {record:true,cascades:{}};
@@ -1072,15 +1115,21 @@ api.get('/manual/:entity/:id/impact',(req,res)=>{
 
 api.get('/manual/:entity', (req,res)=>{
   const e=req.params.entity;
-  if(e==='seasons') return res.json(db.prepare(`SELECT * FROM seasons ORDER BY season DESC,competition`).all());
-  if(e==='matches') return res.json(db.prepare(`SELECT * FROM matches ORDER BY date DESC,id DESC LIMIT 2500`).all());
-  if(e==='players') return res.json(db.prepare(`SELECT * FROM players ORDER BY name`).all());
-  if(e==='player-seasons') return res.json(db.prepare(`SELECT ps.*,p.name AS player_name FROM player_seasons ps JOIN players p ON p.id=ps.player_id ORDER BY ps.season DESC,p.name`).all());
-  if(e==='transfers') return res.json(db.prepare(`SELECT * FROM transfers ORDER BY date DESC,id DESC`).all());
-  if(e==='match-events') return res.json(db.prepare(`SELECT e.*,m.date AS match_date,m.season AS match_season,m.competition AS match_competition,m.home_team,m.away_team,m.home_score,m.away_score
-    FROM match_events e JOIN matches m ON m.id=e.match_id
-    ORDER BY m.date DESC,COALESCE(e.minute,999),COALESCE(e.extra_minute,0),e.id DESC`).all());
-  res.status(404).json({error:'Entity non supportata'});
+  const definitions:Record<string,{from:string;select:string;order:string;search:string[]}>= {
+    seasons:{from:'seasons',select:'*',order:'season DESC,competition',search:['season','competition','manager']},
+    matches:{from:'matches',select:'*',order:'date DESC,id DESC',search:['date','season','competition','home_team','away_team']},
+    players:{from:'players',select:'*',order:'name',search:['name','position','nationality']},
+    'player-seasons':{from:'player_seasons ps JOIN players p ON p.id=ps.player_id',select:'ps.*,p.name AS player_name',order:'ps.season DESC,p.name',search:['p.name','ps.season','ps.competition']},
+    transfers:{from:'transfers',select:'*',order:'date DESC,id DESC',search:['player_name','season','from_team_name','to_team_name']},
+    'match-events':{from:'match_events e JOIN matches m ON m.id=e.match_id',select:'e.*,m.date AS match_date,m.season AS match_season,m.competition AS match_competition,m.home_team,m.away_team,m.home_score,m.away_score',order:'m.date DESC,COALESCE(e.minute,999),COALESCE(e.extra_minute,0),e.id DESC',search:['CAST(e.id AS TEXT)','m.date','m.home_team','m.away_team','e.player_name','e.team_name']},
+    'match-special-events':{from:'match_special_events e JOIN matches m ON m.id=e.match_id',select:'e.*,m.date AS match_date,m.season AS match_season,m.competition AS match_competition,m.home_team,m.away_team,m.home_score AS final_home_score,m.away_score AS final_away_score',order:'e.effective_at DESC,e.id DESC',search:['CAST(e.id AS TEXT)','m.date','m.home_team','m.away_team','e.event_type','e.reason','e.description']}
+  };
+  const definition=definitions[e];if(!definition)return res.status(404).json({error:'Entity non supportata'});
+  const query=String(req.query.q??'').trim();const where=query?`WHERE ${definition.search.map(field=>`lower(COALESCE(${field},'')) LIKE lower(?)`).join(' OR ')}`:'';const queryParams=query?definition.search.map(()=>`%${query.replace(/^#/,'')}%`):[];
+  const {page,pageSize}=pagination(req.query as Record<string,unknown>);
+  const total=Number((db.prepare(`SELECT COUNT(*) AS total FROM ${definition.from} ${where}`).get(...queryParams) as any).total);
+  const rows=db.prepare(`SELECT ${definition.select} FROM ${definition.from} ${where} ORDER BY ${definition.order} LIMIT ? OFFSET ?`).all(...queryParams,pageSize,(page-1)*pageSize);
+  res.json({rows,total,page,pageSize});
 });
 
 // A dedicated endpoint makes events safely editable without asking a curator
@@ -1153,6 +1202,45 @@ api.delete('/manual/match-events/:id',(req,res)=>{try{
   recordChange({entityType:'match_event',entityId:id,action:'delete',before,backupId:backup.id,note:'Eliminazione manuale con backup'});
   res.json({ok:true,backupId:backup.id});
 }catch(e){res.status(500).json({error:String(e)});}});
+
+const specialEventTypes=new Set(['POSTPONED','KICKOFF_DELAYED','SUSPENDED','RESUMED','ABANDONED','CANCELLED','AWARDED','DATE_CHANGED','VENUE_CHANGED','OTHER']);
+function validateSpecialEvent(x:any,eventId?:number){
+  const matchId=asInt(x.match_id);
+  if(matchId==null||!db.prepare(`SELECT 1 FROM matches WHERE id=?`).get(matchId))return 'Seleziona una partita esistente';
+  const eventType=String(x.event_type??'').trim().toUpperCase();
+  if(!specialEventTypes.has(eventType))return 'Seleziona un tipo di avvenimento previsto';
+  if(!nullish(x.effective_at))return 'La data effettiva dell’avvenimento è obbligatoria';
+  if(Number.isNaN(Date.parse(String(x.effective_at))))return 'La data effettiva non è valida';
+  const minute=asInt(x.match_minute),remaining=asInt(x.remaining_minutes),home=asInt(x.home_score),away=asInt(x.away_score);
+  if(minute!=null&&(minute<0||minute>130))return 'Il minuto deve essere compreso tra 0 e 130';
+  if(remaining!=null&&(remaining<0||remaining>130))return 'I minuti residui devono essere compresi tra 0 e 130';
+  if((home!=null&&home<0)||(away!=null&&away<0))return 'Il punteggio non può essere negativo';
+  if(!nullish(x.description))return 'La descrizione è obbligatoria';
+  if(!nullish(x.source_url))return 'Per un avvenimento storico è obbligatorio un URL fonte';
+  try{const url=new URL(String(x.source_url));if(!['http:','https:'].includes(url.protocol))return 'La fonte deve essere un URL HTTP o HTTPS';}catch{return 'La fonte deve essere un URL valido';}
+  const duplicate=db.prepare(`SELECT id FROM match_special_events WHERE match_id=? AND event_type=? AND effective_at=? AND id<>?`).get(matchId,eventType,String(x.effective_at).trim(),eventId??-1);
+  if(duplicate)return 'Questo avvenimento risulta già presente';
+  return null;
+}
+api.post('/manual/match-special-events',(req,res)=>{try{
+  const x=req.body??{},validationError=validateSpecialEvent(x);if(validationError)return res.status(400).json({error:validationError});
+  const result=db.prepare(`INSERT INTO match_special_events(match_id,event_type,effective_at,match_minute,remaining_minutes,home_score,away_score,reason,description,authority,source_provider,source_url,verification_note,verified_by,last_verified_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(asInt(x.match_id),String(x.event_type).toUpperCase(),String(x.effective_at).trim(),asInt(x.match_minute),asInt(x.remaining_minutes),asInt(x.home_score),asInt(x.away_score),nullish(x.reason),String(x.description).trim(),nullish(x.authority),'manual',String(x.source_url).trim(),nullish(x.verification_note),nullish(x.verified_by)||'Data Manager',nowIso());
+  const id=Number(result.lastInsertRowid),after=db.prepare(`SELECT * FROM match_special_events WHERE id=?`).get(id);
+  recordSourceReference({entityType:'match_special_event',entityId:id,field:null,sourceUrl:String(x.source_url),note:nullish(x.verification_note),author:nullish(x.verified_by)});
+  recordChange({entityType:'match_special_event',entityId:id,action:'create',after,sourceUrl:String(x.source_url),note:nullish(x.verification_note),author:nullish(x.verified_by)});
+  res.json({ok:true,id});
+}catch(e){res.status(500).json({error:String(e)});}});
+api.put('/manual/match-special-events/:id',(req,res)=>{try{
+  const x=req.body??{},id=asInt(req.params.id);if(id==null)return res.status(400).json({error:'ID avvenimento non valido'});
+  const before=db.prepare(`SELECT * FROM match_special_events WHERE id=?`).get(id) as any;if(!before)return res.status(404).json({error:'Avvenimento non trovato'});
+  const validationError=validateSpecialEvent(x,id);if(validationError)return res.status(400).json({error:validationError});
+  db.prepare(`UPDATE match_special_events SET match_id=?,event_type=?,effective_at=?,match_minute=?,remaining_minutes=?,home_score=?,away_score=?,reason=?,description=?,authority=?,source_provider='manual',source_url=?,verification_note=?,verified_by=?,last_verified_at=? WHERE id=?`).run(asInt(x.match_id),String(x.event_type).toUpperCase(),String(x.effective_at).trim(),asInt(x.match_minute),asInt(x.remaining_minutes),asInt(x.home_score),asInt(x.away_score),nullish(x.reason),String(x.description).trim(),nullish(x.authority),String(x.source_url).trim(),nullish(x.verification_note),nullish(x.verified_by)||'Data Manager',nowIso(),id);
+  const after=db.prepare(`SELECT * FROM match_special_events WHERE id=?`).get(id);
+  recordSourceReference({entityType:'match_special_event',entityId:id,field:'manual-review',sourceUrl:String(x.source_url),note:nullish(x.verification_note),author:nullish(x.verified_by)});
+  recordChange({entityType:'match_special_event',entityId:id,action:'update',before,after,sourceUrl:String(x.source_url),note:nullish(x.verification_note),author:nullish(x.verified_by)});
+  res.json({ok:true});
+}catch(e){res.status(500).json({error:String(e)});}});
+api.delete('/manual/match-special-events/:id',(req,res)=>{try{const id=asInt(req.params.id);if(id==null)return res.status(400).json({error:'ID non valido'});const backup=deleteManualRecord('match-special-events',id);if(!backup)return res.status(404).json({error:'Avvenimento non trovato'});res.json({ok:true,backupId:backup.id});}catch(e){res.status(500).json({error:String(e)});}});
 
 api.post('/manual/seasons', (req,res)=>{
   try{

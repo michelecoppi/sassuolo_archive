@@ -5,7 +5,7 @@ export type Match = {
   possession_home?:number|null; possession_away?:number|null; shots_home?:number|null; shots_away?:number|null;
   shots_on_target_home?:number|null; shots_on_target_away?:number|null; corners_home?:number|null; corners_away?:number|null;
   fouls_home?:number|null; fouls_away?:number|null; xg_home?:number|null; xg_away?:number|null;
-  completeness_level?:'BASIC'|'STANDARD'|'DETAILED'|null; source_external_id?:string|null; external_key?:string|null; source_provider?:string|null; source_url?:string|null; last_verified_at?:string|null; kickoff_fixture_id?:number|null; bigballs_match_id?:string|null;
+  completeness_level?:'BASIC'|'STANDARD'|'DETAILED'|null; has_special_events?:number|boolean; source_external_id?:string|null; external_key?:string|null; source_provider?:string|null; source_url?:string|null; last_verified_at?:string|null; kickoff_fixture_id?:number|null; bigballs_match_id?:string|null;
 };
 
 export type Season = {

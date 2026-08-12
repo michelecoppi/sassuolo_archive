@@ -1,0 +1,22 @@
+{
+  "season": "2014/15",
+  "competition": "Coppa Italia",
+  "playerSeason": {
+    "playerId": 3312,
+    "playerName": "Nicola Sansone",
+    "goals": 3,
+    "sourceProvider": "Lega Serie A + AC Milan + ANSA + Sky + La Gazzetta dello Sport",
+    "sourceUrl": "https://www.acmilan.com/it/news/articoli/coppa-italia/2024-12-03/milan-sassuolo-match-preview"
+  },
+  "events": [
+    {"date":"2014-08-21","minute":12,"team":"U.S. Sassuolo Calcio","player":"Simone Zaza","playerId":3303,"detail":"Normal Goal","homeScore":1,"awayScore":0,"sourceUrl":"https://football-italia.net/coppa-chievo-crash-out/"},
+    {"date":"2014-08-21","minute":33,"team":"Cittadella","player":"Claudio Coralli","playerId":null,"detail":"Normal Goal","homeScore":1,"awayScore":1,"sourceUrl":"https://football-italia.net/coppa-chievo-crash-out/"},
+    {"date":"2014-08-21","minute":53,"team":"U.S. Sassuolo Calcio","player":"Nicola Sansone","playerId":3312,"detail":"Normal Goal","homeScore":2,"awayScore":1,"sourceUrl":"https://football-italia.net/coppa-chievo-crash-out/"},
+    {"date":"2014-08-21","minute":83,"team":"U.S. Sassuolo Calcio","player":"Nicola Sansone","playerId":3312,"detail":"Normal Goal","homeScore":3,"awayScore":1,"sourceUrl":"https://football-italia.net/coppa-chievo-crash-out/"},
+    {"date":"2014-08-21","minute":90,"extraMinute":3,"team":"U.S. Sassuolo Calcio","player":"Antonio Floro Flores","playerId":3304,"detail":"Normal Goal","homeScore":4,"awayScore":1,"sourceUrl":"https://football-italia.net/coppa-chievo-crash-out/"},
+    {"date":"2014-12-02","minute":57,"team":"U.S. Sassuolo Calcio","player":"Antonio Floro Flores","playerId":3304,"detail":"Normal Goal","homeScore":1,"awayScore":0,"sourceUrl":"https://www.gazzetta.it/Calcio/Coppa-Italia/02-12-2014/coppa-italia-pescara-sassuolo-1-0-tabellino-3-ammoniti-100121292733.shtml"},
+    {"date":"2015-01-13","minute":38,"team":"Milan","player":"Giampaolo Pazzini","playerId":null,"detail":"Normal Goal","homeScore":1,"awayScore":0,"sourceUrl":"https://www.ansa.it/sito/notizie/sport/calcio/2015/01/12/coppa-italia-milan-sassuolo-2-1-negli-ottavi.-video-foto.-in-campionato-il-6-gennaio_34d217d6-627e-4986-af3e-f4a3e6db371e.html"},
+    {"date":"2015-01-13","minute":64,"team":"U.S. Sassuolo Calcio","player":"Nicola Sansone","playerId":3312,"detail":"Penalty","homeScore":1,"awayScore":1,"sourceUrl":"https://www.ansa.it/sito/notizie/sport/calcio/2015/01/12/coppa-italia-milan-sassuolo-2-1-negli-ottavi.-video-foto.-in-campionato-il-6-gennaio_34d217d6-627e-4986-af3e-f4a3e6db371e.html"},
+    {"date":"2015-01-13","minute":86,"team":"Milan","player":"Nigel de Jong","playerId":null,"detail":"Normal Goal","homeScore":2,"awayScore":1,"sourceUrl":"https://www.ansa.it/sito/notizie/sport/calcio/2015/01/12/coppa-italia-milan-sassuolo-2-1-negli-ottavi.-video-foto.-in-campionato-il-6-gennaio_34d217d6-627e-4986-af3e-f4a3e6db371e.html"}
+  ]
+}

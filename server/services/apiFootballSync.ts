@@ -133,7 +133,12 @@ function upsertPlayer(player: any, extra: { position?: any; number?: any; curren
   const name = [firstname, lastname].filter(Boolean).join(' ').trim() || providerName;
   if (!providerName && !name) return null;
   let existing: any = apiId ? db.prepare(`SELECT * FROM players WHERE api_football_id=?`).get(apiId) : null;
-  if (!existing) existing = db.prepare(`SELECT * FROM players WHERE lower(name)=lower(?)`).get(name);
+  if (!existing) {
+    const byName = db.prepare(`SELECT * FROM players WHERE lower(name)=lower(?)`).get(name) as any;
+    // A provider ID is stronger than a same-name match. Never merge homonyms
+    // already linked to different API identities.
+    if (!apiId || byName?.api_football_id == null || Number(byName.api_football_id) === apiId) existing = byName;
+  }
   if (!existing) {
     const resolution = resolvePlayer({ name: providerName || name, sourceProvider: PROVIDER, sourcePlayerId: apiId, context: `api-football:${apiId ?? name}`, allowCreate: true });
     if (resolution.status === 'conflict') return null;
@@ -538,7 +543,7 @@ function persistFixtureDetails(matchId: number, row: any) {
       if (!p?.name) continue;
       insertPlayerStats.run(
         matchId, apiFixtureId, nInt(teamBlock?.team?.id), teamBlock?.team?.name ?? null, teamBlock?.team?.logo ?? null,
-        localPlayerId, nInt(p?.id), p?.name, p?.photo ?? null, nInt(games?.minutes), nInt(games?.number), games?.position ?? null,
+        localPlayerId, nInt(p?.id), p?.name, p?.photo ?? null, nInt(games?.minutes), nInt(games?.number), normalizePlayerPosition(games?.position),
         cleanRating(games?.rating), games?.captain == null ? null : boolInt(games.captain), games?.substitute == null ? null : boolInt(games.substitute), nInt(games?.offsides),
         nInt(shots?.total), nInt(shots?.on), nInt(goals2?.total), nInt(goals2?.conceded), nInt(goals2?.assists), nInt(goals2?.saves),
         nInt(passes?.total), nInt(passes?.key), parsePercentOrNumber(passes?.accuracy), nInt(tackles?.total), nInt(tackles?.blocks), nInt(tackles?.interceptions),

@@ -3,10 +3,11 @@ import type { FormEvent } from 'react';
 import { ArrowLeft, Edit3, ExternalLink, Save, Search, Trash2, X } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
-import { Loading, PageTitle, fmt } from '../components/Ui';
+import { ErrorState, Loading, PageTitle, Pagination, fmt } from '../components/Ui';
 
-type Entity = 'seasons' | 'matches' | 'players' | 'player-seasons' | 'transfers' | 'match-events';
+type Entity = 'seasons' | 'matches' | 'players' | 'player-seasons' | 'transfers' | 'match-events' | 'match-special-events';
 type Row = Record<string, any> & { id:number };
+type PagedRows={rows:Row[];total:number;page:number;pageSize:number};
 type Field = { key:string; label:string; type?:'text'|'number'|'date'|'checkbox'; required?:boolean; placeholder?:string };
 
 const CONFIG: Record<Entity,{label:string; fields:Field[]; summary:(r:Row)=>string}> = {
@@ -35,6 +36,11 @@ const CONFIG: Record<Entity,{label:string; fields:Field[]; summary:(r:Row)=>stri
   ]},
   'match-events':{label:'Eventi partita',summary:r=>`${r.match_date?.slice(0,10)??'Data N/D'} · ${r.home_team??'N/D'} ${r.home_score??'–'}-${r.away_score??'–'} ${r.away_team??'N/D'} · ${r.minute==null?'minuto N/D':`${r.minute}${r.extra_minute?`+${r.extra_minute}`:''}'`} · ${r.player_name??r.team_name??'Evento'}`,fields:[
     {key:'match_id',label:'Partita (ID)',type:'number',required:true,placeholder:'ID partita'}, {key:'minute',label:'Minuto',type:'number',placeholder:'Lascia vuoto se non verificato'}, {key:'extra_minute',label:'Recupero',type:'number'}, {key:'team_name',label:'Squadra'}, {key:'player_name',label:'Giocatore'}, {key:'assist_name',label:'Assist / giocatore sostituito'}, {key:'type',label:'Tipo',placeholder:'Card, Goal, subst…'}, {key:'detail',label:'Dettaglio',placeholder:'Yellow Card'}, {key:'comments',label:'Nota evento'}, {key:'home_score',label:'Punteggio casa dopo evento',type:'number'}, {key:'away_score',label:'Punteggio trasferta dopo evento',type:'number'}, {key:'source_url',label:'URL referto / video autorizzato'}, {key:'verification_note',label:'Nota curatoriale'}, {key:'verified_by',label:'Verificato da'}, {key:'verified',label:'Dato verificato',type:'checkbox'}
+  ]},
+  'match-special-events':{label:'Avvenimenti particolari',summary:r=>`${r.effective_at?.slice(0,10)??'Data N/D'} · ${r.home_team??'N/D'} – ${r.away_team??'N/D'} · ${r.event_type}`,fields:[
+    {key:'match_id',label:'Partita (ID)',type:'number',required:true,placeholder:'ID partita'}, {key:'event_type',label:'Tipo',required:true}, {key:'effective_at',label:'Data effettiva',required:true,placeholder:'AAAA-MM-GG oppure ISO 8601'},
+    {key:'match_minute',label:'Minuto della sospensione/ripresa',type:'number'}, {key:'remaining_minutes',label:'Minuti residui',type:'number'}, {key:'home_score',label:'Punteggio casa',type:'number'}, {key:'away_score',label:'Punteggio trasferta',type:'number'},
+    {key:'reason',label:'Motivo'}, {key:'description',label:'Descrizione documentata',required:true}, {key:'authority',label:'Autorità / decisore'}, {key:'source_url',label:'URL fonte',required:true}, {key:'verification_note',label:'Nota curatoriale'}, {key:'verified_by',label:'Verificato da'}
   ]}
 };
 
@@ -43,33 +49,39 @@ const isEntity=(value:string|null):value is Entity=>entityValues.includes(value 
 const emptyFor=(entity:Entity)=>Object.fromEntries(CONFIG[entity].fields.map(f=>[f.key,f.type==='checkbox'?false:'']));
 
 export default function ManualEditor(){
-  const [params]=useSearchParams();
+  const [params,setParams]=useSearchParams();
   const initialEntity:Entity=isEntity(params.get('entity'))?params.get('entity') as Entity:'seasons';
   const [entity,setEntity]=useState<Entity>(initialEntity);
-  const [rows,setRows]=useState<Row[]|null>(null);
+  const [data,setData]=useState<PagedRows|null>(null);
   const [matches,setMatches]=useState<Row[]>([]);
   const [form,setForm]=useState<Record<string,any>>(()=>emptyFor(initialEntity));
   const [editing,setEditing]=useState<number|null>(null);
-  const [query,setQuery]=useState('');
+  const [query,setQuery]=useState(params.get('q')??'');
   const [status,setStatus]=useState('');
+  const [loadError,setLoadError]=useState('');
   const [busy,setBusy]=useState(false);
   const openedLinkedEvent=useRef(false);
   const cfg=CONFIG[entity];
-  const load=async()=>{setRows(null);setRows(await api<Row[]>(`/manual/${entity}`));};
+  const page=Math.max(1,Number(params.get('page')||1));
+  const rows=data?.rows??null;
+  const updateUrl=(changes:Record<string,string|null>)=>{const next=new URLSearchParams(params);for(const[key,value]of Object.entries(changes))value?next.set(key,value):next.delete(key);setParams(next,{replace:true});};
+  const load=async()=>{setData(null);setLoadError('');const request=new URLSearchParams({page:String(page),pageSize:'50'});if(query)request.set('q',query);try{setData(await api<PagedRows>(`/manual/${entity}?${request}`));}catch(error){setLoadError(String(error));}};
 
   useEffect(()=>{
     openedLinkedEvent.current=false;
     setEditing(null);
     const next=emptyFor(entity);
-    if(entity==='match-events'&&params.get('matchId'))next.match_id=params.get('matchId')??'';
+    if((entity==='match-events'||entity==='match-special-events')&&params.get('matchId'))next.match_id=params.get('matchId')??'';
     setForm(next);
     setQuery(entity==='match-events'&&params.get('id')?`#${params.get('id')}`:'');
     setStatus('');
+    updateUrl({entity,page:null,q:null});
     void load();
-    if(entity==='match-events')void api<Row[]>('/manual/matches').then(setMatches);
+    if(entity==='match-events'||entity==='match-special-events')void api<PagedRows>('/manual/matches?page=1&pageSize=100').then(result=>setMatches(result.rows));
   },[entity]);
 
-  const filtered=useMemo(()=>rows?.filter(r=>`${r.id} ${cfg.summary(r)}`.toLowerCase().includes(query.toLowerCase()))??[],[rows,query,cfg]);
+  useEffect(()=>{const timer=window.setTimeout(()=>{updateUrl({q:query||null,page:null});void load();},250);return()=>window.clearTimeout(timer)},[query,page]);
+  const filtered=useMemo(()=>rows??[],[rows]);
   const beginEdit=(r:Row)=>{
     const next=emptyFor(entity);
     for(const f of cfg.fields)next[f.key]=f.type==='checkbox'?Boolean(r[f.key]):(r[f.key]??'');
@@ -99,7 +111,7 @@ export default function ManualEditor(){
     }
     catch(err){setStatus(`Errore: ${String(err)}`);}finally{setBusy(false);}
   };
-  const selectedMatch=entity==='match-events'?matches.find(m=>Number(m.id)===Number(form.match_id)):undefined;
+  const selectedMatch=entity==='match-events'||entity==='match-special-events'?matches.find(m=>Number(m.id)===Number(form.match_id)):undefined;
   const matchText=selectedMatch?`${String(selectedMatch.date).slice(0,10)} · ${selectedMatch.home_team} ${selectedMatch.home_score??'–'}-${selectedMatch.away_score??'–'} ${selectedMatch.away_team}`:'';
   const sourceSearch=selectedMatch?`https://www.google.com/search?q=${encodeURIComponent(`${selectedMatch.home_team} ${selectedMatch.away_team} ${String(selectedMatch.date).slice(0,10)} referto video`)}`:'';
 
@@ -107,8 +119,8 @@ export default function ManualEditor(){
     <PageTitle title="Modifica dati manualmente" subtitle="Correggi o integra SQLite dal browser, conservando la provenienza delle verifiche manuali." action={<Link className="btn-secondary" to="/data-manager"><ArrowLeft className="h-4 w-4"/>Data Manager</Link>}/>
     <div className="mb-5 flex flex-wrap gap-2">{entityValues.map(k=><button key={k} onClick={()=>setEntity(k)} className={entity===k?'btn-primary':'btn-secondary'}>{CONFIG[k].label}</button>)}</div>
     <form onSubmit={save} className="card mb-6 p-5">
-      <div className="mb-4 flex items-center justify-between"><div><h2 className="font-bold">{editing?'Modifica':'Nuovo'} · {cfg.label}</h2><p className="mt-1 text-xs text-zinc-500">Lascia vuoti i valori che non conosci: restano N/D, senza stime.</p></div>{editing&&<button type="button" onClick={reset} className="btn-secondary"><X className="h-4 w-4"/>Annulla</button>}</div>
-      {entity==='match-events'&&<><datalist id="manual-match-options">{matches.map(m=><option key={m.id} value={m.id}>{String(m.date).slice(0,10)} · {m.home_team} – {m.away_team}</option>)}</datalist><div className="mb-4 rounded-xl border border-sky-500/30 bg-sky-500/5 p-4 text-sm text-sky-100"><b>Prima controlla la gara.</b>{selectedMatch?<span className="ml-1">{matchText}</span>:<span className="ml-1">Inserisci l’ID della partita per aprire contesto e fonti.</span>}{selectedMatch&&<div className="mt-3 flex flex-wrap gap-2"><Link className="btn-secondary !min-h-8 !px-3 !py-1 text-xs" to={`/matches/${selectedMatch.id}`} target="_blank"><ExternalLink className="h-3.5 w-3.5"/>Apri scheda partita</Link><a className="btn-secondary !min-h-8 !px-3 !py-1 text-xs" href={sourceSearch} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5"/>Cerca referto o video autorizzato</a></div>}</div></>}
+      <div className="mb-4 flex items-center justify-between"><div><h2 className="font-bold">{editing?'Modifica':'Nuovo'} · {cfg.label}</h2><p className="mt-1 text-xs text-zinc-400">Lascia vuoti i valori che non conosci: restano N/D, senza stime.</p></div>{editing&&<button type="button" onClick={reset} className="btn-secondary"><X className="h-4 w-4"/>Annulla</button>}</div>
+      {(entity==='match-events'||entity==='match-special-events')&&<><datalist id="manual-match-options">{matches.map(m=><option key={m.id} value={m.id}>{String(m.date).slice(0,10)} · {m.home_team} – {m.away_team}</option>)}</datalist><div className="mb-4 rounded-xl border border-sky-500/30 bg-sky-500/5 p-4 text-sm text-sky-100"><b>Prima controlla la gara.</b>{selectedMatch?<span className="ml-1">{matchText}</span>:<span className="ml-1">Inserisci l’ID della partita per aprire contesto e fonti.</span>}{selectedMatch&&<div className="mt-3 flex flex-wrap gap-2"><Link className="btn-secondary !min-h-8 !px-3 !py-1 text-xs" to={`/matches/${selectedMatch.id}`} target="_blank"><ExternalLink className="h-3.5 w-3.5"/>Apri scheda partita</Link><a className="btn-secondary !min-h-8 !px-3 !py-1 text-xs" href={sourceSearch} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5"/>Cerca fonti</a></div>}</div></>}
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">{cfg.fields.map(f=>{
         if(entity==='match-events' && f.key==='type') return (
               <label key={f.key} className="text-sm text-zinc-400">
@@ -135,6 +147,9 @@ export default function ManualEditor(){
               </label>
             );
         if(entity==='match-events' && f.key==='detail') return null;
+        if(entity==='match-special-events' && f.key==='event_type') return (
+          <label key={f.key} className="text-sm text-zinc-400"><span className="mb-1 block">Tipo avvenimento<b className="text-neroverde-400"> *</b></span><select className="input" required value={form.event_type??''} onChange={e=>setForm({...form,event_type:e.target.value})}><option value="">Seleziona tipo</option><option value="POSTPONED">Rinviata</option><option value="KICKOFF_DELAYED">Calcio d’inizio ritardato</option><option value="SUSPENDED">Sospesa</option><option value="RESUMED">Ripresa / completata</option><option value="ABANDONED">Abbandonata</option><option value="CANCELLED">Annullata</option><option value="AWARDED">Risultato a tavolino</option><option value="DATE_CHANGED">Data modificata</option><option value="VENUE_CHANGED">Sede modificata</option><option value="OTHER">Altro</option></select></label>
+        );
         if(entity==='match-events' && f.key==='team_name' && selectedMatch) return (
               <label key={f.key} className="text-sm text-zinc-400">
                 <span className="mb-1 block">Squadra<b className="text-neroverde-400"> *</b></span>
@@ -148,15 +163,15 @@ export default function ManualEditor(){
         return (
               <label key={f.key} className="text-sm text-zinc-400">
                 <span className="mb-1 block">{f.label}{f.required&&<b className="text-neroverde-400"> *</b>}</span>
-                {f.type==='checkbox'?<input type="checkbox" checked={Boolean(form[f.key])} onChange={e=>setForm({...form,[f.key]:e.target.checked})} className="h-5 w-5 accent-emerald-500"/>:<input className="input" required={f.required} list={entity==='match-events'&&f.key==='match_id'?'manual-match-options':undefined} type={f.type??'text'} min={f.key==='minute'||f.key==='extra_minute'?0:undefined} max={f.key==='minute'?130:f.key==='extra_minute'?30:undefined} step={f.key.startsWith('xg_')||f.key.startsWith('possession_')?'0.01':undefined} placeholder={f.placeholder} value={form[f.key]??''} onChange={e=>setForm({...form,[f.key]:e.target.value})}/>}
+                {f.type==='checkbox'?<input type="checkbox" checked={Boolean(form[f.key])} onChange={e=>setForm({...form,[f.key]:e.target.checked})} className="h-5 w-5 accent-emerald-500"/>:<input className="input" required={f.required} list={(entity==='match-events'||entity==='match-special-events')&&f.key==='match_id'?'manual-match-options':undefined} type={f.type??'text'} min={['minute','extra_minute','match_minute','remaining_minutes'].includes(f.key)?0:undefined} max={f.key==='minute'||f.key==='match_minute'||f.key==='remaining_minutes'?130:f.key==='extra_minute'?30:undefined} step={f.key.startsWith('xg_')||f.key.startsWith('possession_')?'0.01':undefined} placeholder={f.placeholder} value={form[f.key]??''} onChange={e=>setForm({...form,[f.key]:e.target.value})}/>}
               </label>
             );
         })}</div>
       <div className="mt-5 flex items-center gap-3"><button className="btn-primary" disabled={busy}><Save className="h-4 w-4"/>{editing?'Salva modifiche':'Aggiungi'}</button>{status&&<span className="text-sm text-zinc-300">{status}</span>}</div>
     </form>
     <div className="card p-5">
-      <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"><div><h2 className="font-bold">Dati presenti</h2><p className="text-xs text-zinc-500">{rows?.length??0} record</p></div><div className="relative w-full md:w-96"><Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-600"/><input className="input pl-9" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Cerca nei record…"/></div></div>
-      {!rows?<Loading/>:<div className="space-y-2">{filtered.slice(0,500).map(r=><div key={r.id} className="flex flex-col gap-3 rounded-xl border border-zinc-800 bg-zinc-950/60 p-3 md:flex-row md:items-center md:justify-between"><div className="min-w-0"><div className="truncate font-medium text-zinc-100">{cfg.summary(r)}</div><div className="mt-1 text-xs text-zinc-500">Fonte: {fmt(r.source_provider)} · ID {r.id}{entity==='match-events'&&<> · <Link className="text-neroverde-400 hover:underline" to={`/matches/${r.match_id}`} target="_blank">Apri partita</Link></>}</div></div><div className="flex shrink-0 gap-2"><button className="btn-secondary" onClick={()=>beginEdit(r)}><Edit3 className="h-4 w-4"/>Modifica</button><button className="btn-secondary text-red-300" onClick={()=>remove(r)}><Trash2 className="h-4 w-4"/>Elimina</button></div></div>)}{filtered.length>500&&<p className="pt-2 text-sm text-zinc-500">Mostrati i primi 500 risultati. Usa la ricerca per restringere l’elenco.</p>}{filtered.length===0&&<p className="py-6 text-center text-sm text-zinc-500">Nessun record.</p>}</div>}
+      <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between"><div><h2 className="font-bold">Dati presenti</h2><p className="text-xs text-zinc-400">{data?.total??0} record</p></div><div className="relative w-full md:w-96"><Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400"/><input className="input pl-9" value={query} onChange={e=>setQuery(e.target.value)} placeholder="Cerca nei record…"/></div></div>
+      {loadError?<ErrorState message={loadError} retry={load}/>:!rows?<Loading/>:<div className="space-y-2">{filtered.map(r=><div key={r.id} className="flex flex-col gap-3 rounded-xl border border-zinc-800 bg-zinc-950/60 p-3 md:flex-row md:items-center md:justify-between"><div className="min-w-0"><div className="truncate font-medium text-zinc-100">{cfg.summary(r)}</div><div className="mt-1 text-xs text-zinc-400">Fonte: {fmt(r.source_provider)} · ID {r.id}{(entity==='match-events'||entity==='match-special-events')&&<> · <Link className="text-neroverde-400 hover:underline" to={`/matches/${r.match_id}`} target="_blank">Apri partita</Link></>}</div></div><div className="flex shrink-0 gap-2"><button className="btn-secondary" onClick={()=>beginEdit(r)}><Edit3 className="h-4 w-4"/>Modifica</button><button className="btn-secondary text-red-300" onClick={()=>remove(r)}><Trash2 className="h-4 w-4"/>Elimina</button></div></div>)}{filtered.length===0&&<p className="py-6 text-center text-sm text-zinc-400">Nessun record.</p>}{data&&<Pagination page={data.page} pageSize={data.pageSize} total={data.total} onPage={value=>updateUrl({page:String(value)})}/>}</div>}
     </div>
   </>;
 }

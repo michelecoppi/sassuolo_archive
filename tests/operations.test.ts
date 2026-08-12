@@ -40,6 +40,24 @@ test('le GET usano ETag e cache, poi una scrittura riuscita invalida le risposte
   assert.equal(refreshed.headers.get('x-cache'),'MISS');
 });
 
+test('partite, giocatori, trasferimenti e liste amministrative applicano limiti server-side',async()=>{
+  const insertPlayer=db.prepare(`INSERT INTO players(name,position,nationality,current_squad) VALUES(?,?,?,?)`);
+  const insertTransfer=db.prepare(`INSERT INTO transfers(external_key,player_name,date,direction,season) VALUES(?,?,?,?,?)`);
+  for(let index=0;index<65;index++){insertPlayer.run(`Paged Player ${String(index).padStart(2,'0')}`,'Attacker','Italia',1);insertTransfer.run(`paged-transfer-${index}`,`Paged Player ${String(index).padStart(2,'0')}`,'2099-07-01',index%2?'IN':'OUT','2099/00');}
+  const players=await (await fetch(`${base}/players?page=2&pageSize=20&sort=name&direction=asc`)).json() as any;
+  assert.equal(players.page,2);assert.equal(players.pageSize,20);assert.equal(players.rows.length,20);assert.ok(players.total>=65);
+  const transfers=await (await fetch(`${base}/transfers?season=2099%2F00&page=2&pageSize=20`)).json() as any;
+  assert.equal(transfers.total,65);assert.equal(transfers.rows.length,20);
+  const manual=await (await fetch(`${base}/manual/players?page=1&pageSize=10&q=Paged`)).json() as any;
+  assert.equal(manual.total,65);assert.equal(manual.rows.length,10);
+  assert.ok(JSON.stringify(manual).length<JSON.stringify(await db.prepare(`SELECT * FROM players`).all()).length);
+});
+
+test('il proxy immagini rifiuta host non ammessi con un fallback stabile',async()=>{
+  const response=await fetch(`${base}/assets/image?url=${encodeURIComponent('https://example.test/missing.jpg')}`);
+  assert.equal(response.status,200);assert.match(response.headers.get('content-type')??'',/image\/svg\+xml/);assert.match(await response.text(),/<svg/);
+});
+
 test('health espone stato operativo, tempi e provider senza rivelare segreti',async()=>{
   const started=nowIso();
   db.prepare(`INSERT INTO sync_state(provider,resource,requests_used,last_request,last_successful_sync,last_error) VALUES(?,?,?,?,?,?)`).run('test-provider','matches',3,started,started,'token=super-secret provider unavailable');

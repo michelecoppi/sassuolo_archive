@@ -1,0 +1,65 @@
+{
+  "package_type": "historical_matches",
+  "area": "matches",
+  "season": "2014/15",
+  "competition": "Coppa Italia",
+  "source_provider": "Lega Serie A + AC Milan + ANSA + Sky + La Gazzetta dello Sport + FBref",
+  "source_url": "https://img.legaseriea.it/vimages/16fdc30118237ec9/cu_26.pdf",
+  "verified_at": "2026-08-12",
+  "file": "data.csv",
+  "sha256": "e836b53e766fc0de2aaf5bdb4d7a0a1293be693425c50f0c943b438a43987589",
+  "records_total": 3,
+  "records_discarded": 0,
+  "fields_covered": [
+    "date",
+    "season",
+    "competition",
+    "round",
+    "home_team",
+    "away_team",
+    "home_score",
+    "away_score",
+    "halftime_score",
+    "scorers",
+    "cards",
+    "stadium",
+    "attendance",
+    "referee",
+    "corners_home",
+    "corners_away",
+    "source_url"
+  ],
+  "validation": {
+    "status": "reconciled",
+    "checks": [
+      {
+        "name": "single_scope",
+        "status": "passed"
+      },
+      {
+        "name": "complete_fixture_set",
+        "status": "passed"
+      },
+      {
+        "name": "two_independent_sources_per_match",
+        "status": "passed"
+      },
+      {
+        "name": "halftime_scores_reconciled",
+        "status": "passed"
+      },
+      {
+        "name": "editorial_discrepancies_resolved",
+        "status": "passed"
+      }
+    ],
+    "unresolved_conflicts": []
+  },
+  "notes": [
+    "Una sola stagione e competizione.",
+    "Copertura completa delle tre fixture disputate dal Sassuolo.",
+    "I campi non verificabili restano vuoti e saranno importati come NULL.",
+    "Marcatori e cartellini sono testuali; non sono stati simulati eventi strutturati.",
+    "Approvato dal Data Manager dopo revisione manuale."
+  ]
+}

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import test from 'node:test';
 import { parseImportFile, previewControlledImport } from '../server/services/controlledImport.js';
 
@@ -43,4 +44,11 @@ test('il dry-run accetta un capitano verificato e rifiuta flag diversi da 0 o 1'
   ].join('\n'));
   assert.equal(invalid.canApply, false);
   assert.ok(invalid.issues.some(issue => issue.code === 'invalid_flag'));
+});
+
+test('il dry-run riconosce tutti i campi della tranche Coppa Italia 2013/14',()=>{
+  const content=fs.readFileSync('data/reconciliation/candidates/matches-coppa-italia-2013-14/data.csv','utf8');
+  const preview=previewControlledImport('matches','data.csv',content);
+  assert.equal(preview.canApply,true);assert.equal(preview.rows,2);assert.equal(preview.created+preview.updated,2);
+  assert.ok(preview.columnMappings.every(mapping=>mapping.recognized));
 });

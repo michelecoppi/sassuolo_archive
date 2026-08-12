@@ -110,6 +110,7 @@ test('player positions normalize provider abbreviations into one squad taxonomy'
   assert.equal(normalizePlayerPosition('F'), 'Attacker');
   assert.equal(normalizePlayerPosition('forward'), 'Attacker');
   assert.equal(normalizePlayerPosition('M'), 'Midfielder');
+  assert.equal(normalizePlayerPosition('MF'), 'Midfielder');
 });
 
 test('Hall of Fame filters by season and role without converting NULL into zero', () => {

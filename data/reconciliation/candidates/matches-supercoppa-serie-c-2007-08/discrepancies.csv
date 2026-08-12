@@ -1,0 +1,5 @@
+field,decision,note
+fixture_dates,"2008-05-11; 2008-05-15","RSSSF, Sassuolo 2000 e Salernitana News concordano; Transfermarkt mostra il giorno precedente alle 23:00 per effetto di una conversione di fuso e non è stato seguito."
+return_penalty_score,4-5,"Sassuolo 2000 descrive vittoria 5-4 ai rigori. RSSSF scrive 0-1, 4-6 a.p. includendo il gol dei tempi regolamentari nel totale visualizzato; il punteggio della sola serie è 4-5."
+return_player_spelling,Andy Selva,"RSSSF abbrevia Selva; collegamento previsto al giocatore canonico Andy Selva #342."
+attendance,"1600; 10000","Valori disponibili soltanto nel calendario Transfermarkt; conservati con provenienza esplicita e da sottoporre a revisione."

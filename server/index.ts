@@ -11,4 +11,4 @@ dns.setDefaultResultOrder('ipv4first');
 const app=createApp();
 const port=Number(process.env.PORT||8787);
 app.listen(port,()=>console.log(`Sassuolo History API: http://localhost:${port}`));
-startAdminScheduler();
+if(process.env.NODE_ENV!=='test')startAdminScheduler();

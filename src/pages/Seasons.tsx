@@ -19,7 +19,7 @@ export default function Seasons() {
   return <>
     <PageTitle title="Stagioni" subtitle="Una stagione contiene tutte le competizioni disputate; le statistiche restano separate per competizione." />
     <div className="card mb-5 flex flex-wrap items-center gap-2 p-3">
-      <span className="mr-1 text-sm text-zinc-500">Filtra:</span>
+      <span className="mr-1 text-sm text-zinc-400">Filtra:</span>
       <button className={competition ? 'btn-secondary' : 'btn-primary'} onClick={() => setCompetition('')}>Tutte</button>
       {competitions.map(item => <button key={item} className={competition === item ? 'btn-primary' : 'btn-secondary'} onClick={() => setCompetition(item)}><CompetitionBadge competition={item} /></button>)}
     </div>

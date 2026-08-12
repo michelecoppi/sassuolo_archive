@@ -1,0 +1,62 @@
+{
+  "package_type": "historical_matches",
+  "area": "matches",
+  "season": "2011/12",
+  "competition": "Serie B playoff",
+  "source_provider": "U.C. Sampdoria + la Repubblica + Sassuolo 2000 + Sassuolo Calcio",
+  "source_url": "https://www.sampdoria.it/news/archivio/2012/05/30/eder-e-pozzi-micidiali-il-sassuolo-va-ko-nella-ripresa/",
+  "verified_at": "2026-08-12",
+  "file": "data.csv",
+  "sha256": "36d45a82850a0ff252e2b1bbd70698d470fb97b995b5f32045c39b507dec92fb",
+  "records_total": 2,
+  "records_discarded": 0,
+  "fields_covered": [
+    "date",
+    "season",
+    "competition",
+    "round",
+    "home_team",
+    "away_team",
+    "home_score",
+    "away_score",
+    "halftime_score",
+    "scorers",
+    "cards",
+    "stadium",
+    "attendance",
+    "referee",
+    "source_url"
+  ],
+  "validation": {
+    "status": "reconciled",
+    "checks": [
+      {
+        "name": "single_scope",
+        "status": "passed"
+      },
+      {
+        "name": "complete_fixture_set",
+        "status": "passed"
+      },
+      {
+        "name": "official_club_reports_per_match",
+        "status": "passed"
+      },
+      {
+        "name": "own_goal_attribution_resolved",
+        "status": "passed"
+      },
+      {
+        "name": "lineups_available_for_followup",
+        "status": "passed"
+      }
+    ],
+    "unresolved_conflicts": []
+  },
+  "notes": [
+    "Due semifinali separate dalla regular season.",
+    "Gianluca Sansone è distinto da Nicola Sansone.",
+    "Pacchetto candidato: richiede preview e approvazione prima dell'import.",
+    "Approvato dal Data Manager dopo revisione manuale."
+  ]
+}

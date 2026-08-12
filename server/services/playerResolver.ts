@@ -106,6 +106,16 @@ export function resolvePlayer(input: ResolveInput): ResolveResult {
   const exactNormalized = db.prepare(`SELECT id,name FROM players`).all() as Array<{ id: number; name: string }>;
   const canonicalMatches = exactNormalized.filter(player => normalizeNameForMatch(player.name) === normalizedName);
   if (canonicalMatches.length === 1) {
+    if (sourceProvider && sourcePlayerId) {
+      const knownIds = db.prepare(`SELECT source_player_id FROM player_source_ids WHERE player_id=? AND source_provider=?`).all(canonicalMatches[0].id, sourceProvider) as Array<{ source_player_id: string }>;
+      const canonical = db.prepare(`SELECT source_provider,source_external_id FROM players WHERE id=?`).get(canonicalMatches[0].id) as { source_provider: string | null; source_external_id: string | null } | undefined;
+      const providerIds = new Set(knownIds.map(row => String(row.source_player_id)));
+      if (canonical?.source_provider === sourceProvider && canonical.source_external_id) providerIds.add(String(canonical.source_external_id));
+      if (providerIds.size > 0 && !providerIds.has(sourcePlayerId)) {
+        const conflictId = enqueueConflict({ rawName, sourceProvider, sourcePlayerId, sourceUrl: input.sourceUrl, context: input.context, normalizedName, reason: 'canonical-name-source-id-mismatch', candidates: canonicalMatches });
+        return { status: 'conflict', conflictId, reason: 'canonical-name-source-id-mismatch', normalizedName, candidates: canonicalMatches };
+      }
+    }
     recordAlias(canonicalMatches[0].id, rawName, sourceProvider, 'Auto-learned from canonical normalized match');
     return { status: 'resolved', playerId: canonicalMatches[0].id, matchedBy: 'canonical', canonicalName: canonicalMatches[0].name };
   }

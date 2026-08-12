@@ -1,0 +1,6 @@
+field,decision,note
+sassuolo_modena_attendance,2329,"FBref riporta 2.329; Transfermarkt e Gazzetta di Modena riportano circa 2.500. Conservato il valore esatto di FBref e documentata la stima alternativa."
+sassuolo_modena_referee_name,Giampaolo Calvarese,"FBref usa Giampaolo; Transfermarkt visualizza Gianpaolo. Le cronache identificano Calvarese di Teramo; conservata la grafia anagrafica Giampaolo."
+sassuolo_modena_cards,"Berardi; Granoche","I due cartellini sono attestati dal tabellino Transfermarkt; la cronaca Sassuolo 2000 non pubblica una sezione ammoniti."
+sassuolo_cagliari_sau_minute,36,"Sassuolo 2000, Rai News e Gazzetta riportano 36'; un archivio secondario isolato riporta 18' ed è stato scartato."
+openfootball_coverage,source_replaced,"OpenFootball non contiene cup.txt per il 2015/16; usate cronache coeve e archivi partita incrociati."

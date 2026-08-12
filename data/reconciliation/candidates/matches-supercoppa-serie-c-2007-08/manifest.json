@@ -1,0 +1,61 @@
+{
+  "package_type": "historical_matches",
+  "area": "matches",
+  "season": "2007/08",
+  "competition": "Supercoppa di Serie C",
+  "source_provider": "RSSSF + Sassuolo 2000 + Salernitana News + Transfermarkt",
+  "source_url": "https://www.rsssf.org/tablesi/ital3supcuphist.html",
+  "verified_at": "2026-08-12",
+  "file": "data.csv",
+  "sha256": "98db9872aac3390e4caf5a8c548f82d3c5695041deda2cccd1ce859567a199b0",
+  "records_total": 2,
+  "records_discarded": 0,
+  "fields_covered": [
+    "date",
+    "season",
+    "competition",
+    "round",
+    "home_team",
+    "away_team",
+    "home_score",
+    "away_score",
+    "scorers",
+    "cards",
+    "stadium",
+    "attendance",
+    "referee",
+    "source_url"
+  ],
+  "validation": {
+    "status": "reconciled",
+    "checks": [
+      {
+        "name": "single_scope",
+        "status": "passed"
+      },
+      {
+        "name": "complete_fixture_set",
+        "status": "passed"
+      },
+      {
+        "name": "dates_cross_checked",
+        "status": "passed"
+      },
+      {
+        "name": "regulation_and_shootout_scores_separated",
+        "status": "passed"
+      },
+      {
+        "name": "lineups_available_for_followup",
+        "status": "passed"
+      }
+    ],
+    "unresolved_conflicts": []
+  },
+  "notes": [
+    "Prima Supercoppa vinta dal Sassuolo.",
+    "Il ritorno richiede persistenza separata del 4-5 ai rigori.",
+    "Pacchetto candidato: richiede preview e approvazione prima dell'import.",
+    "Approvato dal Data Manager dopo revisione manuale."
+  ]
+}

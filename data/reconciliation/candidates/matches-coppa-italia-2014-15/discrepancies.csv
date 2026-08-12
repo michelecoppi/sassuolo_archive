@@ -1,0 +1,7 @@
+field,decision,note
+milan_goal_minutes,"38; 64; 86","ANSA e Sky riportano 38', 64' e 86'; Gazzetta usa la convenzione 39' p.t., 19' s.t. e 42' s.t. Il database conserva i minuti trascorsi usati da ANSA/Sky."
+milan_yellow_cards,"Cannavaro; Antei; Biondini; Missiroli","Sky elenca e temporizza quattro ammonizioni del Sassuolo. Gazzetta conferma Cannavaro, Biondini e Missiroli ma nel testo omette Antei; ANSA aggiunge due nomi non confermati da Sky. Conservato il set verificabile su Sky."
+pescara_yellow_cards,"Pavoletti; Antei; Selasi","Gazzetta e FCUpdate riportano tre ammoniti; CalcioMagazine omette Selasi. Conservato il set attestato dalla fonte più completa e dal secondo archivio."
+pescara_attendance,1887,"La fonte indica 1.887 paganti. Il valore è registrato come attendance perché la gara di coppa non aveva un dato separato di abbonati; la natura del conteggio resta documentata."
+cittadella_attendance,1000,"Valore dell'archivio FBref; non trovato nel comunicato Lega. Conservato perché coerente con il match log, ma la fonte secondaria è dichiarata esplicitamente."
+openfootball_coverage,source_replaced,"Il repository OpenFootball verificato non contiene cup.txt per il 2014/15; sono state usate fonti ufficiali, cronache coeve e archivi partita incrociati."

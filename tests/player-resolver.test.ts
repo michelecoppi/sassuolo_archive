@@ -55,3 +55,13 @@ test('resolvePlayer auto-learns canonical normalized matches as aliases', () => 
   assert.equal(resolved.playerId, playerId);
   assert.equal((db.prepare(`SELECT player_id FROM player_name_aliases WHERE alias_normalized='rogerio'`).get() as any).player_id, playerId);
 });
+
+test('resolvePlayer rejects a same-name player with a different provider id', () => {
+  clearDb();
+  const playerId = Number(db.prepare(`INSERT INTO players(name,source_provider,source_external_id) VALUES(?,?,?)`).run('Flavio Russo', 'api-football', '330758').lastInsertRowid);
+  db.prepare(`INSERT INTO player_source_ids(player_id,source_provider,source_player_id) VALUES(?,?,?)`).run(playerId, 'api-football', '330758');
+  const resolved = resolvePlayer({ name: 'Flavio Russo', sourceProvider: 'api-football', sourcePlayerId: '30766', allowCreate: true });
+  assert.equal(resolved.status, 'conflict');
+  assert.equal(resolved.reason, 'canonical-name-source-id-mismatch');
+  assert.equal((db.prepare(`SELECT COUNT(*) AS count FROM players`).get() as any).count, 1);
+});
