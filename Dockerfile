@@ -1,4 +1,4 @@
-FROM node:22-bookworm-slim AS dependencies
+FROM node:26-bookworm-slim AS dependencies
 WORKDIR /app
 RUN apt-get update \
     && apt-get install -y --no-install-recommends python3 make g++ \
@@ -10,7 +10,7 @@ FROM dependencies AS build
 COPY . .
 RUN npm run build
 
-FROM node:22-bookworm-slim AS runtime
+FROM node:26-bookworm-slim AS runtime
 ENV NODE_ENV=production PORT=8787 SASSUOLO_DB_PATH=/data/sassuolo.db SASSUOLO_BACKUPS_DIR=/data/backups
 WORKDIR /app
 COPY package*.json ./
