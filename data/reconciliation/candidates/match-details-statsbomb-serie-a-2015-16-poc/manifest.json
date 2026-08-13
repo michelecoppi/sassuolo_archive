@@ -1,0 +1,70 @@
+{
+  "area": "match_details_statsbomb",
+  "season": "2015/16",
+  "competition": "Serie A",
+  "source_provider": "StatsBomb Open Data",
+  "source_url": "https://github.com/hudl/open-data/tree/master/data",
+  "verified_at": "2026-08-13",
+  "file": "data.csv",
+  "sha256": "b7991b1247073fa2c1b94532040df0b679d2260236d04f2b5f2bacd4848340d2",
+  "rich_file": "rich-data.json",
+  "rich_sha256": "b20d3a66cdbd4f3a0c731fc70c15bc2f3c738cdea892d4d8597f35e1b56069d4",
+  "records_total": 1,
+  "records_discarded": 0,
+  "discard_reasons": [],
+  "fields_covered": [
+    "stadium",
+    "referee",
+    "lineups",
+    "goals",
+    "cards",
+    "substitutions"
+  ],
+  "counts": {
+    "raw_events": 3726,
+    "key_events": 13,
+    "lineups": 2,
+    "players": 43
+  },
+  "raw_files": {
+    "matches-12-27.json": "613cd3cc70699ba613cb1b3c27b4c8a01b0b5fa28415e09c928d020208905c7a",
+    "events-3879771.json": "d9cc0b9ad60087c16d822dc06b6396bb7aad1d7c0882062e244ac9de1cdecf25",
+    "lineups-3879771.json": "da99db8f2c71388ad37b7691392f408590b0f1a1cd3bd83fcdc6a1b93a3ea683"
+  },
+  "validation": {
+    "status": "reconciled",
+    "checks": [
+      {
+        "name": "fixture_identity",
+        "status": "passed",
+        "note": "Match ID, data, squadre e risultato verificati."
+      },
+      {
+        "name": "starting_xi",
+        "status": "passed",
+        "note": "11 titolari per ciascuna squadra."
+      },
+      {
+        "name": "goal_reconciliation",
+        "status": "passed",
+        "note": "2-0 dagli eventi Goal coincide con il risultato finale."
+      },
+      {
+        "name": "editorial_event_filter",
+        "status": "passed",
+        "note": "Solo gol, cartellini e sostituzioni saranno pubblicati; lo stream completo resta raw."
+      },
+      {
+        "name": "nullable_unknowns",
+        "status": "passed",
+        "note": "I campi non presenti restano NULL."
+      }
+    ],
+    "unresolved_conflicts": []
+  },
+  "notes": [
+    "POC di una singola partita prima dell’estensione alle 38 gare del Sassuolo in Serie A 2015/16.",
+    "Richiede approvazione manuale nel Data Manager prima dell’import.",
+    "Approvato dal Data Manager dopo revisione manuale."
+  ]
+}

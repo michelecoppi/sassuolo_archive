@@ -1,0 +1,12 @@
+{
+  "checked_at": "2026-08-13",
+  "source_provider": "SofaScore public HTTP API",
+  "technical_client": "https://github.com/tunjayoff/sofascore_scraper",
+  "endpoint": "https://www.sofascore.com/api/v1/unique-tournament/23/seasons",
+  "attempts": 2,
+  "http_status": 403,
+  "mass_scraping_attempted": false,
+  "data_imported": false,
+  "status": "blocked_by_remote_access_policy",
+  "next_action": "Repeat only after confirming compliant access and applicable terms."
+}

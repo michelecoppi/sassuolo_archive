@@ -9,6 +9,7 @@ process.env.SASSUOLO_DB_PATH = path.join(tempRoot, 'test.db');
 
 const { db, initDb, normalizePlayerPosition } = await import('../server/db/database.js');
 const { importAll, recomputeDerivedPlayerStats } = await import('../server/services/importer.js');
+const { normalizeKickoffEventMinute } = await import('../server/services/kickoffSync.js');
 const { headToHead, records, hallOfFame } = await import('../server/services/stats.js');
 
 function clearDb() {
@@ -48,6 +49,14 @@ test('database rejects impossible event and player-stat values', () => {
   assert.throws(() => db.prepare(`INSERT INTO match_events(match_id,provider_match_id,minute,type) VALUES(?,?,?,?)`).run(matchId,'fixture',-5,'Card'), /Minuto evento non valido/);
   const playerId=Number(db.prepare(`INSERT INTO players(name) VALUES('Validation Player')`).run().lastInsertRowid);
   assert.throws(() => db.prepare(`INSERT INTO player_seasons(player_id,season,competition,minutes) VALUES(?,?,?,?)`).run(playerId,'2020/21','Serie A',-1), /Statistica giocatore non valida/);
+});
+
+test('kickoff normalizes unknown or impossible event minutes without weakening database validation', () => {
+  assert.equal(normalizeKickoffEventMinute(-5), null);
+  assert.equal(normalizeKickoffEventMinute(131), null);
+  assert.equal(normalizeKickoffEventMinute(92), 92);
+  assert.equal(normalizeKickoffEventMinute(31, true), null);
+  assert.equal(normalizeKickoffEventMinute(4, true), 4);
 });
 
 test('event provenance and curator audit tables are available for manual verification', () => {

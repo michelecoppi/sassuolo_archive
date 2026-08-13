@@ -115,7 +115,8 @@ export function headToHead(opponentRaw: string) {
 export function records(filters: Record<string,string|undefined> = {}) {
   const matches=completedMatches(filters).filter(m => [normalizeTeamName(m.home_team),normalizeTeamName(m.away_team)].includes(SASSUOLO));
   const meta={policyVersion:STATISTICS_POLICY_VERSION,lastRecalculation:getSetting('data_last_audit_at')||getSetting('last_import_at'),filters:{competition:filters.competition||null,from:filters.from||null,to:filters.to||null},coverage:{matches:matches.length,seasons:new Set(matches.map(m=>m.season).filter(Boolean)).size,competitions:[...new Set(matches.map(m=>m.competition).filter(Boolean))],fromDate:matches[0]?.date??null,toDate:matches.at(-1)?.date??null},definitions:RECORD_DEFINITIONS};
-  if(!matches.length) return { biggestWin:null,biggestHomeWin:null,biggestAwayWin:null,biggestDefeat:null,longestWinningStreak:null,longestUnbeatenStreak:null,longestLosingStreak:null,mostGoalsInMatch:null,seasonRecords:[],meta };
+  const emptyEvidence={biggestWin:[],biggestHomeWin:[],biggestAwayWin:[],biggestDefeat:[],longestWinningStreak:[],longestUnbeatenStreak:[],longestLosingStreak:[],mostGoalsInMatch:[]};
+  if(!matches.length) return { biggestWin:null,biggestHomeWin:null,biggestAwayWin:null,biggestDefeat:null,longestWinningStreak:null,longestUnbeatenStreak:null,longestLosingStreak:null,mostGoalsInMatch:null,seasonRecords:[],evidence:emptyEvidence,meta };
   const wins=matches.filter(m=>perspective(m).result==='W');
   const losses=matches.filter(m=>perspective(m).result==='L');
   const margin=(m:MatchRow)=>perspective(m).gf-perspective(m).ga;
@@ -125,9 +126,13 @@ export function records(filters: Record<string,string|undefined> = {}) {
   const biggestAwayWin=[...wins].filter(m=>!perspective(m).isHome).sort((a,b)=>margin(b)-margin(a)||oldest(a,b))[0]??null;
   const biggestDefeat=[...losses].sort((a,b)=>margin(a)-margin(b)||oldest(a,b))[0]??null;
   const mostGoalsInMatch=[...matches].sort((a,b)=>(perspective(b).gf+perspective(b).ga)-(perspective(a).gf+perspective(a).ga)||oldest(a,b))[0]??null;
-  const streak=(predicate:(r:'W'|'D'|'L')=>boolean)=>{let best=0,cur=0;for(const m of matches){if(predicate(perspective(m).result)){cur++;best=Math.max(best,cur);}else cur=0;}return best;};
+  const streak=(predicate:(r:'W'|'D'|'L')=>boolean)=>{let best:MatchRow[]=[],cur:MatchRow[]=[];for(const m of matches){if(predicate(perspective(m).result)){cur.push(m);if(cur.length>best.length)best=[...cur];}else cur=[];}return {value:best.length,matches:best};};
+  const winningStreak=streak(r=>r==='W');
+  const unbeatenStreak=streak(r=>r!=='L');
+  const losingStreak=streak(r=>r==='L');
   const seasons=db.prepare(`SELECT * FROM seasons ORDER BY season`).all();
-  return { biggestWin,biggestHomeWin,biggestAwayWin,biggestDefeat,longestWinningStreak:streak(r=>r==='W'),longestUnbeatenStreak:streak(r=>r!=='L'),longestLosingStreak:streak(r=>r==='L'),mostGoalsInMatch,seasonRecords:seasons,meta };
+  const evidence={biggestWin:[biggestWin],biggestHomeWin:[biggestHomeWin],biggestAwayWin:[biggestAwayWin],biggestDefeat:[biggestDefeat],longestWinningStreak:winningStreak.matches,longestUnbeatenStreak:unbeatenStreak.matches,longestLosingStreak:losingStreak.matches,mostGoalsInMatch:[mostGoalsInMatch]};
+  return { biggestWin,biggestHomeWin,biggestAwayWin,biggestDefeat,longestWinningStreak:winningStreak.value,longestUnbeatenStreak:unbeatenStreak.value,longestLosingStreak:losingStreak.value,mostGoalsInMatch,seasonRecords:seasons,evidence,meta };
 }
 
 export type HallOfFameFilters = {

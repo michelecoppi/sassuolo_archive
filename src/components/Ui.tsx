@@ -2,6 +2,7 @@ import { Component, useState } from 'react';
 import type { ErrorInfo, ImgHTMLAttributes, ReactNode } from 'react';
 import { Database, ExternalLink, Inbox, Sparkles, TableProperties, UserRound } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { reportFrontendEvent } from '../services/telemetry';
 
 export type PageTone='green'|'sky'|'amber'|'violet';
 const pageToneClasses:Record<PageTone,{panel:string;glow:string;eyebrow:string}>={
@@ -42,7 +43,7 @@ export function ErrorState({message='Non è stato possibile caricare questi dati
 export class WidgetBoundary extends Component<{children:ReactNode;label?:string},{failed:boolean}>{
   state={failed:false};
   static getDerivedStateFromError(){return {failed:true};}
-  componentDidCatch(error:Error,info:ErrorInfo){console.error('Widget isolato',error,info.componentStack);}
+  componentDidCatch(error:Error,info:ErrorInfo){console.error('Widget isolato',error,info.componentStack);const routeLoad=/dynamically imported|loading chunk|failed to fetch module/i.test(error.message);reportFrontendEvent({eventType:routeLoad?'route_load':'boundary',message:error.message,stack:error.stack,context:{component:this.props.label??'widget'}});}
   render(){return this.state.failed?<ErrorState message={`${this.props.label??'Questo contenuto'} non è disponibile; il resto della pagina continua a funzionare.`}/>:this.props.children;}
 }
 export function Pagination({page,pageSize,total,onPage}:{page:number;pageSize:number;total:number;onPage:(page:number)=>void}){

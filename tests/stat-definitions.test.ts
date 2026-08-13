@@ -21,9 +21,13 @@ test('record definitions are complete and equal values use the declared determin
   assert.equal(result.biggestWin.date,'2022-09-01');
   assert.equal(result.meta.coverage.matches,2);
   assert.deepEqual(result.meta.coverage.competitions,['Serie A']);
+  assert.deepEqual(result.evidence.biggestWin.map((match:any)=>match.id),[result.biggestWin.id]);
+  assert.deepEqual(result.evidence.longestWinningStreak.map((match:any)=>match.date),['2022-09-01','2022-09-10']);
   assert.deepEqual(result.meta.definitions.map((item:any)=>item.key),RECORD_DEFINITIONS.map(item=>item.key));
   assert.equal(new Set(RECORD_DEFINITIONS.map(item=>item.key)).size,8);
-  assert.equal((records({competition:'Serie B'}) as any).longestWinningStreak,null);
+  const empty=records({competition:'Serie B'}) as any;
+  assert.equal(empty.longestWinningStreak,null);
+  assert.deepEqual(empty.evidence.longestWinningStreak,[]);
 });
 
 test('Hall of Fame exposes applied thresholds, coverage, competitions and tie-break rules',()=>{

@@ -13,7 +13,8 @@ const server=app.listen(0);
 const address=server.address();
 if(!address||typeof address==='string')throw new Error('Server test non disponibile');
 const base=`http://127.0.0.1:${address.port}/api`;
-const adminHeaders={'Content-Type':'application/json',Authorization:'Bearer operations-test-admin-token'};
+const login=await fetch(`${base}/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:'operations-test-admin-token',name:'Operations test'})});
+const loginBody=await login.json() as any;const adminHeaders={'Content-Type':'application/json',Cookie:login.headers.get('set-cookie')!,'X-CSRF-Token':loginBody.csrfToken};
 
 after(()=>{server.close();db.close();fs.rmSync(tempRoot,{recursive:true,force:true});});
 
@@ -58,12 +59,15 @@ test('il proxy immagini rifiuta host non ammessi con un fallback stabile',async(
   assert.equal(response.status,200);assert.match(response.headers.get('content-type')??'',/image\/svg\+xml/);assert.match(await response.text(),/<svg/);
 });
 
-test('health espone stato operativo, tempi e provider senza rivelare segreti',async()=>{
+test('health pubblico è sintetico e la diagnostica completa richiede admin',async()=>{
   const started=nowIso();
   db.prepare(`INSERT INTO sync_state(provider,resource,requests_used,last_request,last_successful_sync,last_error) VALUES(?,?,?,?,?,?)`).run('test-provider','matches',3,started,started,'token=super-secret provider unavailable');
   db.prepare(`INSERT INTO import_runs(kind,source_provider,area,status,started_at,finished_at) VALUES('provider_sync','test-provider','matches','failed',?,?)`).run('2026-08-11T10:00:00.000Z','2026-08-11T10:00:02.000Z');
 
-  const response=await fetch(`${base}/health`);
+  const publicResponse=await fetch(`${base}/health`);const publicHealth=await publicResponse.json() as any;
+  assert.deepEqual(Object.keys(publicHealth).sort(),['checkedAt','ok','service','status']);
+  assert.equal((await fetch(`${base}/health/details`)).status,401);
+  const response=await fetch(`${base}/health/details`,{headers:{Cookie:adminHeaders.Cookie}});
   assert.equal(response.status,200);
   assert.equal(response.headers.get('cache-control'),'no-store');
   const health=await response.json() as any;

@@ -5,13 +5,13 @@ import { api, post } from '../services/api';
 import { CompletenessBadge, Loading, PageTitle, RemoteImage, Score, SourceBadge, fmt } from '../components/Ui';
 import type { Match } from '../types';
 
-type EventRow={id:number;minute:number|null;extra_minute:number|null;team_name:string|null;player_id:number|null;player_name:string|null;assist_player_id:number|null;assist_name:string|null;type:string|null;detail:string|null;comments:string|null;home_score?:number|null;away_score?:number|null};
+type EventRow={id:number;minute:number|null;extra_minute:number|null;team_name:string|null;player_id:number|null;player_name:string|null;assist_player_id:number|null;assist_name:string|null;type:string|null;detail:string|null;comments:string|null;verification_note?:string|null;home_score?:number|null;away_score?:number|null};
 type LineupPlayer={player?:{id?:string|number|null;localPlayerId?:number|null;name?:string;number?:number|null;pos?:string|null}};
 type Lineup={id:number;team_name:string|null;team_logo:string|null;formation:string|null;coach_name:string|null;startXI:LineupPlayer[];substitutes:LineupPlayer[]};
 type TeamStat={type:string;value:unknown};
 type TeamStats={id:number;team_name:string|null;statistics:TeamStat[]};
 type PlayerStat={id:number;team_name:string|null;team_logo:string|null;player_id:number|null;player_name:string;player_photo:string|null;minutes:number|null;position:string|null;rating:number|null;captain:number|null;shots_total:number|null;shots_on:number|null;goals:number|null;assists:number|null;passes_total:number|null;passes_key:number|null;pass_accuracy:number|null;tackles_total:number|null;blocks:number|null;interceptions:number|null;duels_total:number|null;duels_won:number|null;dribbles_attempts:number|null;dribbles_success:number|null;fouls_drawn:number|null;fouls_committed:number|null;yellow_cards:number|null;red_cards:number|null};
-type Details={source_provider?:string|null;status_long?:string|null;status_short?:string|null;venue_name?:string|null;venue_city?:string|null;league_round?:string|null;home_team_logo?:string|null;away_team_logo?:string|null};
+type Details={source_provider?:string|null;status_long?:string|null;status_short?:string|null;venue_name?:string|null;venue_city?:string|null;league_round?:string|null;home_team_logo?:string|null;away_team_logo?:string|null;events_synced?:number|null;lineups_synced?:number|null;team_stats_synced?:number|null;player_stats_synced?:number|null;injuries_synced?:number|null};
 type Injury={id:number;team_name:string|null;player_id:number|null;player_name:string;type:string|null;reason:string|null};
 type SpecialEvent={id:number;event_type:string;effective_at:string;match_minute:number|null;remaining_minutes:number|null;home_score:number|null;away_score:number|null;reason:string|null;description:string;authority:string|null;source_provider:string;source_url:string;last_verified_at:string};
 type Modules={score:boolean;events:boolean;lineups:boolean;substitutions:boolean;teamStats:boolean;playerStats:boolean;injuries:boolean;specialEvents:boolean};
@@ -20,7 +20,10 @@ type Payload={match:Match;details:Details|null;outcome:{halftime:string|null;ful
 const statLabel=(value:string)=>value.replace(/_/g,' ').replace(/\b\w/g,char=>char.toUpperCase());
 const displayValue=(value:unknown)=>value==null||value===''?'N/D':String(value);
 function eventGlyph(type:string|null,detail:string|null){const value=`${type??''} ${detail??''}`.toLowerCase();if(value.includes('goal'))return '⚽';if(value.includes('red')&&value.includes('card'))return '🟥';if(value.includes('yellow')||value.includes('card'))return '🟨';if(value.includes('sub'))return '🔄';if(value.includes('var'))return '📺';return '•';}
-function minuteLabel(event:EventRow){return event.minute==null?'—':event.extra_minute?`${event.minute}+${event.extra_minute}'`:`${event.minute}'`;}
+function minuteLabel(event:EventRow){
+  if(event.minute==null)return /(?:fine|termine) (?:della )?gara/i.test(event.verification_note??'')?'Fine gara':'—';
+  return event.extra_minute?`${event.minute}+${event.extra_minute}'`:`${event.minute}'`;
+}
 const specialEventLabels:Record<string,string>={POSTPONED:'Rinviata',KICKOFF_DELAYED:'Calcio d’inizio ritardato',SUSPENDED:'Sospesa',RESUMED:'Ripresa / completata',ABANDONED:'Abbandonata',CANCELLED:'Annullata',AWARDED:'Risultato a tavolino',DATE_CHANGED:'Data modificata',VENUE_CHANGED:'Sede modificata',OTHER:'Avvenimento particolare'};
 
 export default function MatchDetail(){
@@ -46,11 +49,14 @@ export default function MatchDetail(){
 
   if(!data)return <Loading/>;
   const {match,details,modules}=data;
+  const creditedSources=[...new Map(data.sources.filter(source=>source.source_url).map(source=>[`${source.source_provider??''}|${source.source_url}`,source])).values()];
+  const syncFlags=details?[details.events_synced,details.lineups_synced,details.team_stats_synced,details.player_stats_synced,details.injuries_synced]:[];
+  const syncProgress=syncFlags.some(value=>value!=null)?syncFlags.filter(Boolean).length:null;
   return <>
     <div className="mb-4 flex flex-wrap gap-2 text-xs text-zinc-400"><Link to="/matches" className="hover:text-neroverde-300">Partite</Link><span>/</span>{match.season&&<><Link to={`/seasons/${encodeURIComponent(match.season)}`} className="hover:text-neroverde-300">{match.season}</Link><span>/</span></>}<span>{match.home_team} – {match.away_team}</span></div>
     <div className="mb-4"><Link className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-white" to="/matches"><ArrowLeft className="h-4 w-4"/>Torna alle partite</Link></div>
     <PageTitle title={`${match.home_team} vs ${match.away_team}`} subtitle={`${match.competition??'Competizione N/D'} · ${match.season??'Stagione N/D'} · ${details?.league_round??match.round??'Giornata N/D'}`} action={<button className="btn-secondary" disabled={busy} onClick={sync}><RefreshCw className={`h-4 w-4 ${busy?'animate-spin':''}`}/>{busy?'Aggiornamento…':'Aggiorna dettagli'}</button>}/>
-    <div className="mb-4 flex flex-wrap items-center gap-3"><CompletenessBadge level={match.completeness_level} prefix/><SourceBadge provider={match.source_provider} url={match.source_url} verifiedAt={match.last_verified_at}/></div>
+    <div className="mb-4 flex flex-wrap items-center gap-3"><CompletenessBadge level={match.completeness_level} prefix/>{syncProgress!=null&&<span className={`badge text-[10px] ${syncProgress===syncFlags.length?'text-neroverde-300':'text-amber-200'}`} title="Eventi, formazioni, statistiche squadra, statistiche giocatori e indisponibili">Sincronizzazione: {syncProgress}/{syncFlags.length} moduli</span>}<SourceBadge provider={match.source_provider} url={match.source_url} verifiedAt={match.last_verified_at}/></div>
     {message&&<div className="mb-5 rounded-xl border border-zinc-800 bg-zinc-900 p-3 text-sm text-zinc-300">{message}</div>}
 
     <section className="card mb-5 overflow-hidden p-5 md:p-7">
@@ -74,6 +80,7 @@ export default function MatchDetail(){
 
     {modules.playerStats&&<section><h2 className="mb-4 text-lg font-bold">Statistiche giocatori</h2><div className="space-y-5">{groupedPlayers.map(([team,players])=><div className="card p-5" key={team}><h3 className="mb-4 font-black">{team}</h3><div className="table-wrap"><table><thead><tr><th>Giocatore</th><th>Min</th><th>Rating</th><th>Gol</th><th>Assist</th><th>Tiri</th><th>Passaggi</th><th>Key pass</th><th>Tackle</th><th>Intercetti</th><th>Duelli</th><th>Dribbling</th><th>Falli</th><th>Cartellini</th></tr></thead><tbody>{players.map(player=><tr key={player.id}><td>{player.player_id?<Link className="font-semibold text-white hover:text-neroverde-400" to={`/players/${player.player_id}`}>{player.player_name}</Link>:player.player_name}<div className="text-xs text-zinc-400">{player.position??'N/D'}{player.captain?' · C':''}</div></td><td>{fmt(player.minutes)}</td><td>{player.rating==null?'N/D':Number(player.rating).toFixed(1)}</td><td>{fmt(player.goals)}</td><td>{fmt(player.assists)}</td><td>{fmt(player.shots_on)} / {fmt(player.shots_total)}</td><td>{fmt(player.passes_total)}</td><td>{fmt(player.passes_key)}</td><td>{fmt(player.tackles_total)}</td><td>{fmt(player.interceptions)}</td><td>{fmt(player.duels_won)} / {fmt(player.duels_total)}</td><td>{fmt(player.dribbles_success)} / {fmt(player.dribbles_attempts)}</td><td>{fmt(player.fouls_drawn)} / {fmt(player.fouls_committed)}</td><td>{player.yellow_cards?`🟨 ${player.yellow_cards}`:''}{player.red_cards?` 🟥 ${player.red_cards}`:''}{!player.yellow_cards&&!player.red_cards?'—':''}</td></tr>)}</tbody></table></div></div>)}</div></section>}
 
+    {creditedSources.length>0&&<section className="card mt-5 p-5"><h2 className="mb-3 text-lg font-bold">Fonti e crediti</h2><p className="mb-3 text-sm text-zinc-400">I dati di questa scheda mantengono il collegamento alla fonte originale e alla data di verifica.</p><div className="flex flex-wrap gap-2">{creditedSources.map(source=><a key={`${source.source_provider}-${source.source_url}`} className="inline-flex items-center gap-1 rounded-lg border border-zinc-800 px-3 py-2 text-sm font-semibold text-neroverde-300 hover:border-neroverde-500 hover:underline" href={source.source_url} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5"/>{source.source_provider??'Fonte originale'} · verificata {String(source.verified_at).slice(0,10)}</a>)}</div></section>}
     {!modules.events&&!modules.lineups&&!modules.teamStats&&!modules.playerStats&&<div className="card p-5 text-sm text-zinc-400">Questa gara ha copertura <b className="text-white">{match.completeness_level}</b>: sono mostrati soltanto i dati effettivamente disponibili, senza sezioni vuote o valori ricostruiti.</div>}
   </>;
 }

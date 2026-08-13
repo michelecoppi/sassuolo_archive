@@ -1,0 +1,62 @@
+{
+  "area": "match_details_wyscout_season",
+  "season": "2017/18",
+  "competition": "Serie A",
+  "source_provider": "Wyscout Soccer Match Event Dataset",
+  "source_url": "https://figshare.com/collections/Soccer_match_event_dataset/4415000",
+  "verified_at": "2026-08-13",
+  "file": "data.csv",
+  "sha256": "6973f25b1189dfbe8a199b4d6f96cd6b7b81b1e8aba18f5a8c55235c1cbf6a79",
+  "rich_file": "rich-data.json",
+  "rich_sha256": "c60a30a24534bd18131c7639b5603eb708cd2b4b4452bba9fa4214a8d042deaf",
+  "source_index": "source-index.json",
+  "source_index_sha256": "ae8233d2a7a7e6ef9af23c928b9648168e29b8a634dd5299e2220d61f2a3f96b",
+  "records_total": 38,
+  "records_discarded": 0,
+  "fields_covered": [
+    "venue",
+    "lineups",
+    "goals",
+    "cards",
+    "substitutions",
+    "shots",
+    "event_locations"
+  ],
+  "counts": {
+    "matches": 38,
+    "keyEvents": 484,
+    "shots": 908,
+    "players": 1706,
+    "raw_files": 4
+  },
+  "validation": {
+    "status": "reconciled",
+    "checks": [
+      {
+        "name": "fixture_count",
+        "status": "passed",
+        "note": "38/38 gare Sassuolo"
+      },
+      {
+        "name": "starting_xi",
+        "status": "passed",
+        "note": "Due XI da 11 per gara"
+      },
+      {
+        "name": "goal_reconciliation",
+        "status": "passed",
+        "note": "Gol, inclusi autogol, coerenti coi risultati"
+      },
+      {
+        "name": "source_attribution",
+        "status": "passed",
+        "note": "CC BY 4.0, autori, DOI e URL inclusi"
+      }
+    ],
+    "unresolved_conflicts": []
+  },
+  "notes": [
+    "xG non presente nella fonte: resta N/D.",
+    "Arbitri disponibili solo come identificativi, non importati come nomi."
+  ]
+}

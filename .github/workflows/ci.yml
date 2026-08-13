@@ -22,15 +22,25 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check:secrets
+      - run: npm run check:supply-chain:audit
+      - run: npm run data:release:check
+      - run: npm run ops:sbom
       - run: npm run check
       - run: npm test
       - run: npm run build
+      - run: npm run perf:archive
       - run: npx playwright install --with-deps chromium firefox webkit
       - run: npm run test:e2e
       - name: Smoke test immagine di produzione
         run: docker build -t sassuolo-history-ci .
       - run: npm run db:migrate
       - run: npm run data:audit:full
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: supply-chain-sbom
+          path: sbom.cdx.json
+          if-no-files-found: error
       - if: always()
         uses: actions/upload-artifact@v4
         with:

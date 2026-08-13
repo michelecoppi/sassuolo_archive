@@ -1,0 +1,3 @@
+field,source_value,canonical_value,status,resolution
+home_team,Sassuolo,U.S. Sassuolo Calcio,resolved,Alias squadra già gestito dal normalizzatore
+away_team,AC Milan,Milan,resolved,Alias squadra già gestito dal normalizzatore

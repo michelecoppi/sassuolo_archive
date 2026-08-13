@@ -53,6 +53,23 @@ test('snapshot API e preferiti restano disponibili quando la rete dati cade',asy
   await expect(page.getByText(/120 risultati/)).toBeVisible();
 });
 
+test('un aggiornamento pronto richiede consenso e conserva i dati locali',async({page})=>{
+  await page.addInitScript(()=>{
+    localStorage.setItem('sassuolo-history-favorites','[{"url":"/players"}]');
+    localStorage.setItem('sassuolo-history-telemetry-opt-out','1');
+  });
+  await page.goto('/');await expect(page.locator('h1')).toBeVisible();
+  await page.evaluate(()=>{
+    const registration={waiting:{postMessage:(message:unknown)=>{(window as any).__updateMessage=message;}}};
+    window.dispatchEvent(new CustomEvent('sassuolo-history:update-ready',{detail:registration}));
+  });
+  await expect(page.getByText('Nuova versione disponibile')).toBeVisible();
+  await page.getByRole('button',{name:'Aggiorna ora'}).click();
+  expect(await page.evaluate(()=>(window as any).__updateMessage)).toEqual({type:'SKIP_WAITING'});
+  expect(await page.evaluate(()=>localStorage.getItem('sassuolo-history-favorites'))).toContain('/players');
+  expect(await page.evaluate(()=>localStorage.getItem('sassuolo-history-telemetry-opt-out'))).toBe('1');
+});
+
 test('le rotte principali non hanno violazioni WCAG 2.2 AA automatiche',async({page},testInfo)=>{
   test.skip(testInfo.project.name!=='chromium-desktop','Audit automatico unico; le altre matrici verificano navigazione e layout');
   for(const route of ['/','/matches?season=2025%2F26','/players','/seasons','/favorites']){

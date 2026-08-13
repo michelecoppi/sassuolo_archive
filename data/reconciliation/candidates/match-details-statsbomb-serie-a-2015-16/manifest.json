@@ -1,0 +1,72 @@
+{
+  "area": "match_details_statsbomb_season",
+  "season": "2015/16",
+  "competition": "Serie A",
+  "source_provider": "StatsBomb Open Data",
+  "source_url": "https://github.com/hudl/open-data",
+  "verified_at": "2026-08-13",
+  "file": "data.csv",
+  "sha256": "993e84af0e0018ea23b175cc18fbce0f53d2ba9e6131d7f5f8e21997e66ad2e8",
+  "rich_file": "rich-data.json",
+  "rich_sha256": "7155a5a250d173aa7180b5930387b77432cc2725ee5df8093f1a0badddc63ea2",
+  "source_index": "source-index.json",
+  "source_index_sha256": "21fe6a5d04feb37fe712d6e9aa7dfe2fc963c00e4701e378b0ba05417efdfed8",
+  "records_total": 38,
+  "records_discarded": 0,
+  "fields_covered": [
+    "stadium",
+    "referee",
+    "lineups",
+    "goals",
+    "cards",
+    "substitutions",
+    "shots",
+    "xg"
+  ],
+  "counts": {
+    "matches": 38,
+    "keyEvents": 484,
+    "shots": 978,
+    "players": 1662,
+    "raw_files": 77
+  },
+  "validation": {
+    "status": "reconciled",
+    "checks": [
+      {
+        "name": "single_scope",
+        "status": "passed"
+      },
+      {
+        "name": "fixture_count",
+        "status": "passed",
+        "note": "38/38 gare del Sassuolo."
+      },
+      {
+        "name": "starting_xi",
+        "status": "passed",
+        "note": "Due XI da 11 per ogni gara."
+      },
+      {
+        "name": "goal_reconciliation",
+        "status": "passed",
+        "note": "Gol evento coerenti con tutti i risultati."
+      },
+      {
+        "name": "source_attribution",
+        "status": "passed",
+        "note": "Credito StatsBomb e URL presenti nel pacchetto."
+      }
+    ],
+    "unresolved_conflicts": []
+  },
+  "notes": [
+    "La POC già importata è inclusa e viene ignorata idempotentemente.",
+    "Gli eventi diversi da gol, cartellini e sostituzioni restano negli snapshot raw."
+  ],
+  "raw_archive": {
+    "file": "source-files/statsbomb-raw.zip",
+    "sha256": "ed88d193223f215c61af702590a76a42d8d7f571da32fa5844184857b28aa093",
+    "bytes": 11106641
+  }
+}

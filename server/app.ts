@@ -6,9 +6,13 @@ import cors from 'cors';
 import { api } from './routes/api.js';
 import { db, initDb, nowIso } from './db/database.js';
 import { createApiResponseCache, createRequestObservability } from './services/operations.js';
+import { safeRemoteFetch } from './services/outboundUrlPolicy.js';
 
-type AppOptions={adminToken?:string|null;nodeEnv?:string;corsOrigins?:string[];mutationLimit?:number;cacheTtlMs?:number};
+type AppOptions={adminToken?:string|null;nodeEnv?:string;corsOrigins?:string[];mutationLimit?:number;cacheTtlMs?:number;adminSessionTtlMs?:number};
 type CachedImage={body:Buffer;contentType:string;expiresAt:number};
+type AdminSession={actor:string;csrfToken:string;expiresAt:number};
+
+const ADMIN_COOKIE='sassuolo_admin_session';
 
 const safeEqual=(left:string,right:string)=>{
   const a=Buffer.from(left);const b=Buffer.from(right);
@@ -23,12 +27,53 @@ export function createApp(options:AppOptions={}){
   const configuredOrigins=options.corsOrigins??String(process.env.CORS_ORIGINS??'').split(',').map(x=>x.trim()).filter(Boolean);
   const localOrigins=['http://localhost:5173','http://127.0.0.1:5173','http://localhost:4173','http://127.0.0.1:4173'];
   const allowedOrigins=new Set(configuredOrigins.length?configuredOrigins:nodeEnv==='production'?[]:localOrigins);
+  const sessionTtlMs=options.adminSessionTtlMs??8*60*60*1000;
+  const adminSessions=new Map<string,AdminSession>();
   const app=express();
   app.disable('x-powered-by');
   app.set('trust proxy',false);
-  app.use((_req,res,next)=>{res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('X-Frame-Options','DENY');res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');res.setHeader('Permissions-Policy','camera=(), microphone=(), geolocation=()');next();});
-  app.use(cors({origin(origin,callback){if(!origin||allowedOrigins.has(origin))return callback(null,true);callback(new Error('Origine CORS non autorizzata'));},methods:['GET','HEAD','POST','PUT','PATCH','DELETE'],allowedHeaders:['Content-Type','Authorization','X-Admin-Name']}));
+  app.use((_req,res,next)=>{res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('X-Frame-Options','DENY');res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');res.setHeader('Permissions-Policy','camera=(), microphone=(), geolocation=()');res.setHeader('Content-Security-Policy',`default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'`);if(nodeEnv==='production')res.setHeader('Strict-Transport-Security','max-age=31536000; includeSubDomains');next();});
+  app.use(cors({origin(origin,callback){if(!origin||allowedOrigins.has(origin))return callback(null,true);callback(new Error('Origine CORS non autorizzata'));},credentials:true,methods:['GET','HEAD','POST','PUT','PATCH','DELETE'],allowedHeaders:['Content-Type','X-CSRF-Token']}));
   app.use(express.json({limit:'2mb',strict:true}));
+
+  const cookieValue=(req:Request)=>{
+    const cookies=String(req.headers.cookie??'').split(';');
+    for(const cookie of cookies){const [name,...parts]=cookie.trim().split('=');if(name===ADMIN_COOKIE)return decodeURIComponent(parts.join('='));}
+    return null;
+  };
+  const activeSession=(req:Request)=>{
+    const id=cookieValue(req);if(!id)return null;
+    const session=adminSessions.get(id);if(!session)return null;
+    if(session.expiresAt<=Date.now()){adminSessions.delete(id);return null;}
+    return {id,session};
+  };
+  const sessionCookie=(id:string,maxAgeSeconds:number)=>`${ADMIN_COOKIE}=${encodeURIComponent(id)}; Path=/api; HttpOnly; SameSite=Strict; Max-Age=${maxAgeSeconds}${nodeEnv==='production'?'; Secure':''}`;
+  const loginAttempts=new Map<string,{windowStart:number,count:number}>();
+  app.post('/api/auth/login',(req,res)=>{
+    if(!adminToken)return res.status(503).json({error:'Accesso amministrativo non configurato'});
+    const key=req.ip||req.socket.remoteAddress||'unknown',now=Date.now(),previous=loginAttempts.get(key);
+    const state=!previous||now-previous.windowStart>=15*60_000?{windowStart:now,count:1}:{...previous,count:previous.count+1};loginAttempts.set(key,state);
+    if(state.count>10)return res.status(429).json({error:'Troppi tentativi di accesso: riprova più tardi'});
+    const supplied=String(req.body?.token??'');
+    if(!safeEqual(supplied,adminToken))return res.status(401).json({error:'Credenziali amministrative non valide'});
+    const id=crypto.randomBytes(32).toString('base64url'),csrfToken=crypto.randomBytes(32).toString('base64url');
+    const actor=String(req.body?.name??'Curatore').trim().slice(0,120)||'Curatore';
+    const expiresAt=now+sessionTtlMs;adminSessions.set(id,{actor,csrfToken,expiresAt});loginAttempts.delete(key);
+    res.setHeader('Set-Cookie',sessionCookie(id,Math.ceil(sessionTtlMs/1000)));
+    res.setHeader('Cache-Control','no-store');return res.json({authenticated:true,actor,csrfToken,expiresAt:new Date(expiresAt).toISOString()});
+  });
+  app.get('/api/auth/session',(req,res)=>{
+    res.setHeader('Cache-Control','no-store');
+    if(!adminToken)return res.json({authenticated:nodeEnv!=='production',actor:nodeEnv!=='production'?'local-development':null,csrfToken:null,expiresAt:null});
+    const current=activeSession(req);if(!current)return res.json({authenticated:false,actor:null,csrfToken:null,expiresAt:null});
+    return res.json({authenticated:true,actor:current.session.actor,csrfToken:current.session.csrfToken,expiresAt:new Date(current.session.expiresAt).toISOString()});
+  });
+  app.post('/api/auth/logout',(req,res)=>{
+    if(!adminToken){res.setHeader('Set-Cookie',sessionCookie('',0));return res.json({ok:true});}
+    const current=activeSession(req);if(!current)return res.status(401).json({error:'Sessione amministrativa assente o scaduta'});
+    if(!safeEqual(String(req.headers['x-csrf-token']??''),current.session.csrfToken))return res.status(403).json({error:'Token CSRF non valido'});
+    adminSessions.delete(current.id);res.setHeader('Set-Cookie',sessionCookie('',0));res.setHeader('Cache-Control','no-store');return res.json({ok:true});
+  });
 
   const imageCache=new Map<string,CachedImage>();
   const defaultImageHosts=['media.api-sports.io','images.kickoffapi.com','www.thesportsdb.com','r2.thesportsdb.com'];
@@ -40,24 +85,13 @@ export function createApp(options:AppOptions={}){
       if(target.protocol!=='https:'||!imageHosts.has(target.hostname.toLowerCase()))return imageFallback(res);
       const key=target.toString(),cached=imageCache.get(key);
       if(cached&&cached.expiresAt>Date.now()){res.setHeader('Content-Type',cached.contentType);res.setHeader('Cache-Control','public, max-age=86400, stale-if-error=604800');return res.send(cached.body);}
-      const upstream=await fetch(key,{headers:{Accept:'image/avif,image/webp,image/*;q=0.8'},signal:AbortSignal.timeout(5_000),redirect:'follow'});
+      const upstream=await safeRemoteFetch(target,imageHosts);
       const contentType=upstream.headers.get('content-type')??'';const length=Number(upstream.headers.get('content-length')??0);
       if(!upstream.ok||!contentType.startsWith('image/')||length>5_000_000)return imageFallback(res);
       const body=Buffer.from(await upstream.arrayBuffer());if(body.length>5_000_000)return imageFallback(res);
       imageCache.set(key,{body,contentType,expiresAt:Date.now()+86_400_000});
       res.setHeader('Content-Type',contentType);res.setHeader('Cache-Control','public, max-age=86400, stale-if-error=604800');res.setHeader('Vary','Accept');return res.send(body);
-    }catch{
-      // In ambienti locali o gestiti il processo Node può non avere accesso
-      // HTTPS in uscita mentre il browser sì. L'URL è già stato validato
-      // contro protocollo e allowlist: il redirect conserva quel confine e
-      // lascia che il browser applichi il normale fallback su errore.
-      const target=new URL(String(req.query.url??''));
-      if(target.protocol==='https:'&&imageHosts.has(target.hostname.toLowerCase())){
-        res.setHeader('Cache-Control','no-store');
-        return res.redirect(307,target.toString());
-      }
-      return imageFallback(res);
-    }
+    }catch{return imageFallback(res);}
   });
   app.use('/api',(_req,res,next)=>{
     const sendJson=res.json.bind(res);
@@ -79,22 +113,29 @@ export function createApp(options:AppOptions={}){
   app.locals.observability=observability;
   app.use('/api',observability.middleware);
   app.use('/api',(_req,res,next)=>{res.setHeader('X-API-Version','1.0.0');next();});
-  app.use('/api',responseCache.middleware);
 
   const attempts=new Map<string,{windowStart:number,count:number}>();const limit=options.mutationLimit??60;
   app.use('/api',(req:Request,res:Response,next:NextFunction)=>{
-    const protectedRead=req.method==='GET'&&req.path==='/corrections';
+    const protectedRead=req.method==='GET'&&(['/corrections','/data-manager','/data-quality','/sync/jobs','/telemetry/frontend/summary','/health/details'].includes(req.path)||req.path.startsWith('/player-identity-conflicts/')||req.path.startsWith('/data/candidates/')||req.path.startsWith('/data/provenance/'));
+    if(protectedRead)res.setHeader('Cache-Control','no-store');
     if(['GET','HEAD','OPTIONS'].includes(req.method)&&!protectedRead)return next();
     const now=Date.now();const key=req.ip||req.socket.remoteAddress||'unknown';const state=attempts.get(key);
-    const current=!state||now-state.windowStart>=60_000?{windowStart:now,count:1}:{...state,count:state.count+1};attempts.set(key,current);
+    const rateState=!state||now-state.windowStart>=60_000?{windowStart:now,count:1}:{...state,count:state.count+1};attempts.set(key,rateState);
     const publicCorrection=req.method==='POST'&&req.path==='/corrections';
-    const actor=String(req.headers['x-admin-name']??(publicCorrection?'public-reporter':adminToken?'anonymous':'local-development')).slice(0,120);
-    res.on('finish',()=>{try{db.prepare(`INSERT INTO security_audit_log(method,path,actor,role,ip,status_code,created_at) VALUES(?,?,?,?,?,?,?)`).run(req.method,req.path,actor,res.statusCode===401?'anonymous':publicCorrection?'reporter':'admin',key,res.statusCode,nowIso());}catch{/* il log non deve interrompere la risposta già conclusa */}});
-    res.setHeader('X-RateLimit-Limit',String(limit));res.setHeader('X-RateLimit-Remaining',String(Math.max(0,limit-current.count)));
-    if(current.count>limit)return res.status(429).json({error:'Troppe operazioni di scrittura: riprova tra un minuto'});
-    if(adminToken&&!publicCorrection){const authorization=String(req.headers.authorization??'');const token=authorization.startsWith('Bearer ')?authorization.slice(7):'';if(!safeEqual(token,adminToken))return res.status(401).json({error:'Autenticazione amministrativa richiesta'});}
+    const publicTelemetry=req.method==='POST'&&req.path==='/telemetry/frontend';
+    const currentSession=activeSession(req);
+    const actor=String(currentSession?.session.actor??(publicCorrection?'public-reporter':publicTelemetry?'frontend-telemetry':adminToken?'anonymous':'local-development')).slice(0,120);
+    res.locals.adminActor=actor;
+    if(!publicTelemetry)res.on('finish',()=>{try{db.prepare(`INSERT INTO security_audit_log(method,path,actor,role,ip,status_code,created_at) VALUES(?,?,?,?,?,?,?)`).run(req.method,req.path,actor,res.statusCode===401?'anonymous':publicCorrection?'reporter':'admin',key,res.statusCode,nowIso());}catch{/* il log non deve interrompere la risposta già conclusa */}});
+    res.setHeader('X-RateLimit-Limit',String(limit));res.setHeader('X-RateLimit-Remaining',String(Math.max(0,limit-rateState.count)));
+    if(rateState.count>limit)return res.status(429).json({error:'Troppe operazioni di scrittura: riprova tra un minuto'});
+    if(adminToken&&!publicCorrection&&!publicTelemetry){
+      if(!currentSession)return res.status(401).json({error:'Sessione amministrativa richiesta o scaduta'});
+      if(!['GET','HEAD','OPTIONS'].includes(req.method)&&!safeEqual(String(req.headers['x-csrf-token']??''),currentSession.session.csrfToken))return res.status(403).json({error:'Token CSRF non valido'});
+    }
     next();
   });
+  app.use('/api',responseCache.middleware);
   app.use('/api',api);
   if(nodeEnv==='production'){
     const dist=path.resolve('dist');

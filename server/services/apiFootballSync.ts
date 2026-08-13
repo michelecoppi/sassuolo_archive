@@ -123,7 +123,7 @@ export async function resolveLeagueForSeason(season: string, competition: string
   return { ok: true as const, leagueId, year, coverage, requests: t.requests + r.meta.requests };
 }
 
-function upsertPlayer(player: any, extra: { position?: any; number?: any; currentSquad?: boolean } = {}) {
+export function upsertPlayer(player: any, extra: { position?: any; number?: any; currentSquad?: boolean } = {}) {
   const apiId = nInt(player?.id);
   const providerName = String(player?.name ?? '').trim();
   const firstname = String(player?.firstname ?? '').trim();
@@ -152,7 +152,7 @@ function upsertPlayer(player: any, extra: { position?: any; number?: any; curren
       return existing.id as number;
     }
     db.prepare(`UPDATE players SET api_football_id=COALESCE(?,api_football_id),name=CASE WHEN ?<>'' THEN ? ELSE name END,firstname=COALESCE(?,firstname),lastname=COALESCE(?,lastname),nationality=COALESCE(?,nationality),birth_date=COALESCE(?,birth_date),birth_place=COALESCE(?,birth_place),birth_country=COALESCE(?,birth_country),age=COALESCE(?,age),height=COALESCE(?,height),weight=COALESCE(?,weight),photo_url=COALESCE(?,photo_url),position=COALESCE(?,position),shirt_number=COALESCE(?,shirt_number),injured=COALESCE(?,injured),current_squad=CASE WHEN ?=1 THEN 1 ELSE current_squad END,source_provider=?,source_external_id=COALESCE(?,source_external_id),last_verified_at=? WHERE id=?`)
-      .run(apiId, firstname && lastname ? name : '', firstname || null, lastname || null, player?.nationality ?? null, player?.birth?.date ?? player?.birth_date ?? null, player?.birth?.place ?? null, player?.birth?.country ?? null, nInt(player?.age), player?.height ?? null, player?.weight ?? null, player?.photo ?? null, normalizePlayerPosition(extra.position ?? player?.position), nInt(extra.number ?? player?.number), boolInt(player?.injured), extra.currentSquad ? 1 : 0, PROVIDER, apiId ? String(apiId) : null, nowIso(), existing.id);
+      .run(apiId, firstname && lastname ? name : '', name, firstname || null, lastname || null, player?.nationality ?? null, player?.birth?.date ?? player?.birth_date ?? null, player?.birth?.place ?? null, player?.birth?.country ?? null, nInt(player?.age), player?.height ?? null, player?.weight ?? null, player?.photo ?? null, normalizePlayerPosition(extra.position ?? player?.position), nInt(extra.number ?? player?.number), boolInt(player?.injured), extra.currentSquad ? 1 : 0, PROVIDER, apiId ? String(apiId) : null, nowIso(), existing.id);
     return existing.id as number;
   }
   const result = db.prepare(`INSERT INTO players(api_football_id,name,firstname,lastname,nationality,birth_date,birth_place,birth_country,age,height,weight,photo_url,position,shirt_number,injured,current_squad,source_provider,source_external_id,last_verified_at)

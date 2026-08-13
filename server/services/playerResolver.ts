@@ -1,4 +1,4 @@
-import { db, normalizeNameForMatch, nowIso, recordChange } from '../db/database.js';
+import { createBackupSnapshot, db, normalizeNameForMatch, nowIso, recordChange } from '../db/database.js';
 
 type ResolveInput = {
   name: string;
@@ -173,15 +173,29 @@ export function resolvePlayer(input: ResolveInput): ResolveResult {
   return { status: 'conflict', conflictId, reason: 'no-safe-match', normalizedName, candidates: [] };
 }
 
-export function resolvePlayerIdentityConflict(conflictId: number, decision: { action: 'merge' | 'create' | 'reject'; playerId?: number; name?: string; firstname?: string; lastname?: string }) {
+type IdentityDecision={action:'merge'|'create'|'reject'|'defer';playerId?:number;name?:string;firstname?:string;lastname?:string;reviewer:string;note:string};
+
+export function resolvePlayerIdentityConflict(conflictId: number, decision: IdentityDecision) {
   const conflict = db.prepare('SELECT * FROM player_match_conflicts WHERE id=? AND status=\'open\'').get(conflictId) as any;
   if (!conflict) throw new Error('Conflitto giocatore non trovato o già risolto');
+  if (!decision.reviewer.trim() || !decision.note.trim()) throw new Error('Revisore e motivazione sono obbligatori');
+  if (decision.action === 'defer') {
+    db.prepare(`UPDATE player_match_conflicts SET resolution_action='defer',reviewer=?,resolution_note=?,updated_at=? WHERE id=?`).run(decision.reviewer.trim(),decision.note.trim(),nowIso(),conflictId);
+    recordChange({entityType:'player_match_conflicts',entityId:conflictId,action:'update',before:conflict,after:{status:'open',action:'defer'},note:decision.note,author:decision.reviewer});
+    return {conflictId,deferred:true};
+  }
+  const backup=createBackupSnapshot(`before-player-identity-${conflictId}-${decision.action}`);
   if (decision.action === 'reject') {
-    db.prepare("UPDATE player_match_conflicts SET status='ignored',updated_at=? WHERE id=?").run(nowIso(), conflictId);
-    recordChange({ entityType: 'player_match_conflicts', entityId: conflictId, action: 'delete', before: conflict, after: { status: 'ignored' }, note: 'Identità rifiutata dal Data Manager' });
-    return { conflictId, rejected: true };
+    const resolvedAt=nowIso();
+    db.prepare("UPDATE player_match_conflicts SET status='ignored',resolution_action='reject',reviewer=?,resolution_note=?,resolved_at=?,backup_id=?,decision_json=?,updated_at=? WHERE id=?").run(decision.reviewer.trim(),decision.note.trim(),resolvedAt,backup.id,JSON.stringify({action:'reject'}),resolvedAt,conflictId);
+    recordChange({ entityType: 'player_match_conflicts', entityId: conflictId, action: 'delete', before: conflict, after: { status: 'ignored' }, note: decision.note,author:decision.reviewer,backupId:backup.id });
+    return { conflictId, rejected: true,backupId:backup.id };
   }
   let playerId: number;
+  const normalized=normalizeNameForMatch(conflict.raw_name);
+  const aliasBefore=normalized?db.prepare(`SELECT * FROM player_name_aliases WHERE alias_normalized=?`).get(normalized)??null:null;
+  const sourceBefore=conflict.source_provider&&conflict.source_player_id?db.prepare(`SELECT * FROM player_source_ids WHERE source_provider=? AND source_player_id=?`).get(conflict.source_provider,conflict.source_player_id)??null:null;
+  let createdPlayer=false;
   if (decision.action === 'merge') {
     if (!decision.playerId) throw new Error('playerId obbligatorio per unire il conflitto');
     const target = db.prepare('SELECT id,name FROM players WHERE id=?').get(decision.playerId) as { id: number; name: string } | undefined;
@@ -193,15 +207,42 @@ export function resolvePlayerIdentityConflict(conflictId: number, decision: { ac
     if (!name) throw new Error('Nome obbligatorio per creare il giocatore');
     const result = db.prepare('INSERT INTO players(name,firstname,lastname,source_provider,source_external_id,source_url,current_squad,last_verified_at) VALUES(?,?,?,?,?,?,?,?)').run(name, decision.firstname ?? null, decision.lastname ?? null, conflict.source_provider ?? 'manual', conflict.source_player_id ?? null, conflict.source_url ?? null, /^(api-football|thesportsdb):/.test(String(conflict.context ?? '')) ? 1 : 0, nowIso());
     playerId = Number(result.lastInsertRowid);
+    createdPlayer=true;
     recordAliasForConflict(playerId, conflict);
   }
   if (conflict.source_provider && conflict.source_player_id) {
     db.prepare(`INSERT INTO player_source_ids(player_id,source_provider,source_player_id,source_url,last_verified_at) VALUES(?,?,?,?,?) ON CONFLICT(source_provider,source_player_id) DO UPDATE SET player_id=excluded.player_id,source_url=COALESCE(excluded.source_url,player_source_ids.source_url),last_verified_at=excluded.last_verified_at`).run(playerId, conflict.source_provider, conflict.source_player_id, conflict.source_url, nowIso());
   }
   if (/^(api-football|thesportsdb):/.test(String(conflict.context ?? ''))) db.prepare('UPDATE players SET current_squad=1 WHERE id=?').run(playerId);
-  db.prepare('UPDATE player_match_conflicts SET status=\'resolved\',candidates_json=?,updated_at=? WHERE id=?').run(JSON.stringify({ decision, playerId }), nowIso(), conflictId);
-  recordChange({ entityType: 'player_match_conflicts', entityId: conflictId, action: 'resolve-conflict', before: conflict, after: { playerId, decision }, note: decision.action === 'merge' ? 'Identità collegata a un giocatore esistente' : 'Nuovo giocatore confermato' });
-  return { conflictId, playerId };
+  const resolvedAt=nowIso();const decisionRecord={action:decision.action,playerId,createdPlayer,aliasBefore,sourceBefore};
+  db.prepare(`UPDATE player_match_conflicts SET status='resolved',resolution_action=?,resolved_player_id=?,reviewer=?,resolution_note=?,resolved_at=?,backup_id=?,decision_json=?,updated_at=? WHERE id=?`).run(decision.action,playerId,decision.reviewer.trim(),decision.note.trim(),resolvedAt,backup.id,JSON.stringify(decisionRecord),resolvedAt,conflictId);
+  recordChange({ entityType: 'player_match_conflicts', entityId: conflictId, action: 'resolve-conflict', before: conflict, after: decisionRecord, note: decision.note,author:decision.reviewer,backupId:backup.id });
+  return { conflictId, playerId,backupId:backup.id };
+}
+
+export function reopenPlayerIdentityConflict(conflictId:number,reviewer:string,note:string){
+  const conflict=db.prepare(`SELECT * FROM player_match_conflicts WHERE id=? AND status<>'open'`).get(conflictId) as any;
+  if(!conflict)throw new Error('Decisione identità non trovata o già aperta');
+  if(!reviewer.trim()||!note.trim())throw new Error('Revisore e motivazione sono obbligatori');
+  const decision=JSON.parse(conflict.decision_json||'{}') as any,backup=createBackupSnapshot(`before-reopen-player-identity-${conflictId}`);
+  db.transaction(()=>{
+    if(decision.createdPlayer){
+      const refs=['player_seasons','match_player_stats','transfers','match_injuries','match_events'].reduce((total,table)=>total+Number((db.prepare(`SELECT COUNT(*) AS total FROM ${table} WHERE player_id=?`).get(decision.playerId) as any)?.total??0),0);
+      if(refs>0)throw new Error('Il profilo creato ha acquisito dati: usare il ripristino del backup associato alla decisione');
+      db.prepare(`DELETE FROM players WHERE id=?`).run(decision.playerId);
+    }else if(decision.playerId){
+      const normalized=normalizeNameForMatch(conflict.raw_name);
+      if(decision.aliasBefore)db.prepare(`INSERT INTO player_name_aliases(id,player_id,alias,alias_normalized,source_provider,note,created_at) VALUES(@id,@player_id,@alias,@alias_normalized,@source_provider,@note,@created_at) ON CONFLICT(alias_normalized) DO UPDATE SET player_id=excluded.player_id,alias=excluded.alias,source_provider=excluded.source_provider,note=excluded.note`).run(decision.aliasBefore);
+      else db.prepare(`DELETE FROM player_name_aliases WHERE alias_normalized=? AND player_id=?`).run(normalized,decision.playerId);
+      if(conflict.source_provider&&conflict.source_player_id){
+        if(decision.sourceBefore)db.prepare(`INSERT INTO player_source_ids(id,player_id,source_provider,source_player_id,source_url,last_verified_at) VALUES(@id,@player_id,@source_provider,@source_player_id,@source_url,@last_verified_at) ON CONFLICT(source_provider,source_player_id) DO UPDATE SET player_id=excluded.player_id,source_url=excluded.source_url,last_verified_at=excluded.last_verified_at`).run(decision.sourceBefore);
+        else db.prepare(`DELETE FROM player_source_ids WHERE source_provider=? AND source_player_id=? AND player_id=?`).run(conflict.source_provider,conflict.source_player_id,decision.playerId);
+      }
+    }
+    db.prepare(`UPDATE player_match_conflicts SET status='open',resolution_action=NULL,resolved_player_id=NULL,reviewer=NULL,resolution_note=NULL,resolved_at=NULL,backup_id=NULL,decision_json=NULL,updated_at=? WHERE id=?`).run(nowIso(),conflictId);
+    recordChange({entityType:'player_match_conflicts',entityId:conflictId,action:'update',before:conflict,after:{status:'open'},note,author:reviewer,backupId:backup.id});
+  })();
+  return {conflictId,reopened:true,backupId:backup.id};
 }
 
 function recordAliasForConflict(playerId: number, conflict: any) {

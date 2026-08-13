@@ -1,0 +1,22 @@
+{
+  "players.json": {
+    "url": "https://ndownloader.figshare.com/files/15073721",
+    "sha256": "877a111cb1005b73df5645e9338bd74fb4b496bace2fbc545a72abb3b73efa2e",
+    "bytes": 1737347
+  },
+  "teams.json": {
+    "url": "https://ndownloader.figshare.com/files/15073697",
+    "sha256": "9f7a4a3b3d92c0be33f40613ad6e6eb4316c3b9771ec74c61a22c9b8ece23a4d",
+    "bytes": 27404
+  },
+  "matches_Italy.zip": {
+    "url": "https://ndownloader.figshare.com/files/14464622",
+    "sha256": "c8f92bb7533e5c127e043cee764c991b5c25b4f5e70a65be931baae0b1765ce9",
+    "bytes": 645097
+  },
+  "events_Italy.zip": {
+    "url": "https://ndownloader.figshare.com/files/14464685",
+    "sha256": "877e015b716ffdeea18f04418e3f24fed307ed03c37ff305cabe1f47c4822a45",
+    "bytes": 77323413
+  }
+}

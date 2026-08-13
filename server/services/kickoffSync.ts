@@ -1,4 +1,4 @@
-import { db, getSetting, normalizePlayerPosition, normalizeSearchText, normalizeTeamName, nowIso, recordFixtureConflicts, setSetting } from '../db/database.js';
+import { db, getSetting, normalizePlayerPosition, normalizeSearchText, normalizeTeamName, nowIso, recordDataConflict, recordFixtureConflicts, setSetting } from '../db/database.js';
 
 const API_BASE = 'https://api.kickoffapi.com';
 const PROVIDER = 'kickoff';
@@ -7,6 +7,12 @@ const nNum = (v: any) => v == null || v === '' || Number.isNaN(Number(v)) ? null
 const text = (v: any) => v == null ? null : String(v).trim() || null;
 const boolInt = (v: any) => v == null ? null : v ? 1 : 0;
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+export function normalizeKickoffEventMinute(value: any, extra = false) {
+  const minute = nInt(value);
+  const maximum = extra ? 30 : 130;
+  return minute != null && minute >= 0 && minute <= maximum ? minute : null;
+}
 
 export type KickoffMeta = {
   requests: number;
@@ -413,28 +419,37 @@ async function saveEvents(matchId: number, fixtureId: number, body: any, homeId:
   // Manual event corrections are evidence-backed curation. Keep them on a
   // refresh and use their provider event id to avoid reintroducing a second,
   // uncorrected copy from the provider response.
-  db.prepare(`DELETE FROM match_events WHERE match_id=? AND source_provider<>'manual'`).run(matchId);
   const manualEvent = db.prepare(`SELECT id FROM match_events WHERE match_id=? AND source_provider='manual' AND provider_event_id=? LIMIT 1`);
   const stmt = db.prepare(`INSERT INTO match_events(match_id,source_provider,provider_match_id,provider_event_id,api_fixture_id,minute,extra_minute,sequence_number,team_provider_id,team_api_id,team_name,team_logo,player_provider_id,player_api_id,player_id,player_name,assist_player_provider_id,assist_player_api_id,assist_player_id,assist_name,type,detail,comments,scoring_play,home_score,away_score) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
-  let i = 0;
-  for (const e of rows) {
-    const teamId = nInt(e?.teamId ?? e?.team?.id);
-    const playerId = nInt(e?.playerId ?? e?.player?.id);
-    const assistId = nInt(e?.assistId ?? e?.assist?.id);
-    const localPlayer = localSassuoloPlayer(playerId, { id: playerId, name: e?.playerName ?? e?.player?.name }, teamId, sassuoloId);
-    const localAssist = localSassuoloPlayer(assistId, { id: assistId, name: e?.assistName ?? e?.assist?.name }, teamId, sassuoloId);
-    const sc = scoreMap.get(e) ?? { home: null, away: null };
-    const type = text(e?.type);
-    const detail = text(e?.detail);
-    const providerEventId = text(e?.id);
-    if (providerEventId && manualEvent.get(matchId, providerEventId)) continue;
-    stmt.run(matchId, PROVIDER, String(fixtureId), providerEventId, fixtureId, nInt(e?.time ?? e?.minute), nInt(e?.extra ?? e?.extraTime), i++, teamId == null ? null : String(teamId), teamId, text(e?.team?.name), text(e?.team?.logo), playerId == null ? null : String(playerId), playerId, localPlayer, text(e?.playerName ?? e?.player?.name), assistId == null ? null : String(assistId), assistId, localAssist, text(e?.assistName ?? e?.assist?.name), type, detail, text(e?.comments), /goal/i.test(String(type)) && !/miss/i.test(String(detail)) ? 1 : 0, sc.home, sc.away);
-  }
-  const scorerNames = rows.filter(e => /goal/i.test(String(e?.type ?? '')) && !/miss/i.test(String(e?.detail ?? ''))).map(e => `${nInt(e?.time) ?? '?'}' ${text(e?.playerName ?? e?.player?.name) ?? 'N/D'}`);
-  const assistNames = rows.filter(e => /goal/i.test(String(e?.type ?? '')) && text(e?.assistName ?? e?.assist?.name)).map(e => `${nInt(e?.time) ?? '?'}' ${text(e?.assistName ?? e?.assist?.name)}`);
-  const cardNames = rows.filter(e => /card/i.test(String(e?.type ?? ''))).map(e => `${nInt(e?.time) ?? '?'}' ${text(e?.playerName ?? e?.player?.name) ?? 'N/D'} (${text(e?.detail) ?? 'Card'})`);
-  db.prepare(`UPDATE matches SET scorers=?,assists=?,cards=?,last_verified_at=? WHERE id=?`).run(scorerNames.join(' | ') || null, assistNames.join(' | ') || null, cardNames.join(' | ') || null, nowIso(), matchId);
-  setDetailFlag(matchId, 'events_synced');
+  db.transaction(() => {
+    db.prepare(`DELETE FROM match_events WHERE match_id=? AND source_provider<>'manual'`).run(matchId);
+    let i = 0;
+    for (const e of rows) {
+      const teamId = nInt(e?.teamId ?? e?.team?.id);
+      const playerId = nInt(e?.playerId ?? e?.player?.id);
+      const assistId = nInt(e?.assistId ?? e?.assist?.id);
+      const localPlayer = localSassuoloPlayer(playerId, { id: playerId, name: e?.playerName ?? e?.player?.name }, teamId, sassuoloId);
+      const localAssist = localSassuoloPlayer(assistId, { id: assistId, name: e?.assistName ?? e?.assist?.name }, teamId, sassuoloId);
+      const sc = scoreMap.get(e) ?? { home: null, away: null };
+      const type = text(e?.type);
+      const detail = text(e?.detail);
+      const providerEventId = text(e?.id);
+      if (providerEventId && manualEvent.get(matchId, providerEventId)) continue;
+      const rawMinute = e?.time ?? e?.minute;
+      const rawExtraMinute = e?.extra ?? e?.extraTime;
+      const minute = normalizeKickoffEventMinute(rawMinute);
+      const extraMinute = normalizeKickoffEventMinute(rawExtraMinute, true);
+      const inserted = stmt.run(matchId, PROVIDER, String(fixtureId), providerEventId, fixtureId, minute, extraMinute, i++, teamId == null ? null : String(teamId), teamId, text(e?.team?.name), text(e?.team?.logo), playerId == null ? null : String(playerId), playerId, localPlayer, text(e?.playerName ?? e?.player?.name), assistId == null ? null : String(assistId), assistId, localAssist, text(e?.assistName ?? e?.assist?.name), type, detail, text(e?.comments), /goal/i.test(String(type)) && !/miss/i.test(String(detail)) ? 1 : 0, sc.home, sc.away);
+      const eventId = String(inserted.lastInsertRowid);
+      if (nInt(rawMinute) != null && minute == null) recordDataConflict('match_event', eventId, 'minute', rawMinute, null, PROVIDER);
+      if (nInt(rawExtraMinute) != null && extraMinute == null) recordDataConflict('match_event', eventId, 'extra_minute', rawExtraMinute, null, PROVIDER);
+    }
+    const scorerNames = rows.filter(e => /goal/i.test(String(e?.type ?? '')) && !/miss/i.test(String(e?.detail ?? ''))).map(e => `${normalizeKickoffEventMinute(e?.time ?? e?.minute) ?? '?'}' ${text(e?.playerName ?? e?.player?.name) ?? 'N/D'}`);
+    const assistNames = rows.filter(e => /goal/i.test(String(e?.type ?? '')) && text(e?.assistName ?? e?.assist?.name)).map(e => `${normalizeKickoffEventMinute(e?.time ?? e?.minute) ?? '?'}' ${text(e?.assistName ?? e?.assist?.name)}`);
+    const cardNames = rows.filter(e => /card/i.test(String(e?.type ?? ''))).map(e => `${normalizeKickoffEventMinute(e?.time ?? e?.minute) ?? '?'}' ${text(e?.playerName ?? e?.player?.name) ?? 'N/D'} (${text(e?.detail) ?? 'Card'})`);
+    db.prepare(`UPDATE matches SET scorers=?,assists=?,cards=?,last_verified_at=? WHERE id=?`).run(scorerNames.join(' | ') || null, assistNames.join(' | ') || null, cardNames.join(' | ') || null, nowIso(), matchId);
+    setDetailFlag(matchId, 'events_synced');
+  })();
   return rows.length;
 }
 
@@ -580,7 +595,11 @@ export async function syncKickoffMatchDetails(matchId: number, force = false, ma
     const current = flags(matchId) ?? {};
     if (!force && current[resource.flag]) continue;
     if (!canRequest()) { warnings.push(`Sincronizzazione sospesa prima di ${resource.name}: budget/quota KickoffAPI quasi esaurita.`); break; }
-    await resource.run();
+    try {
+      await resource.run();
+    } catch (error) {
+      warnings.push(`${resource.name}: ${String(error)}`);
+    }
   }
 
   const after = flags(matchId) ?? {};

@@ -1,0 +1,17 @@
+{
+  "allowedLicenses": [
+    "0BSD",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "BlueOak-1.0.0",
+    "CC-BY-4.0",
+    "ISC",
+    "MIT",
+    "MIT AND ISC",
+    "MPL-2.0"
+  ],
+  "blockedLicenses": ["AGPL-3.0", "GPL-3.0", "SSPL-1.0"],
+  "blockedSeverity": "critical",
+  "exceptions": []
+}

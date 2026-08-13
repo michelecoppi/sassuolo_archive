@@ -1,0 +1,2023 @@
+{
+  "area": "player_identity_crosswalk",
+  "season": "2017/18",
+  "competition": "Serie A",
+  "source_provider": "Reep v0 2026.25",
+  "source_url": "https://github.com/withqwerty/reep",
+  "verified_at": "2026-08-13",
+  "file": "data.csv",
+  "sha256": "2a991a0fbe482a7ca822a71bd829d71cfec589b8a0cf5efa6d59fd0567cdba46",
+  "records_total": 550,
+  "records_discarded": 0,
+  "counts": {
+    "unique_name_match": 56,
+    "reep_missing": 20,
+    "ambiguous": 0,
+    "local_missing": 474
+  },
+  "source_files": {
+    "source-people.csv": "9c3c1eb59ab149dfd45ba43eceafd8f71820aad0451adee8be9d2d9e279adf7e",
+    "source-meta.json": "696e3f138fd770976c96315db3c9a761999d04e248693e0769ace3667e3cf143",
+    "source-LICENSE": "af82da9b9a0df3442b6f15225a6c51fc308fdd2878d0d16de1f26fadf5b65a95"
+  },
+  "validation": {
+    "status": "reconciled",
+    "checks": [
+      {
+        "name": "provider_ids",
+        "status": "passed"
+      },
+      {
+        "name": "unique_local_identity_only",
+        "status": "passed"
+      },
+      {
+        "name": "license",
+        "status": "passed",
+        "note": "CC0 1.0 archiviata"
+      }
+    ],
+    "unresolved_conflicts": [
+      {
+        "provider_player_id": "218971",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "228928",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "232822",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "299557",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "300830",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "9080",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20941",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21655",
+        "status": "reep_missing"
+      },
+      {
+        "provider_player_id": "213387",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20812",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20540",
+        "status": "reep_missing"
+      },
+      {
+        "provider_player_id": "21415",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "134435",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20661",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "339791",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21077",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "8306",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "99423",
+        "status": "reep_missing"
+      },
+      {
+        "provider_player_id": "22566",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "405597",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "270034",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "417230",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "263591",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20929",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "346908",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20947",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "146588",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21494",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "263433",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "286215",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "70084",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21098",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "131184",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "85113",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "214220",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "40726",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "374013",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "134484",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "135927",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20815",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20458",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21234",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20749",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20874",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20609",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "523089",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20841",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "272878",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "246175",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20519",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "397237",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21840",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "218982",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "135150",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "412914",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "22020",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "300669",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20604",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "392395",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "69513",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "265172",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "22093",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "300373",
+        "status": "reep_missing"
+      },
+      {
+        "provider_player_id": "20556",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "22085",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20483",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "190168",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "99452",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "49857",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "50073",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "7858",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "265431",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "208865",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "99833",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20723",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "22695",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "50007",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "25437",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21169",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20426",
+        "status": "reep_missing"
+      },
+      {
+        "provider_player_id": "3543",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20637",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20639",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "394",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "402017",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "401277",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "44251",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "22185",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "222766",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "252589",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "86309",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20404",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "26000",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21128",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "26518",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "340085",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "350032",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "149846",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "92900",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "361779",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "25601",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21173",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20632",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21384",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20470",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "101742",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "3531",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "14745",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21842",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "255670",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20663",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "298212",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "22381",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "49979",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21507",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20438",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20875",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20572",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "134427",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "343925",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "256478",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21094",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20583",
+        "status": "reep_missing"
+      },
+      {
+        "provider_player_id": "20638",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "127534",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "138402",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20866",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "206318",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "393566",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "257028",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20972",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "7982",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "22889",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "240042",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "37739",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "3475",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "116269",
+        "status": "reep_missing"
+      },
+      {
+        "provider_player_id": "21306",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "105334",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "122",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20575",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "86243",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "520774",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20626",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20816",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "8327",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "239290",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21001",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20468",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "40787",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21314",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "51064",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21279",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20802",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "388099",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "90268",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21517",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "38532",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "50849",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21636",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "45579",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20449",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "415809",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "22732",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20479",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21607",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "25849",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "246061",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "239298",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "456492",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21528",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "447804",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "3463",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "471286",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20448",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "40806",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20928",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "149848",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "101635",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21091",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "448299",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "174",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "50805",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "351009",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "22559",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "22053",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "263432",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "24024",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "285109",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "3736",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20490",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "405607",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "343915",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "24838",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20689",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "137161",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "86328",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "340019",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20845",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "24725",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20536",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "125286",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "286225",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21376",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21578",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "272280",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "115933",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "346913",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20455",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "350999",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "22270",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "338249",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20461",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "368642",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "269152",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "461671",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "388398",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "3548",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "295273",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "3323",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21177",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "241675",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "70834",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "113927",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "15524",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "280419",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "3795",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "293198",
+        "status": "reep_missing"
+      },
+      {
+        "provider_player_id": "69874",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "8148",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "22377",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20390",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "14812",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21564",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "105361",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "69417",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "14904",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "192",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "354547",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "385655",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "56026",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "11063",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "145787",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "40767",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "70965",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "3431",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "135903",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "116171",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20525",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "137298",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "25541",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "37745",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21315",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "86366",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "7949",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "3313",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20460",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "239294",
+        "status": "reep_missing"
+      },
+      {
+        "provider_player_id": "20820",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20518",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20751",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "25726",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "138174",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "333913",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "114",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "92966",
+        "status": "reep_missing"
+      },
+      {
+        "provider_player_id": "658",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20588",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "404209",
+        "status": "reep_missing"
+      },
+      {
+        "provider_player_id": "82266",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "40538",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "3885",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "22323",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20459",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "134429",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "392384",
+        "status": "reep_missing"
+      },
+      {
+        "provider_player_id": "86785",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "350569",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "536520",
+        "status": "reep_missing"
+      },
+      {
+        "provider_player_id": "20526",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20927",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21678",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21385",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21006",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "284960",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "352722",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21272",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21639",
+        "status": "reep_missing"
+      },
+      {
+        "provider_player_id": "20850",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "472938",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "238832",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "22864",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "397239",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "523086",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20655",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "23386",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20776",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "360778",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "262384",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "86301",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "7965",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "334817",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "37732",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "333571",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "22817",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "3484",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "7926",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "376362",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "137041",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "99430",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "377757",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "25898",
+        "status": "reep_missing"
+      },
+      {
+        "provider_player_id": "471300",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "226200",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "24964",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "22099",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "69968",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "22380",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20476",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21370",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21322",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20516",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "23427",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21900",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21350",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21865",
+        "status": "reep_missing"
+      },
+      {
+        "provider_player_id": "21573",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "23705",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20457",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "347026",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "51151",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21171",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21078",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "14943",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "22107",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21280",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "93341",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "99511",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "284315",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "625",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "24269",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20495",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "3526",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20811",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "116349",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "215869",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "288663",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20395",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20796",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21468",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20414",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "339192",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "41368",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "206314",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "25405",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20422",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "116225",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20579",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "449978",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "490626",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21725",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21288",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "69400",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "138408",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20443",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21114",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "405602",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21019",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "328336",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "410031",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "419204",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "491409",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20748",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21959",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "402014",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20869",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21148",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20429",
+        "status": "reep_missing"
+      },
+      {
+        "provider_player_id": "21298",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21072",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "342075",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "25558",
+        "status": "reep_missing"
+      },
+      {
+        "provider_player_id": "286223",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "105376",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "127524",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "424241",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "405880",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "16922",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "403272",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "50807",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "220359",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20911",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "4792",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "351010",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "234359",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "89186",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "240039",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "269188",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20653",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "69658",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "372079",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "264084",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "481329",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "99902",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20879",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21299",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "3344",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "40774",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "41034",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20506",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "361214",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "3300",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "49991",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "14922",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "507570",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21119",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20943",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "373768",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21025",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "289122",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "268180",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "241676",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21438",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "295176",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "361807",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "213948",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21296",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "337225",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "302799",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20935",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20949",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "350992",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "116394",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "25421",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "3318",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "248950",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20571",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "278813",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "252473",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "26373",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "8291",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "26336",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "170738",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "116170",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20707",
+        "status": "reep_missing"
+      },
+      {
+        "provider_player_id": "134508",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20561",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "402898",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "265865",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20662",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "403546",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "50069",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "72397",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21228",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20403",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "354552",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20472",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "364640",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "364641",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21373",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "239288",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "564512",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20550",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "130",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "137048",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20633",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21290",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20418",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20465",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "349102",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "234533",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "347593",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "99661",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "25878",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "166534",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "263803",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "14903",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "70161",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "149076",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20446",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20938",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21291",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "283062",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "21004",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "92908",
+        "status": "reep_missing"
+      },
+      {
+        "provider_player_id": "22552",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "22313",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "44510",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "239295",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "260250",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "7849",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "352993",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "20517",
+        "status": "local_missing"
+      },
+      {
+        "provider_player_id": "288423",
+        "status": "local_missing"
+      }
+    ]
+  },
+  "notes": [
+    "Reep v0 è congelato; gli ID v0 non sono intercambiabili con Reep v1.",
+    "Le righe irrisolte non sono importate."
+  ]
+}
