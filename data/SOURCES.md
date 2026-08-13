@@ -58,6 +58,35 @@ La scheda della competizione usa le pagine ufficiali UEFA per risultati corretti
 - Luzern-Sassuolo: <https://www.uefa.com/uefaeuropaleague/match/2020373--luzern-vs-sassuolo/>
 - Gruppo F e Sassuolo-Genk: <https://www.uefa.com/uefaeuropaleague/news/0233-0e95c1c35e88-f3edf7b19d01-1000--sassuolo-v-genk-background/>
 
+## StatsBomb Open Data — Serie A 2015/16
+
+Il candidato `match-details-statsbomb-serie-a-2015-16-poc` usa StatsBomb Open Data per Sassuolo–Milan del 6 marzo 2016 (match ID `3879771`). Il pacchetto conserva metadata, eventi e formazioni raw con checksum, oltre a una vista normalizzata limitata a stadio, arbitro, formazioni, gol, cartellini e sostituzioni.
+
+- Repository e condizioni di attribuzione: <https://github.com/hudl/open-data>
+- Metadata Serie A 2015/16: <https://raw.githubusercontent.com/hudl/open-data/master/data/matches/12/27.json>
+- Eventi partita: <https://raw.githubusercontent.com/hudl/open-data/master/data/events/3879771.json>
+- Formazioni partita: <https://raw.githubusercontent.com/hudl/open-data/master/data/lineups/3879771.json>
+
+La POC serve a validare il modello rich-data prima di estenderlo alle altre gare della stagione. I valori non presenti restano `NULL`; l'intero event stream viene archiviato per riproducibilità ma non pubblicato integralmente nella timeline della partita.
+
+### Estensione completa 2015/16
+
+Il candidato `match-details-statsbomb-serie-a-2015-16` estende la POC a tutte le 38 gare: 77 JSON originali indicizzati, 76 distinte, 484 eventi editoriali e 978 tiri con xG. StatsBomb richiede l'attribuzione nelle analisi pubblicate; credito e link sono conservati nel pacchetto, nella provenienza SQLite e nella scheda partita.
+
+## Wyscout / Figshare — Serie A 2017/18
+
+Le 38 partite 2017/18 derivano dal **Soccer match event dataset** di Luca Pappalardo et al., distribuito su Figshare con licenza **CC BY 4.0**. Il pacchetto conserva archivi originali, checksum, citazione e DOI. Sono importati 76 distinte, 484 eventi e 908 tiri; gli xG restano `NULL` perché assenti dalla fonte.
+
+- Dataset: <https://figshare.com/collections/Soccer_match_event_dataset/4415000>
+- Articolo: <https://doi.org/10.1038/s41597-019-0247-7>
+- Adattamento di riferimento: <https://github.com/koenvo/wyscout-soccer-match-event-dataset>
+
+## Reep, OpenFootball e SofaScore
+
+- **Reep — The football entity register**, release v0 2026.25, CC0: <https://github.com/withqwerty/reep>. Sono stati importati soltanto i 56 collegamenti locali univoci, pari a 204 identificativi; gli ID v0 non sono trattati come ID Reep v1.
+- **OpenFootball Italy**, CC0: <https://github.com/openfootball/italy>. È la baseline indipendente che ha confermato 38/38 risultati 2015/16 e 38/38 risultati 2017/18; dossier in `data/reconciliation/baselines/openfootball/`.
+- **SofaScore Scraper di Tuncay Eşsiz**, MIT: <https://github.com/tunjayoff/sofascore_scraper>. Il probe pubblico ha restituito HTTP 403; non sono stati effettuati aggiramenti o scraping massivo e nessun dato SofaScore è stato importato. Evidenza in `data/reconciliation/probes/sofascore/`.
+
 ## Pre-Serie A: Serie B 2008/09-2012/13
 
 Lo storico di campionato viene ora esteso a cinque stagioni prima del debutto in Serie A:

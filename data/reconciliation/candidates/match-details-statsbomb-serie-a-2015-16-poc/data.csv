@@ -1,0 +1,2 @@
+match_date,home_team,away_team,stadium,referee,source_provider,source_url,last_verified_at,provider_match_id,lineups,key_events
+2016-03-06,Sassuolo,AC Milan,MAPEI Stadium - Città del Tricolore,Piero Giacomelli,StatsBomb Open Data,https://github.com/hudl/open-data/tree/master/data,2026-08-13,3879771,2,13

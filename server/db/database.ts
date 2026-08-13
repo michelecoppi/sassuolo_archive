@@ -115,6 +115,33 @@ const schemaMigrations: SchemaMigration[] = [
     const seededEvents=db.prepare(`SELECT id,event_type,source_provider,source_url,last_verified_at FROM match_special_events WHERE match_id IN (SELECT id FROM matches WHERE substr(date,1,10)='2010-03-16' AND lower(home_team) LIKE '%cesena%' AND lower(away_team) LIKE '%sassuolo%')`).all() as any[];
     for(const event of seededEvents)recordSourceReference({entityType:'match_special_event',entityId:event.id,field:null,sourceUrl:event.source_url,note:event.event_type==='SUSPENDED'?'Fonte coeva della sospensione':'Fonte locale coeva della prosecuzione',author:'Archivio Sassuolo History',sourceProvider:event.source_provider,verifiedAt:event.last_verified_at});
   } },
+  { version: 9, name: 'reviewable-player-identities', apply: () => {
+    for (const definition of [
+      'resolution_action TEXT', 'resolved_player_id INTEGER', 'reviewer TEXT',
+      'resolution_note TEXT', 'resolved_at TEXT', 'backup_id INTEGER', 'decision_json TEXT'
+    ]) ensureColumn('player_match_conflicts', definition);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_player_match_conflicts_queue ON player_match_conflicts(status,source_provider,updated_at DESC)`);
+  } },
+  { version: 10, name: 'privacy-first-frontend-telemetry', apply: () => {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS frontend_telemetry (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_type TEXT NOT NULL CHECK(event_type IN ('exception','boundary','route_load','web_vital')),
+        release TEXT NOT NULL,
+        route TEXT NOT NULL,
+        online INTEGER NOT NULL CHECK(online IN (0,1)),
+        name TEXT,
+        value REAL,
+        rating TEXT,
+        message TEXT,
+        stack_hash TEXT,
+        context_json TEXT NOT NULL DEFAULT '{}',
+        created_at TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS idx_frontend_telemetry_created ON frontend_telemetry(created_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_frontend_telemetry_release_type ON frontend_telemetry(release,event_type,created_at DESC);
+    `);
+  } },
 ];
 
 function runSchemaMigrations() {

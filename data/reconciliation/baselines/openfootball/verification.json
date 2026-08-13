@@ -1,0 +1,22 @@
+{
+  "checked_at": "2026-08-13",
+  "source_provider": "OpenFootball Italy",
+  "source_url": "https://github.com/openfootball/italy",
+  "license": "CC0 1.0",
+  "reports": [
+    {
+      "season": "2015/16",
+      "source_file": "2015-16/1-seriea.txt",
+      "source_sha256": "d8bac6be2f27a03242a369798cf9fb67816c664b6591960a0c1e4717c3b424c6",
+      "matches": 38,
+      "result_mismatches": []
+    },
+    {
+      "season": "2017/18",
+      "source_file": "2017-18/1-seriea.txt",
+      "source_sha256": "d408017a68e299966d0735f4c9329fedf9861c7b22044fb8965b37b0127f2704",
+      "matches": 38,
+      "result_mismatches": []
+    }
+  ]
+}

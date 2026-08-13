@@ -35,12 +35,13 @@ export function createApiResponseCache(ttlMs = 30_000) {
 
   function middleware(req: Request, res: Response, next: NextFunction) {
     if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+      if (req.path === '/telemetry/frontend') { res.setHeader('Cache-Control', 'no-store'); return next(); }
       res.on('finish', () => {
         if (res.statusCode >= 200 && res.statusCode < 400) invalidate();
       });
       return next();
     }
-    if (req.method !== 'GET' || req.path === '/health' || req.headers.authorization) {
+    if (req.method !== 'GET' || req.path === '/health' || req.headers.authorization || req.headers.cookie) {
       res.setHeader('Cache-Control', 'no-store');
       return next();
     }

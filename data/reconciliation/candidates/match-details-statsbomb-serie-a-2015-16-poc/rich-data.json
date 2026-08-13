@@ -1,0 +1,658 @@
+{
+  "schemaVersion": 1,
+  "season": "2015/16",
+  "competition": "Serie A",
+  "sourceProvider": "StatsBomb Open Data",
+  "sourceUrl": "https://github.com/hudl/open-data/tree/master/data",
+  "lastVerifiedAt": "2026-08-13",
+  "match": {
+    "providerMatchId": "3879771",
+    "date": "2016-03-06",
+    "kickOff": "16:00:00.000",
+    "matchWeek": 28,
+    "homeTeam": {
+      "id": 232,
+      "name": "Sassuolo"
+    },
+    "awayTeam": {
+      "id": 243,
+      "name": "AC Milan"
+    },
+    "homeScore": 2,
+    "awayScore": 0,
+    "stadium": "MAPEI Stadium - Città del Tricolore",
+    "referee": "Piero Giacomelli"
+  },
+  "lineups": [
+    {
+      "teamId": 243,
+      "teamName": "AC Milan",
+      "formation": "442",
+      "coachName": null,
+      "startXI": [
+        {
+          "player": {
+            "id": "statsbomb:3371",
+            "providerId": 3371,
+            "name": "Mario Barwuah Balotelli",
+            "number": 45,
+            "pos": "Left Center Forward"
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:5683",
+            "providerId": 5683,
+            "name": "Keisuke Honda",
+            "number": 10,
+            "pos": "Right Midfield"
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:5688",
+            "providerId": 5688,
+            "name": "Carlos Arturo Bacca Ahumada",
+            "number": 70,
+            "pos": "Right Center Forward"
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:6360",
+            "providerId": 6360,
+            "name": "Cristian Eduardo Zapata Valencia",
+            "number": 17,
+            "pos": "Left Center Back"
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:6944",
+            "providerId": 6944,
+            "name": "Mattia De Sciglio",
+            "number": 2,
+            "pos": "Right Back"
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:7026",
+            "providerId": 7026,
+            "name": "Giacomo Bonaventura",
+            "number": 28,
+            "pos": "Left Midfield"
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:7036",
+            "providerId": 7036,
+            "name": "Gianluigi Donnarumma",
+            "number": 99,
+            "pos": "Goalkeeper"
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:7147",
+            "providerId": 7147,
+            "name": "Andrea Bertolacci",
+            "number": 91,
+            "pos": "Left Defensive Midfield"
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:8874",
+            "providerId": 8874,
+            "name": "Luca Antonelli",
+            "number": 31,
+            "pos": "Left Back"
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:10919",
+            "providerId": 10919,
+            "name": "Juraj Kucka",
+            "number": 27,
+            "pos": "Right Defensive Midfield"
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:40945",
+            "providerId": 40945,
+            "name": "Alex Rodrigo Dias da Costa",
+            "number": 33,
+            "pos": "Right Center Back"
+          }
+        }
+      ],
+      "substitutes": [
+        {
+          "player": {
+            "id": "statsbomb:6768",
+            "providerId": 6768,
+            "name": "Diego López Rodríguez",
+            "number": 1,
+            "pos": null
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:7032",
+            "providerId": 7032,
+            "name": "Davide Calabria",
+            "number": 96,
+            "pos": null
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:7038",
+            "providerId": 7038,
+            "name": "Manuel Locatelli",
+            "number": 73,
+            "pos": null
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:7168",
+            "providerId": 7168,
+            "name": "Andrea Poli",
+            "number": 16,
+            "pos": null
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:7458",
+            "providerId": 7458,
+            "name": "Alessio Romagnoli",
+            "number": 13,
+            "pos": null
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:8653",
+            "providerId": 8653,
+            "name": "José Mauri",
+            "number": 4,
+            "pos": null
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:8668",
+            "providerId": 8668,
+            "name": "Kevin-Prince Boateng",
+            "number": 72,
+            "pos": null
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:13110",
+            "providerId": 13110,
+            "name": "Stefan Simič",
+            "number": 25,
+            "pos": null
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:20300",
+            "providerId": 20300,
+            "name": "Jérémy Ménez",
+            "number": 7,
+            "pos": null
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:26197",
+            "providerId": 26197,
+            "name": "Christian Abbiati",
+            "number": 32,
+            "pos": null
+          }
+        }
+      ]
+    },
+    {
+      "teamId": 232,
+      "teamName": "Sassuolo",
+      "formation": "433",
+      "coachName": null,
+      "startXI": [
+        {
+          "player": {
+            "id": "statsbomb:5461",
+            "providerId": 5461,
+            "name": "Šime Vrsaljko",
+            "number": 11,
+            "pos": "Right Back"
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:6859",
+            "providerId": 6859,
+            "name": "Nicola Sansone",
+            "number": 17,
+            "pos": "Left Wing"
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:7113",
+            "providerId": 7113,
+            "name": "Simone Missiroli",
+            "number": 7,
+            "pos": "Right Center Midfield"
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:7118",
+            "providerId": 7118,
+            "name": "Federico Peluso",
+            "number": 13,
+            "pos": "Left Back"
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:7119",
+            "providerId": 7119,
+            "name": "Francesco Acerbi",
+            "number": 15,
+            "pos": "Left Center Back"
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:7127",
+            "providerId": 7127,
+            "name": "Francesco Magnanelli",
+            "number": 4,
+            "pos": "Center Defensive Midfield"
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:7131",
+            "providerId": 7131,
+            "name": "Domenico Berardi",
+            "number": 25,
+            "pos": "Right Wing"
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:7132",
+            "providerId": 7132,
+            "name": "Andrea Consigli",
+            "number": 47,
+            "pos": "Goalkeeper"
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:7457",
+            "providerId": 7457,
+            "name": "Gregoire Defrel",
+            "number": 92,
+            "pos": "Center Forward"
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:7698",
+            "providerId": 7698,
+            "name": "Joseph Alfred Duncan",
+            "number": 32,
+            "pos": "Left Center Midfield"
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:8848",
+            "providerId": 8848,
+            "name": "Paolo Cannavaro",
+            "number": 28,
+            "pos": "Right Center Back"
+          }
+        }
+      ],
+      "substitutes": [
+        {
+          "player": {
+            "id": "statsbomb:6963",
+            "providerId": 6963,
+            "name": "Lorenzo Pellegrini",
+            "number": 6,
+            "pos": null
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:6978",
+            "providerId": 6978,
+            "name": "Marcello Trotta",
+            "number": 29,
+            "pos": null
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:7109",
+            "providerId": 7109,
+            "name": "Matteo Politano",
+            "number": 16,
+            "pos": null
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:7123",
+            "providerId": 7123,
+            "name": "Gianluca Pegolo",
+            "number": 79,
+            "pos": null
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:8093",
+            "providerId": 8093,
+            "name": "Diego Falcinelli",
+            "number": 9,
+            "pos": null
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:10030",
+            "providerId": 10030,
+            "name": "Davide Biondini",
+            "number": 8,
+            "pos": null
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:10031",
+            "providerId": 10031,
+            "name": "Marcello Gazzola",
+            "number": 23,
+            "pos": null
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:10033",
+            "providerId": 10033,
+            "name": "Luca Antei",
+            "number": 5,
+            "pos": null
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:32903",
+            "providerId": 32903,
+            "name": "Emanuele Terranova",
+            "number": 26,
+            "pos": null
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:35666",
+            "providerId": 35666,
+            "name": "Alberto Pomini",
+            "number": 1,
+            "pos": null
+          }
+        },
+        {
+          "player": {
+            "id": "statsbomb:387420",
+            "providerId": 387420,
+            "name": "Alessandro Longhi",
+            "number": 3,
+            "pos": null
+          }
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "providerEventId": "ce4c5664-ec7d-4f2c-bea8-0ba91e39a37c",
+      "sequenceNumber": 30,
+      "minute": 0,
+      "extraMinute": null,
+      "teamId": 243,
+      "teamName": "AC Milan",
+      "playerId": 7026,
+      "playerName": "Giacomo Bonaventura",
+      "assistPlayerId": null,
+      "assistName": null,
+      "type": "Card",
+      "detail": "Yellow Card",
+      "scoringPlay": 0,
+      "homeScore": null,
+      "awayScore": null
+    },
+    {
+      "providerEventId": "7bae1b06-07f1-489b-b611-c6b11ea6642c",
+      "sequenceNumber": 159,
+      "minute": 4,
+      "extraMinute": null,
+      "teamId": 232,
+      "teamName": "Sassuolo",
+      "playerId": 7131,
+      "playerName": "Domenico Berardi",
+      "assistPlayerId": null,
+      "assistName": null,
+      "type": "Card",
+      "detail": "Yellow Card",
+      "scoringPlay": 0,
+      "homeScore": null,
+      "awayScore": null
+    },
+    {
+      "providerEventId": "4e71a02b-e5e5-4008-bb6a-8b4b85d52c15",
+      "sequenceNumber": 1003,
+      "minute": 26,
+      "extraMinute": null,
+      "teamId": 232,
+      "teamName": "Sassuolo",
+      "playerId": 7698,
+      "playerName": "Joseph Alfred Duncan",
+      "assistPlayerId": 7131,
+      "assistName": "Domenico Berardi",
+      "type": "Goal",
+      "detail": "Open Play · Left Foot",
+      "scoringPlay": 1,
+      "homeScore": 1,
+      "awayScore": 0
+    },
+    {
+      "providerEventId": "daaf5204-0b01-419d-9083-47c6fa75fe8b",
+      "sequenceNumber": 2098,
+      "minute": 54,
+      "extraMinute": null,
+      "teamId": 243,
+      "teamName": "AC Milan",
+      "playerId": 3371,
+      "playerName": "Mario Barwuah Balotelli",
+      "assistPlayerId": 20300,
+      "assistName": "Jérémy Ménez",
+      "type": "Substitution",
+      "detail": "Tactical",
+      "scoringPlay": 0,
+      "homeScore": null,
+      "awayScore": null
+    },
+    {
+      "providerEventId": "77b3abe4-4344-4940-9044-a3f6d991eeba",
+      "sequenceNumber": 2099,
+      "minute": 54,
+      "extraMinute": null,
+      "teamId": 232,
+      "teamName": "Sassuolo",
+      "playerId": 8848,
+      "playerName": "Paolo Cannavaro",
+      "assistPlayerId": 10033,
+      "assistName": "Luca Antei",
+      "type": "Substitution",
+      "detail": "Injury",
+      "scoringPlay": 0,
+      "homeScore": null,
+      "awayScore": null
+    },
+    {
+      "providerEventId": "5e0bf4f0-92c0-4906-93b8-6128bd6625a7",
+      "sequenceNumber": 2424,
+      "minute": 62,
+      "extraMinute": null,
+      "teamId": 232,
+      "teamName": "Sassuolo",
+      "playerId": 7113,
+      "playerName": "Simone Missiroli",
+      "assistPlayerId": 10030,
+      "assistName": "Davide Biondini",
+      "type": "Substitution",
+      "detail": "Injury",
+      "scoringPlay": 0,
+      "homeScore": null,
+      "awayScore": null
+    },
+    {
+      "providerEventId": "754bca3a-0065-4674-b8c3-33d89b498b76",
+      "sequenceNumber": 2465,
+      "minute": 62,
+      "extraMinute": null,
+      "teamId": 232,
+      "teamName": "Sassuolo",
+      "playerId": 7457,
+      "playerName": "Gregoire Defrel",
+      "assistPlayerId": null,
+      "assistName": null,
+      "type": "Card",
+      "detail": "Yellow Card",
+      "scoringPlay": 0,
+      "homeScore": null,
+      "awayScore": null
+    },
+    {
+      "providerEventId": "6029f1c0-cf27-46ca-8641-b6e3fa0d7387",
+      "sequenceNumber": 2695,
+      "minute": 67,
+      "extraMinute": null,
+      "teamId": 243,
+      "teamName": "AC Milan",
+      "playerId": 6360,
+      "playerName": "Cristian Eduardo Zapata Valencia",
+      "assistPlayerId": 7458,
+      "assistName": "Alessio Romagnoli",
+      "type": "Substitution",
+      "detail": "Tactical",
+      "scoringPlay": 0,
+      "homeScore": null,
+      "awayScore": null
+    },
+    {
+      "providerEventId": "452ccd1b-fed5-4d11-bcf7-b24b31b516e9",
+      "sequenceNumber": 2809,
+      "minute": 71,
+      "extraMinute": null,
+      "teamId": 232,
+      "teamName": "Sassuolo",
+      "playerId": 6859,
+      "playerName": "Nicola Sansone",
+      "assistPlayerId": 7457,
+      "assistName": "Gregoire Defrel",
+      "type": "Goal",
+      "detail": "Open Play · Right Foot",
+      "scoringPlay": 1,
+      "homeScore": 2,
+      "awayScore": 0
+    },
+    {
+      "providerEventId": "d3a1a74f-02fc-4fd0-b66b-e480699e527f",
+      "sequenceNumber": 2997,
+      "minute": 75,
+      "extraMinute": null,
+      "teamId": 232,
+      "teamName": "Sassuolo",
+      "playerId": 7457,
+      "playerName": "Gregoire Defrel",
+      "assistPlayerId": null,
+      "assistName": null,
+      "type": "Card",
+      "detail": "Second Yellow",
+      "scoringPlay": 0,
+      "homeScore": null,
+      "awayScore": null
+    },
+    {
+      "providerEventId": "c2cd61bc-3a5f-478b-8c7e-f0a86fefeab5",
+      "sequenceNumber": 3206,
+      "minute": 81,
+      "extraMinute": null,
+      "teamId": 243,
+      "teamName": "AC Milan",
+      "playerId": 5683,
+      "playerName": "Keisuke Honda",
+      "assistPlayerId": 8668,
+      "assistName": "Kevin-Prince Boateng",
+      "type": "Substitution",
+      "detail": "Tactical",
+      "scoringPlay": 0,
+      "homeScore": null,
+      "awayScore": null
+    },
+    {
+      "providerEventId": "e0f28472-3ffe-4080-b2e0-bd82b28e1129",
+      "sequenceNumber": 3346,
+      "minute": 85,
+      "extraMinute": null,
+      "teamId": 232,
+      "teamName": "Sassuolo",
+      "playerId": 7131,
+      "playerName": "Domenico Berardi",
+      "assistPlayerId": 8093,
+      "assistName": "Diego Falcinelli",
+      "type": "Substitution",
+      "detail": "Tactical",
+      "scoringPlay": 0,
+      "homeScore": null,
+      "awayScore": null
+    },
+    {
+      "providerEventId": "a332419e-4044-421e-97c8-dfe06544e8ef",
+      "sequenceNumber": 3372,
+      "minute": 86,
+      "extraMinute": null,
+      "teamId": 243,
+      "teamName": "AC Milan",
+      "playerId": 7147,
+      "playerName": "Andrea Bertolacci",
+      "assistPlayerId": null,
+      "assistName": null,
+      "type": "Card",
+      "detail": "Yellow Card",
+      "scoringPlay": 0,
+      "homeScore": null,
+      "awayScore": null
+    }
+  ]
+}

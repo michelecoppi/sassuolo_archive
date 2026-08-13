@@ -11,7 +11,7 @@ import { bootstrapHistoricalLeagueData } from '../services/historicalBootstrap.j
 import { execFileSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import { applyControlledImport, importEntities, previewControlledImport, recordControlledImportProvenance, type ImportEntity } from '../services/controlledImport.js';
-import { resolvePlayer, resolvePlayerIdentityConflict } from '../services/playerResolver.js';
+import { reopenPlayerIdentityConflict, resolvePlayer, resolvePlayerIdentityConflict } from '../services/playerResolver.js';
 import { currentSeason, getCurrentSeasonDashboard, saveCurrentMatch, validateCurrentMatch } from '../services/currentSeason.js';
 import { getCoverageMatrix } from '../services/coverage.js';
 import { getOperationalStatus } from '../services/operations.js';
@@ -19,6 +19,9 @@ import { HALL_OF_FAME_DEFINITIONS, RECORD_DEFINITIONS } from '../services/statDe
 import { getClubHistory, getSeasonTechnicalContext, getTechnicalArchive } from '../services/clubArchive.js';
 import { getAdminScheduler } from '../services/adminScheduler.js';
 import { openApiDocument } from '../openapi.js';
+import { importStatsBombCandidate, previewStatsBombCandidate } from '../services/statsbombCandidate.js';
+import { importOpenDataSeasonCandidate, previewOpenDataSeasonCandidate } from '../services/openDataSeasonCandidate.js';
+import { frontendTelemetrySummary, recordFrontendTelemetry } from '../services/frontendTelemetry.js';
 
 type CupMetadata={exit:string;topScorer:string|null;topScorerGoals:number|null;sourceProvider?:string;sourceUrl?:string};
 const cupMetadataPath=path.resolve('data/cup-brackets/coppa-italia-sassuolo-metadata.json');
@@ -155,8 +158,15 @@ function enrichLineupPlayerLinks(entries:any[]){
 
 api.get('/health', (req,res)=>{
   const status=getOperationalStatus(db,req.app.locals.responseCache.snapshot(),req.app.locals.observability.snapshot());
-  res.status(status.ok?200:503).json(status);
+  res.status(status.ok?200:503).json({ok:status.ok,status:status.status,service:status.service,checkedAt:status.checkedAt});
 });
+api.get('/dataset-release', (_req,res)=>{const file=path.resolve('data/releases/current.json');if(!fs.existsSync(file))return res.status(503).json({error:'Release dati non generata'});res.json(JSON.parse(fs.readFileSync(file,'utf8')));});
+api.get('/health/details', (req,res)=>{const status=getOperationalStatus(db,req.app.locals.responseCache.snapshot(),req.app.locals.observability.snapshot());res.status(status.ok?200:503).json(status);});
+api.post('/telemetry/frontend', (req,res)=>{try{
+  const event=recordFrontendTelemetry(db,req.body??{});
+  res.setHeader('Cache-Control','no-store');res.status(202).json({accepted:true,id:event.id});
+}catch(error){res.status(400).json({error:error instanceof Error?error.message:'Evento telemetria non valido'});}});
+api.get('/telemetry/frontend/summary', (_req,res)=>res.json(frontendTelemetrySummary(db)));
 api.get('/dashboard', (req,res)=>res.json(dashboardStats(req.query as Record<string,string|undefined>)));
 api.get('/charts/seasons', (req,res)=>{
   const q=req.query as Record<string,string|undefined>,where:string[]=[],params:any[]=[];
@@ -484,8 +494,11 @@ api.get('/data-manager', (_req,res)=>{
     LEFT JOIN match_events e ON c.entity_type='match_event' AND e.id=CAST(c.entity_key AS INTEGER)
     LEFT JOIN matches m ON m.id=e.match_id
     ORDER BY c.status='open' DESC,c.created_at DESC LIMIT 50`).all();
-  const playerConflicts=(db.prepare(`SELECT * FROM player_match_conflicts WHERE status='open' AND raw_name<>'__CONTROLLED_IMPORT_PREVIEW_ONLY__' AND context NOT LIKE 'test-fixture%' AND (context LIKE 'player-season:%' OR context LIKE 'api-football:%' OR context LIKE 'thesportsdb:%' OR context LIKE 'controlled-import:players:%') ORDER BY created_at DESC LIMIT 100`).all() as any[]).map(c=>({...c,candidates:JSON.parse(c.candidates_json||'[]')}));
-  res.json({counts:{seasons:count('seasons'),matches:count('matches'),players:count('players'),playerSeasons:count('player_seasons'),standings:count('season_standings'),transfers:count('transfers'),news:count('news_articles'),corrections:count('correction_requests')},coverage,lastAuditAt:getSetting('data_last_audit_at'),sync:db.prepare(`SELECT * FROM sync_state ORDER BY provider,resource`).all(),conflicts,playerConflicts,corrections:db.prepare(`SELECT id,entity_type,entity_id,field,current_value,proposed_value,source_url,explanation,status,reviewer,review_note,reviewed_at,created_at FROM correction_requests ORDER BY CASE status WHEN 'pending' THEN 0 ELSE 1 END,created_at DESC LIMIT 100`).all(),recentChanges:db.prepare(`SELECT id,entity_type,entity_id,action,source_url,note,author,backup_id,created_at FROM change_log ORDER BY id DESC LIMIT 12`).all(),backups:db.prepare(`SELECT id,reason,file_path,sha256,size_bytes,verified_at,restored_at,created_at FROM backup_runs ORDER BY id DESC LIMIT 12`).all(),importRuns:db.prepare(`SELECT * FROM import_runs ORDER BY id DESC LIMIT 12`).all(),auditRuns:db.prepare(`SELECT id,audit_type,status,generated_at,report_path,report_sha256,issue_count,blocking_issue_count FROM audit_runs ORDER BY id DESC LIMIT 8`).all(),candidateRuns:db.prepare(`SELECT * FROM research_candidates ORDER BY CASE status WHEN 'in_review' THEN 0 WHEN 'validated' THEN 1 WHEN 'candidate' THEN 2 ELSE 3 END,last_seen_at DESC LIMIT 20`).all(),zeroKeyMode:!process.env.FOOTBALL_DATA_API_KEY&&!process.env.API_FOOTBALL_KEY&&!process.env.KICKOFF_API_KEY,apiFootball:apiFootballStatus(),kickoff:kickoffStatus()});
+  const openIdentityRows=db.prepare(`SELECT * FROM player_match_conflicts WHERE status='open' AND raw_name<>'__CONTROLLED_IMPORT_PREVIEW_ONLY__' AND context NOT LIKE 'test-fixture%' AND context NOT LIKE 'controlled-import-preview%' ORDER BY CASE WHEN resolution_action='defer' THEN 1 ELSE 0 END,created_at DESC LIMIT 250`).all() as any[];
+  const playerConflicts=openIdentityRows.map(c=>{const raw=normalizeSearchText(c.raw_name),rawParts=raw.split(' ').filter(Boolean);const candidates=(JSON.parse(c.candidates_json||'[]') as any[]).map(candidate=>{const normalized=normalizeSearchText(candidate.name),parts=normalized.split(' ').filter(Boolean);const exact=normalized===raw,sameSurname=parts.at(-1)===rawParts.at(-1),sameInitial=parts[0]?.[0]===rawParts[0]?.replace('.','')[0];const score=exact?100:sameSurname&&sameInitial?80:sameSurname?65:40;return {...candidate,score,explanation:exact?'Nome normalizzato identico':sameSurname&&sameInitial?'Cognome e iniziale compatibili':sameSurname?'Cognome compatibile':'Candidato indicato dal provider/import'};}).sort((a,b)=>b.score-a.score);return {...c,candidates};});
+  const identitySummary=[...openIdentityRows.reduce((groups,row)=>{const provider=row.source_provider||'N/D',scope=row.context||'altro',key=`${provider}\u0000${scope}`,current=groups.get(key)??{provider,scope,unresolved:0,deferred:0};current.unresolved++;if(row.resolution_action==='defer')current.deferred++;groups.set(key,current);return groups},new Map<string,{provider:string;scope:string;unresolved:number;deferred:number}>()).values()].sort((a,b)=>b.unresolved-a.unresolved);
+  const identityDecisions=db.prepare(`SELECT id,raw_name,source_provider,status,resolution_action,resolved_player_id,reviewer,resolution_note,resolved_at,backup_id FROM player_match_conflicts WHERE status<>'open' AND backup_id IS NOT NULL AND decision_json IS NOT NULL ORDER BY resolved_at DESC LIMIT 30`).all();
+  res.json({counts:{seasons:count('seasons'),matches:count('matches'),players:count('players'),playerSeasons:count('player_seasons'),standings:count('season_standings'),transfers:count('transfers'),news:count('news_articles'),corrections:count('correction_requests')},coverage,lastAuditAt:getSetting('data_last_audit_at'),frontendTelemetry:frontendTelemetrySummary(db),sync:db.prepare(`SELECT * FROM sync_state ORDER BY provider,resource`).all(),conflicts,playerConflicts,identitySummary,identityDecisions,corrections:db.prepare(`SELECT id,entity_type,entity_id,field,current_value,proposed_value,source_url,explanation,status,reviewer,review_note,reviewed_at,created_at FROM correction_requests ORDER BY CASE status WHEN 'pending' THEN 0 ELSE 1 END,created_at DESC LIMIT 100`).all(),recentChanges:db.prepare(`SELECT id,entity_type,entity_id,action,source_url,note,author,backup_id,created_at FROM change_log ORDER BY id DESC LIMIT 12`).all(),backups:db.prepare(`SELECT id,reason,file_path,sha256,size_bytes,verified_at,restored_at,created_at FROM backup_runs ORDER BY id DESC LIMIT 12`).all(),importRuns:db.prepare(`SELECT * FROM import_runs ORDER BY id DESC LIMIT 12`).all(),auditRuns:db.prepare(`SELECT id,audit_type,status,generated_at,report_path,report_sha256,issue_count,blocking_issue_count FROM audit_runs ORDER BY id DESC LIMIT 8`).all(),candidateRuns:db.prepare(`SELECT * FROM research_candidates ORDER BY CASE status WHEN 'in_review' THEN 0 WHEN 'validated' THEN 1 WHEN 'candidate' THEN 2 ELSE 3 END,last_seen_at DESC LIMIT 20`).all(),zeroKeyMode:!process.env.FOOTBALL_DATA_API_KEY&&!process.env.API_FOOTBALL_KEY&&!process.env.KICKOFF_API_KEY,apiFootball:apiFootballStatus(),kickoff:kickoffStatus()});
 });
 
 api.post('/data/backups/:id/verify',(req,res)=>{try{
@@ -505,10 +518,15 @@ api.post('/data/backups/:id/restore',(req,res)=>{try{
 api.post('/player-identity-conflicts/:id/resolve', (req,res)=>{
   try {
     const x=req.body??{};
-    const result=resolvePlayerIdentityConflict(asInt(req.params.id)!, { action:x.action, playerId:asInt(x.playerId) ?? undefined, name:x.name, firstname:x.firstname, lastname:x.lastname });
+    const reviewer=String(res.locals.adminActor??'').trim(),note=String(x.note??'').trim();
+    const result=resolvePlayerIdentityConflict(asInt(req.params.id)!, { action:x.action, playerId:asInt(x.playerId) ?? undefined, name:x.name, firstname:x.firstname, lastname:x.lastname,reviewer,note });
     res.json({ok:true,...result});
   } catch(e) { res.status(400).json({error:String(e)}); }
 });
+
+api.post('/player-identity-conflicts/:id/reopen',(req,res)=>{try{
+  const result=reopenPlayerIdentityConflict(asInt(req.params.id)!,String(res.locals.adminActor??'').trim(),String(req.body?.note??'').trim());res.json({ok:true,...result});
+}catch(e){res.status(400).json({error:String(e)});}});
 
 api.get('/player-identity-conflicts/:id/preview', (req,res)=>{
   try {
@@ -517,14 +535,15 @@ api.get('/player-identity-conflicts/:id/preview', (req,res)=>{
     const playerId=asInt(String(req.query.playerId??''));
     const stats=playerId==null?null:db.prepare(`SELECT COUNT(*) AS seasons,COALESCE(SUM(appearances),0) AS appearances,COALESCE(SUM(minutes),0) AS minutes,COALESCE(SUM(goals),0) AS goals,COALESCE(SUM(assists),0) AS assists FROM player_seasons WHERE player_id=?`).get(playerId);
     const matches=playerId==null?null:db.prepare(`SELECT COUNT(*) AS match_stats,COALESCE(SUM(minutes),0) AS match_minutes,COALESCE(SUM(goals),0) AS match_goals,COALESCE(SUM(assists),0) AS match_assists FROM match_player_stats WHERE player_id=?`).get(playerId);
-    const target=playerId==null?null:db.prepare('SELECT id,name,position,nationality,birth_date FROM players WHERE id=?').get(playerId) as any;
+    const target=playerId==null?null:db.prepare('SELECT id,name,position,nationality,birth_date,source_provider,source_url,last_verified_at FROM players WHERE id=?').get(playerId) as any;
     if(playerId!=null&&!target)return res.status(404).json({error:'Giocatore di destinazione non trovato'});
     const related=playerId==null?null:{
       transfers:(db.prepare('SELECT COUNT(*) AS count FROM transfers WHERE player_id=?').get(playerId) as any).count,
       source_ids:(db.prepare('SELECT COUNT(*) AS count FROM player_source_ids WHERE player_id=?').get(playerId) as any).count,
       aliases:(db.prepare('SELECT COUNT(*) AS count FROM player_name_aliases WHERE player_id=?').get(playerId) as any).count,
     };
-    res.json({conflict,target,stats,matches,related,incoming:{player_seasons:0,match_stats:0,transfers:0,note:'Questa revisione collega un’identità di importazione: non sposta statistiche o altri record giocatore.'},effects:{alias_to_save:conflict.raw_name,source_id_to_link:conflict.source_provider&&conflict.source_player_id?`${conflict.source_provider} · ${conflict.source_player_id}`:null,canonical_name:target?.name??null}});
+    const targetSources=playerId==null?[]:db.prepare(`SELECT source_provider,source_player_id,source_url,last_verified_at FROM player_source_ids WHERE player_id=? ORDER BY source_provider`).all(playerId);
+    res.json({conflict,target,targetSources,stats,matches,related,evidence:{incoming:{provider:conflict.source_provider,playerId:conflict.source_player_id,url:conflict.source_url,context:conflict.context},canonical:{provider:target?.source_provider,url:target?.source_url,lastVerifiedAt:target?.last_verified_at,sourceIds:targetSources}},incoming:{player_seasons:0,match_stats:0,transfers:0,note:'Questa revisione collega un’identità di importazione: non sposta statistiche o altri record giocatore.'},effects:{alias_to_save:conflict.raw_name,source_id_to_link:conflict.source_provider&&conflict.source_player_id?`${conflict.source_provider} · ${conflict.source_player_id}`:null,canonical_name:target?.name??null}});
   } catch(e) { res.status(400).json({error:String(e)}); }
 });
 
@@ -556,6 +575,10 @@ api.get('/data/candidates/:id', (req,res)=>{
       const dataChecksum=crypto.createHash('sha256').update(fs.readFileSync(dataPath)).digest('hex');
       if(String(manifest.sha256??'').toLowerCase()!==dataChecksum.toLowerCase())issues.push({row:0,field:null,code:'checksum_mismatch',message:'Il checksum del manifest non corrisponde al file dati',critical:true});
       preview={entity:'match-details',filename:'data.csv',checksum:dataChecksum,format:'csv',rows:parsed.rows.length,created:0,updated,skipped,conflicts,errors:issues.filter(x=>x.critical).length,canApply:issues.every(x=>!x.critical),issues};
+    }else if(['match_details_statsbomb_season','match_details_wyscout_season'].includes(candidate.area)){
+      preview=previewOpenDataSeasonCandidate(dir,candidate);
+    }else if(candidate.area==='match_details_statsbomb'){
+      preview=previewStatsBombCandidate(dir,candidate);
     }
     const workflowIssues:any[]=[];
     if(manifest.validation?.status!=='reconciled')workflowIssues.push({row:0,field:null,code:'candidate_not_reconciled',message:`Validazione manifest: ${manifest.validation?.status??'N/D'}`,critical:true});
@@ -623,6 +646,24 @@ api.post('/data/candidates/:id/import', (req,res)=>{
     const candidate=db.prepare(`SELECT * FROM research_candidates WHERE id=?`).get(Number(req.params.id)) as any;
     if(!candidate)return res.status(404).json({error:'Candidato non trovato'});
     if(candidate.status!=='approved')return res.status(400).json({error:'Il candidato deve essere approvato prima dell’import'});
+    if(['match_details_statsbomb_season','match_details_wyscout_season'].includes(candidate.area)){
+      const dir=candidateDir(candidate.candidate_path),backup=createBackupSnapshot(`before-candidate-${candidate.id}-import`);
+      const beforeMatches=db.prepare(`SELECT id,stadium,referee,shots_home,shots_away,shots_on_target_home,shots_on_target_away,xg_home,xg_away,last_verified_at FROM matches WHERE season=? AND competition=? ORDER BY id`).all(candidate.season,candidate.competition);
+      const result=importOpenDataSeasonCandidate(dir,candidate);
+      const runId=recordImportRun({kind:'candidate_import',sourceProvider:candidate.source_provider,area:candidate.area,season:candidate.season,competition:candidate.competition,candidatePath:candidate.candidate_path,manifestSha256:candidate.manifest_sha256,status:'succeeded',startedAt:started,finishedAt:nowIso(),recordsSeen:38,recordsCreated:result.created,recordsUpdated:result.updated,recordsSkipped:result.skipped,backupId:backup.id,diff:result,notes:`Open data stagionale con attribuzione: ${candidate.source_provider}`});
+      db.prepare(`UPDATE research_candidates SET status='imported',imported_at=?,last_seen_at=? WHERE id=?`).run(nowIso(),nowIso(),candidate.id);
+      recordChange({entityType:'research_candidate',entityId:candidate.id,action:'update',before:{status:candidate.status,matches:beforeMatches},after:{status:'imported',importRunId:runId,...result},backupId:backup.id,note:'Import open data stagionale candidato approvato'});
+      return res.json({ok:true,backupId:backup.id,importRunId:runId,...result});
+    }
+    if(candidate.area==='match_details_statsbomb'){
+      const dir=candidateDir(candidate.candidate_path),backup=createBackupSnapshot(`before-candidate-${candidate.id}-import`);
+      const before={match:db.prepare(`SELECT * FROM matches WHERE season=? AND competition=? AND substr(date,1,10)='2016-03-06'`).get(candidate.season,candidate.competition)};
+      const result=importStatsBombCandidate(dir,candidate);
+      const runId=recordImportRun({kind:'candidate_import',sourceProvider:candidate.source_provider,area:candidate.area,season:candidate.season,competition:candidate.competition,candidatePath:candidate.candidate_path,manifestSha256:candidate.manifest_sha256,status:'succeeded',startedAt:started,finishedAt:nowIso(),recordsSeen:1,recordsCreated:result.created,recordsUpdated:result.updated,recordsSkipped:result.skipped,backupId:backup.id,diff:result,notes:'POC rich-data StatsBomb approvata dal Data Manager'});
+      db.prepare(`UPDATE research_candidates SET status='imported',imported_at=?,last_seen_at=? WHERE id=?`).run(nowIso(),nowIso(),candidate.id);
+      recordChange({entityType:'research_candidate',entityId:candidate.id,action:'update',before:{status:candidate.status,...before},after:{status:'imported',importRunId:runId,...result},backupId:backup.id,note:'Import rich data StatsBomb candidato approvato'});
+      return res.json({ok:true,backupId:backup.id,importRunId:runId,...result});
+    }
     if(candidate.area==='match_details'){
       const dir=candidateDir(candidate.candidate_path),parsed=parseCsv(fs.readFileSync(path.join(dir,'data.csv'),'utf8'));
       const backup=createBackupSnapshot(`before-candidate-${candidate.id}-import`); let updated=0, unmatched=0;
@@ -725,6 +766,28 @@ api.post('/data/candidates/:id/rollback', (req,res)=>{
     const candidate=db.prepare(`SELECT * FROM research_candidates WHERE id=?`).get(Number(req.params.id)) as any;
     if(!candidate)return res.status(404).json({error:'Candidato non trovato'});
     if(candidate.status!=='imported')return res.status(400).json({error:'Il rollback è disponibile solo per candidati completati'});
+    const openDataChange=db.prepare(`SELECT * FROM change_log WHERE entity_type='research_candidate' AND entity_id=? AND action='update' AND note='Import open data stagionale candidato approvato' ORDER BY id DESC LIMIT 1`).get(candidate.id) as any;
+    if(openDataChange){
+      const before=openDataChange.before_json?JSON.parse(openDataChange.before_json):null;if(!Array.isArray(before?.matches))return res.status(400).json({error:'Snapshot open data non disponibile'});
+      const backup=createBackupSnapshot(`before-candidate-${candidate.id}-rollback`),provider=String(candidate.source_provider);let restored=0;
+      db.transaction(()=>{for(const table of ['match_events','match_lineups','match_team_stats','match_player_stats','match_details'])restored+=(db.prepare(`DELETE FROM ${table} WHERE source_provider=? AND match_id IN (SELECT id FROM matches WHERE season=? AND competition=?)`).run(provider,candidate.season,candidate.competition)).changes;const update=db.prepare(`UPDATE matches SET stadium=?,referee=?,shots_home=?,shots_away=?,shots_on_target_home=?,shots_on_target_away=?,xg_home=?,xg_away=?,last_verified_at=? WHERE id=?`);for(const row of before.matches)update.run(row.stadium,row.referee,row.shots_home,row.shots_away,row.shots_on_target_home,row.shots_on_target_away,row.xg_home,row.xg_away,row.last_verified_at,row.id);db.prepare(`DELETE FROM source_references WHERE source_provider=? AND entity_type='matches' AND entity_id IN (SELECT id FROM matches WHERE season=? AND competition=?)`).run(provider,candidate.season,candidate.competition);})();
+      const runId=recordImportRun({kind:'candidate_import',sourceProvider:provider,area:candidate.area,season:candidate.season,competition:candidate.competition,candidatePath:candidate.candidate_path,manifestSha256:candidate.manifest_sha256,status:'rolled_back',startedAt:nowIso(),finishedAt:nowIso(),recordsSeen:restored,recordsUpdated:before.matches.length,backupId:backup.id,notes:'Rollback open data stagionale'});
+      db.prepare(`UPDATE research_candidates SET status='approved',imported_at=NULL,last_seen_at=? WHERE id=?`).run(nowIso(),candidate.id);recordChange({entityType:'research_candidate',entityId:candidate.id,action:'rollback',before:openDataChange.after_json?JSON.parse(openDataChange.after_json):null,after:{status:'approved',restored,importRunId:runId},backupId:backup.id,note:'Rollback open data stagionale'});return res.json({ok:true,restored,backupId:backup.id,importRunId:runId});
+    }
+    const statsBombChange=db.prepare(`SELECT * FROM change_log WHERE entity_type='research_candidate' AND entity_id=? AND action='update' AND note='Import rich data StatsBomb candidato approvato' ORDER BY id DESC LIMIT 1`).get(candidate.id) as any;
+    if(statsBombChange){
+      const after=statsBombChange.after_json?JSON.parse(statsBombChange.after_json):null;
+      if(!after?.fixtureId)return res.status(400).json({error:'Snapshot StatsBomb non disponibile'});
+      const backup=createBackupSnapshot(`before-candidate-${candidate.id}-rollback`),fixtureId=Number(after.fixtureId);
+      const counts={events:(db.prepare(`DELETE FROM match_events WHERE match_id=? AND source_provider='StatsBomb Open Data'`).run(fixtureId)).changes,lineups:(db.prepare(`DELETE FROM match_lineups WHERE match_id=? AND source_provider='StatsBomb Open Data'`).run(fixtureId)).changes,details:(db.prepare(`DELETE FROM match_details WHERE match_id=? AND source_provider='StatsBomb Open Data'`).run(fixtureId)).changes};
+      const beforeMatch=statsBombChange.before_json?JSON.parse(statsBombChange.before_json)?.match:null;
+      if(beforeMatch)db.prepare(`UPDATE matches SET stadium=?,referee=?,last_verified_at=? WHERE id=?`).run(beforeMatch.stadium??null,beforeMatch.referee??null,beforeMatch.last_verified_at??null,fixtureId);
+      const restored=counts.events+counts.lineups+counts.details;
+      const runId=recordImportRun({kind:'candidate_import',sourceProvider:candidate.source_provider,area:candidate.area,season:candidate.season,competition:candidate.competition,candidatePath:candidate.candidate_path,manifestSha256:candidate.manifest_sha256,status:'rolled_back',startedAt:nowIso(),finishedAt:nowIso(),recordsSeen:restored,recordsUpdated:restored,backupId:backup.id,notes:'Rollback rich data StatsBomb dal Data Manager'});
+      db.prepare(`UPDATE research_candidates SET status='approved',imported_at=NULL,last_seen_at=?,notes=? WHERE id=?`).run(nowIso(),'Import StatsBomb annullato: candidato nuovamente approvato.',candidate.id);
+      recordChange({entityType:'research_candidate',entityId:candidate.id,action:'rollback',before:after,after:{status:'approved',restored,counts,importRunId:runId},backupId:backup.id,note:'Rollback rich data StatsBomb candidato'});
+      return res.json({ok:true,restored,backupId:backup.id,importRunId:runId});
+    }
     const standingsChange=db.prepare(`SELECT * FROM change_log WHERE entity_type='research_candidate' AND entity_id=? AND action='update' AND note='Import season standings candidato approvato' ORDER BY id DESC LIMIT 1`).get(candidate.id) as any;
     if(standingsChange){
       const before=standingsChange.before_json?JSON.parse(standingsChange.before_json):null;

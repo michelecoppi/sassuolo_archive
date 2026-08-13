@@ -1,0 +1,39 @@
+match_date,home_team,away_team,home_score,away_score,stadium,provider_match_id,lineups,key_events,shots,source_provider,source_url,last_verified_at
+2017-08-20,Sassuolo,Genoa,0,0,MAPEI Stadium - Città del Tricolore,2575967,2,11,25,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2017-08-27,Torino,Sassuolo,3,0,Stadio Olimpico Grande Torino,2575978,2,11,23,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2017-09-10,Atalanta,Sassuolo,2,1,Stadio Atleti Azzurri d'Italia,2575979,2,10,19,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2017-09-17,Sassuolo,Juventus,1,3,MAPEI Stadium - Città del Tricolore,2575996,2,13,20,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2017-09-20,Cagliari,Sassuolo,0,1,Sardegna Arena,2576002,2,13,29,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2017-09-24,Sassuolo,Bologna,0,1,MAPEI Stadium - Città del Tricolore,2576017,2,14,17,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2017-10-01,Lazio,Sassuolo,6,1,Stadio Olimpico,2576023,2,18,29,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2017-10-15,Sassuolo,Chievo,0,0,MAPEI Stadium - Città del Tricolore,2576038,2,8,27,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2017-10-22,SPAL,Sassuolo,0,1,Stadio Paolo Mazza,2576046,2,14,30,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2017-10-25,Sassuolo,Udinese,0,1,MAPEI Stadium - Città del Tricolore,2576058,2,12,19,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2017-10-29,Napoli,Sassuolo,3,1,Stadio San Paolo,2576063,2,14,30,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2017-11-05,Sassuolo,Milan,0,2,MAPEI Stadium - Città del Tricolore,2576078,2,13,21,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2017-11-19,Benevento,Sassuolo,1,2,Stadio Ciro Vigorito,2576079,2,14,26,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2017-11-25,Sassuolo,Hellas Verona,0,2,MAPEI Stadium - Città del Tricolore,2576097,2,10,31,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2017-12-03,Fiorentina,Sassuolo,3,0,Stadio Artemio Franchi,2576102,2,13,28,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2017-12-10,Sassuolo,Crotone,2,1,MAPEI Stadium - Città del Tricolore,2576116,2,14,23,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2017-12-17,Sampdoria,Sassuolo,0,1,Stadio Comunale Luigi Ferraris,2576127,2,13,28,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2017-12-23,Sassuolo,Internazionale,1,0,MAPEI Stadium - Città del Tricolore,2576136,2,10,24,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2017-12-30,Roma,Sassuolo,1,1,Stadio Olimpico,2576146,2,11,34,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2018-01-06,Genoa,Sassuolo,1,0,Stadio Comunale Luigi Ferraris,2576157,2,11,20,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2018-01-21,Sassuolo,Torino,1,1,MAPEI Stadium - Città del Tricolore,2576168,2,14,24,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2018-01-27,Sassuolo,Atalanta,0,3,MAPEI Stadium - Città del Tricolore,2576169,2,11,26,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2018-02-04,Juventus,Sassuolo,7,0,Allianz Stadium,2576186,2,15,22,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2018-02-11,Sassuolo,Cagliari,0,0,MAPEI Stadium - Città del Tricolore,2576192,2,7,20,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2018-02-18,Bologna,Sassuolo,2,1,Stadio Renato Dall'Ara,2576207,2,14,26,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2018-02-25,Sassuolo,Lazio,0,3,MAPEI Stadium - Città del Tricolore,2576213,2,16,18,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2018-03-11,Sassuolo,SPAL,1,1,,2576236,2,14,18,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2018-03-17,Udinese,Sassuolo,1,2,,2576248,2,12,20,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2018-03-31,Sassuolo,Napoli,1,1,,2576253,2,15,21,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2018-04-04,Chievo,Sassuolo,1,1,Stadio Marc'Antonio Bentegodi,2576228,2,15,17,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2018-04-08,Milan,Sassuolo,1,1,,2576268,2,13,29,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2018-04-15,Sassuolo,Benevento,2,2,MAPEI Stadium - Città del Tricolore,2576269,2,15,25,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2018-04-18,Hellas Verona,Sassuolo,0,1,,2576287,2,14,23,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2018-04-21,Sassuolo,Fiorentina,1,0,,2576292,2,17,14,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2018-04-29,Crotone,Sassuolo,4,1,,2576306,2,15,25,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2018-05-06,Sassuolo,Sampdoria,1,0,,2576317,2,9,18,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2018-05-12,Internazionale,Sassuolo,1,2,,2576326,2,12,30,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13
+2018-05-20,Sassuolo,Roma,0,1,MAPEI Stadium - Città del Tricolore,2576336,2,9,29,Wyscout Soccer Match Event Dataset,https://figshare.com/collections/Soccer_match_event_dataset/4415000,2026-08-13

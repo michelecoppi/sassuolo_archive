@@ -21,3 +21,7 @@ Thumbs.db
 *.swp
 *.swo
 *.tmp
+
+# Pacchetti di consegna rigenerabili: pubblicarli come asset di release.
+# Manifest, file .sha256 e candidati sorgente restano versionati.
+data/reconciliation/packages/*.zip

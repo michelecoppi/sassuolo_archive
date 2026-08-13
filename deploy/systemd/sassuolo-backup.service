@@ -1,0 +1,9 @@
+[Unit]
+Description=Sassuolo History verified encrypted offsite backup
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/sassuolo-history
+EnvironmentFile=/etc/sassuolo-history/backup.env
+ExecStart=/usr/bin/npm run ops:backup
+ExecStartPost=/usr/bin/npm run ops:restore-drill -- ${BACKUP_DRILL_FILE}

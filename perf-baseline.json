@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "datasetVersion": "final-archive-v1",
+  "dataset": {
+    "seasons": 20,
+    "players": 800,
+    "playerSeasons": 640,
+    "matches": 1200,
+    "events": 19200,
+    "lineups": 2400,
+    "playerStats": 26400,
+    "sourceReferences": 36800
+  },
+  "regressionTolerance": 1.2,
+  "maxHeapDeltaMb": 128,
+  "endpoints": {
+    "/matches?page=1&pageSize=50": { "referenceP95Ms": 80, "maxBytes": 150000 },
+    "/matches/:id": { "referenceP95Ms": 100, "maxBytes": 180000 },
+    "/players?page=1&pageSize=50": { "referenceP95Ms": 100, "maxBytes": 150000 },
+    "/players/:id": { "referenceP95Ms": 100, "maxBytes": 200000 },
+    "/seasons/:season": { "referenceP95Ms": 120, "maxBytes": 300000 },
+    "/search?q=avversaria": { "referenceP95Ms": 100, "maxBytes": 100000 },
+    "/data-manager": { "referenceP95Ms": 200, "maxBytes": 2000000 }
+  }
+}

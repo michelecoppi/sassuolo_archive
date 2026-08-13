@@ -10,7 +10,7 @@ const {createApp}=await import('../server/app.js');
 const {db}=await import('../server/db/database.js');
 const server=createApp({adminToken:'archive-completion-admin-token',nodeEnv:'test'}).listen(0);
 const address=server.address();if(!address||typeof address==='string')throw new Error('Server test non disponibile');
-const base=`http://127.0.0.1:${address.port}/api`;const adminHeaders={'Content-Type':'application/json',Authorization:'Bearer archive-completion-admin-token','X-Admin-Name':'Archivista test'};
+const base=`http://127.0.0.1:${address.port}/api`;const login=await fetch(`${base}/auth/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token:'archive-completion-admin-token',name:'Archivista test'})});const loginBody=await login.json() as any;const adminHeaders={'Content-Type':'application/json',Cookie:login.headers.get('set-cookie')!,'X-CSRF-Token':loginBody.csrfToken};
 after(()=>{server.close();db.close();fs.rmSync(tempRoot,{recursive:true,force:true});});
 
 test('Club e Timeline condividono gli stessi eventi strutturati e fonti',async()=>{

@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily Sassuolo History backup
+
+[Timer]
+OnCalendar=*-*-* 03:15:00
+Persistent=true
+RandomizedDelaySec=900
+Unit=sassuolo-backup.service
+
+[Install]
+WantedBy=timers.target

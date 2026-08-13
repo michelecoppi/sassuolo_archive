@@ -2,11 +2,13 @@
 
 Archivio locale U.S. Sassuolo Calcio: React + TypeScript + Tailwind, backend Express e database SQLite.
 
+La documentazione completa è organizzata nell’[indice `docs/`](docs/README.md); roadmap e specifica tecnica non sono più disperse nella root.
+
 Il progetto è **local-first**: i dati storici vengono salvati nel database locale e gli aggiornamenti esterni servono solo ad aggiungere o arricchire dati. I valori mancanti restano `NULL` e nell'interfaccia sono mostrati come `N/D`.
 
 ## Avvio rapido
 
-Richiede Node.js 20+.
+Richiede Node.js 22–24.
 
 ```bash
 npm install
@@ -37,7 +39,7 @@ docker logs -f sassuolo-history-local
 
 Non eliminare il volume `sassuolo_history_local_data`: contiene il database della modalità Docker. Per il lavoro editoriale ordinario usare una sola copia canonica, attualmente `server/db/sassuolo.db`, e provare periodicamente in Docker tramite un nuovo backup verificato.
 
-La versione pubblicabile serve frontend e API dallo stesso processo Express. Container, volume SQLite persistente, backup esterno e rollback sono descritti in [`docs/RELEASE_AND_RECOVERY.md`](docs/RELEASE_AND_RECOVERY.md).
+La versione pubblicabile serve frontend e API dallo stesso processo Express. Container, volume SQLite persistente, backup esterno e rollback sono descritti nella [guida release e recovery](docs/operations/RELEASE_AND_RECOVERY.md).
 
 Le letture pubbliche riuscite vengono conservate come snapshot locali versionati. Se la rete dati cade, le pagine già consultate usano l'ultima copia indicando la data; il service worker mantiene l'app shell. La pagina **Preferiti** salva raccolte locali senza account e consente import, export e cancellazione JSON.
 
@@ -292,9 +294,9 @@ npm start                  # avvia solo API
 
 `GET /api/health` fornisce lo stato operativo di database, cache, richieste, provider e import recenti. Le letture pubbliche supportano `ETag`; dopo ogni import o correzione riuscita la cache server viene invalidata automaticamente.
 
-Le liste di partite, giocatori, trasferimenti e dell’editor amministrativo supportano `page` e `pageSize` (massimo 100) e mantengono pagina e filtri nell’URL. La baseline ripetibile è documentata in `docs/PERFORMANCE_BASELINE.md` tramite `npm run perf:pagination`.
+Le liste di partite, giocatori, trasferimenti e dell’editor amministrativo supportano `page` e `pageSize` (massimo 100) e mantengono pagina e filtri nell’URL. La baseline ripetibile è documentata in `docs/quality/PERFORMANCE_BASELINE.md` tramite `npm run perf:pagination`.
 
-I test browser si eseguono con `npm run test:e2e`: Playwright avvia API e Vite su porte isolate, crea un database temporaneo, copre Chromium, Firefox, WebKit e viewport mobile e conserva trace, screenshot e video in caso di errore. Matrice e policy immagini sono in `docs/QA_COMPATIBILITY.md`.
+I test browser si eseguono con `npm run test:e2e`: Playwright avvia API e Vite su porte isolate, crea un database temporaneo, copre Chromium, Firefox, WebKit e viewport mobile e conserva trace, screenshot e video in caso di errore. Matrice e policy immagini sono in `docs/quality/QA_COMPATIBILITY.md`.
 
 ## Affidabilità dei dati
 
@@ -306,7 +308,7 @@ I test browser si eseguono con `npm run test:e2e`: Playwright avvia API e Vite s
 
 ## Sicurezza e pubblicazione
 
-Le letture API restano pubbliche. In produzione tutte le richieste `POST`, `PUT`, `PATCH` e `DELETE` richiedono `Authorization: Bearer <ADMIN_API_TOKEN>`, salvo `POST /api/corrections`, che è pubblico, limitato e salva soltanto una proposta in attesa; l'avvio viene bloccato se il token manca. Imposta anche `CORS_ORIGINS` con gli origin autorizzati. Il Data Manager conserva token e nome del curatore soltanto in `sessionStorage`, tramite **Accesso admin**.
+Le letture API ordinarie restano pubbliche; Data Manager, qualità dati, candidati e identità richiedono una sessione amministrativa. In produzione il curatore usa `ADMIN_API_TOKEN` una sola volta nella schermata di accesso: il server rilascia un cookie di sessione `HttpOnly`, `Secure` e `SameSite=Strict`, mentre ogni scrittura richiede anche un token CSRF. Nulla viene conservato nello storage JavaScript del browser. `POST /api/corrections` resta pubblico e limitato perché salva soltanto una proposta in attesa. Configurazione, modello di minaccia, logout e recupero accesso sono descritti nella [guida alla sicurezza amministrativa](docs/setup/ADMIN_SECURITY.md).
 
 Ogni scrittura è soggetta a rate limit e viene registrata in `security_audit_log`. Copiare `.env.example` in `.env`, usare un token casuale lungo e non commettere mai il file `.env`.
 

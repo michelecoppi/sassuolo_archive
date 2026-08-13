@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import { DataTable, ErrorState, Loading, PageTitle } from '../components/Ui';
+import { isTelemetryOptOut, setTelemetryEnabled } from '../services/telemetry';
 
 type Data={lastRecalculation:string|null;rules:{name:string;formula:string}[];providerPriority:string[]};
 type CompetitionKind='league'|'playoff'|'playout'|'domestic_cup'|'continental_cup'|'super_cup'|'unclassified';
@@ -15,6 +16,7 @@ const kindLabel:Record<CompetitionKind,string>={league:'Campionato',playoff:'Pla
 
 export default function Methodology(){
   const[data,setData]=useState<Data|null>(null);const[coverage,setCoverage]=useState<Coverage|null>(null);const[error,setError]=useState(false);
+  const[telemetryEnabled,setTelemetryState]=useState(()=>!isTelemetryOptOut());
   const load=()=>{setError(false);Promise.all([api<Data>('/methodology'),api<Coverage>('/coverage')]).then(([methodology,matrix])=>{setData(methodology);setCoverage(matrix);}).catch(()=>setError(true));};
   useEffect(load,[]);
   if(error)return <ErrorState message="Non è stato possibile caricare metodologia e matrice di copertura." retry={load}/>;
@@ -22,7 +24,7 @@ export default function Methodology(){
   return <>
     <PageTitle title="Fonti e metodologia" subtitle="Cosa copre l’archivio, come vengono scelti e corretti i dati e come leggere ogni indicatore tecnico."/>
     <nav aria-label="Sezioni della metodologia" className="card mb-5 flex flex-wrap gap-2 p-3 text-xs font-bold">
-      {[['coverage','Copertura'],['sources','Fonti'],['conflicts','Conflitti e correzioni'],['missing-data','N/D'],['detail-levels','Livelli partita'],['formulas','Formule']].map(([id,label])=><a key={id} className="rounded-lg bg-zinc-950 px-3 py-2 text-zinc-300 hover:text-neroverde-300" href={`#${id}`}>{label}</a>)}
+      {[['coverage','Copertura'],['sources','Fonti'],['conflicts','Conflitti e correzioni'],['missing-data','N/D'],['detail-levels','Livelli partita'],['privacy','Privacy'],['formulas','Formule']].map(([id,label])=><a key={id} className="rounded-lg bg-zinc-950 px-3 py-2 text-zinc-300 hover:text-neroverde-300" href={`#${id}`}>{label}</a>)}
     </nav>
 
     <div className="grid gap-5 lg:grid-cols-2">
@@ -68,6 +70,13 @@ export default function Methodology(){
           <div className="rounded-xl bg-zinc-950/50 p-4"><dt><span className="badge text-amber-200">STANDARD</span></dt><dd className="mt-2 leading-6 text-zinc-400">Metadati aggiuntivi della gara, come turno, stadio, arbitro o stato, senza blocchi avanzati verificati.</dd></div>
           <div className="rounded-xl bg-zinc-950/50 p-4"><dt><span className="badge text-neroverde-300">DETAILED</span></dt><dd className="mt-2 leading-6 text-zinc-400">È presente almeno un blocco avanzato tra eventi, formazioni, statistiche squadra o statistiche giocatore. Il badge non implica che siano presenti tutti i blocchi.</dd></div>
         </dl>
+      </section>
+
+      <section id="privacy" className={`${sectionClass} lg:col-span-2`}>
+        <h2 className="font-bold">Telemetria tecnica e privacy</h2>
+        <p className="mt-2 text-sm leading-6 text-zinc-400">Raccogliamo in forma minimizzata soltanto eccezioni, errori di caricamento route e Web Vitals campionati. La route è normalizzata e non include ricerca o query string; token, email, stack completi, indirizzi IP e dati personali non vengono conservati. Gli eventi scadono dopo 30 giorni.</p>
+        <button className="btn-secondary mt-4" onClick={()=>{setTelemetryEnabled(!telemetryEnabled);setTelemetryState(!isTelemetryOptOut());}} aria-pressed={telemetryEnabled}>{telemetryEnabled?'Disattiva telemetria tecnica':'Attiva telemetria tecnica'}</button>
+        <p className="mt-2 text-xs text-zinc-400">Stato: {telemetryEnabled?'attiva':'disattivata'}. Global Privacy Control e Do Not Track hanno sempre precedenza.</p>
       </section>
 
       <section id="formulas" className={`${sectionClass} lg:col-span-2`}>

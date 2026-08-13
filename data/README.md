@@ -7,7 +7,7 @@
 - `reconciliation/`: registro macchina, candidati e report JSON di audit.
 - `docs/`: documentazione dati indicizzata per audit, ricerca e riconciliazione.
 
-Il punto di ingresso per la documentazione è [`docs/README.md`](docs/README.md); il piano operativo corrente è [`docs/DATA_MASTER_PLAN.md`](docs/DATA_MASTER_PLAN.md). I file `DATA_*` non devono essere aggiunti nella root del progetto.
+Il punto di ingresso generale è [`docs/README.md`](../docs/README.md); il piano operativo corrente è [`docs/data/DATA_MASTER_PLAN.md`](../docs/data/DATA_MASTER_PLAN.md). I file `DATA_*` non devono essere aggiunti nella root del progetto o sotto `data/`.
 
 Formati supportati: JSON e CSV.
 

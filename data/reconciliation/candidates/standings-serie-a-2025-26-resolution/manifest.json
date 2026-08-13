@@ -1,0 +1,43 @@
+{
+  "package_type": "season_standings_resolution",
+  "area": "season_standings",
+  "season": "2025/26",
+  "competition": "Serie A",
+  "source_provider": "Lega Serie A + Sky Sport/Opta + RSSSF",
+  "source_url": "https://images.legaseriea.it/image/private/fl_attachment/prd/qh1hx4kdoeqm5bxyn9lo.pdf",
+  "row_count": 20,
+  "records_total": 20,
+  "records_discarded": 0,
+  "fields_covered": ["rank", "points", "played", "wins", "draws", "losses", "goals_for", "goals_against", "goals_diff", "status", "description"],
+  "generated_at": "2026-08-13",
+  "validation": {
+    "status": "ok",
+    "checks": {
+      "row_count": "passed",
+      "rank_sequence": "passed",
+      "played_per_team": "passed",
+      "record_identity": "passed",
+      "goal_difference_identity": "passed",
+      "league_win_loss_balance": "passed",
+      "league_goal_balance": "passed",
+      "draw_balance": "passed",
+      "points_reconciliation": "passed",
+      "official_order_and_points": "passed",
+      "source_crosscheck": "passed"
+    },
+    "unresolved_conflicts": []
+  },
+  "math_totals": {
+    "played_total": 760,
+    "wins_total": 281,
+    "draws_total": 198,
+    "losses_total": 281,
+    "goals_for_total": 922,
+    "goals_against_total": 922
+  },
+  "notes": [
+    "Ordine e punti derivano dal Comunicato Ufficiale Lega Serie A n. 199 del 25 maggio 2026.",
+    "Record e reti sono concordanti tra Sky Sport/Opta e RSSSF.",
+    "La classifica riguarda esclusivamente la Serie A 2025/26 conclusa."
+  ]
+}

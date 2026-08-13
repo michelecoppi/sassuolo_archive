@@ -1,0 +1,1113 @@
+{
+  "version": "2026.08.13.1",
+  "generatedAt": "2026-08-13T20:00:00.000Z",
+  "schemaVersion": 10,
+  "databaseSha256": "sha256:4f3af489a4f49e9350746736112a08917b3ed4172e463ab8093de56044fced69",
+  "counts": {
+    "seasons": 28,
+    "matches": 778,
+    "players": 337,
+    "playerSeasons": 814,
+    "sourceReferences": 19444
+  },
+  "coverage": {
+    "scopeVersion": 1,
+    "complete": 18,
+    "partial": 10,
+    "unknown": 16
+  },
+  "imports": [
+    {
+      "id": 7,
+      "kind": "candidate_import",
+      "sourceProvider": "UEFA",
+      "area": "match_details",
+      "season": "2016/17",
+      "competition": "Europa League",
+      "status": "succeeded",
+      "finishedAt": "2026-08-09T20:55:38.763Z"
+    },
+    {
+      "id": 8,
+      "kind": "candidate_import",
+      "sourceProvider": "StatsCrew",
+      "area": "player_seasons",
+      "season": "2012/13",
+      "competition": "Serie B",
+      "status": "succeeded",
+      "finishedAt": "2026-08-09T21:45:46.412Z"
+    },
+    {
+      "id": 9,
+      "kind": "candidate_import",
+      "sourceProvider": "WorldFootball.net + StatsCrew",
+      "area": "player_seasons",
+      "season": "2011/12",
+      "competition": "Serie B",
+      "status": "succeeded",
+      "finishedAt": "2026-08-09T22:14:44.537Z"
+    },
+    {
+      "id": 10,
+      "kind": "candidate_import",
+      "sourceProvider": "WorldFootball.net + StatsCrew",
+      "area": "player_seasons",
+      "season": "2010/11",
+      "competition": "Serie B",
+      "status": "succeeded",
+      "finishedAt": "2026-08-09T22:32:00.616Z"
+    },
+    {
+      "id": 11,
+      "kind": "candidate_import",
+      "sourceProvider": "WorldFootball.net + StatsCrew",
+      "area": "player_seasons",
+      "season": "2009/10",
+      "competition": "Serie B",
+      "status": "succeeded",
+      "finishedAt": "2026-08-09T22:49:28.207Z"
+    },
+    {
+      "id": 12,
+      "kind": "candidate_import",
+      "sourceProvider": "calcio-seriea.net",
+      "area": "player_seasons",
+      "season": "2008/09",
+      "competition": "Serie B",
+      "status": "succeeded",
+      "finishedAt": "2026-08-09T23:18:12.464Z"
+    },
+    {
+      "id": 13,
+      "kind": "candidate_import",
+      "sourceProvider": "calcio-seriea.net + Soccerway/Wikipedia cross-check",
+      "area": "season_standings",
+      "season": "2008/09",
+      "competition": "Serie B",
+      "status": "succeeded",
+      "finishedAt": "2026-08-09T23:34:59.892Z"
+    },
+    {
+      "id": 14,
+      "kind": "candidate_import",
+      "sourceProvider": "RSSSF + calcio-seriea.net + Wikipedia cross-check",
+      "area": "season_standings",
+      "season": "2009/10",
+      "competition": "Serie B",
+      "status": "succeeded",
+      "finishedAt": "2026-08-09T23:47:51.306Z"
+    },
+    {
+      "id": 15,
+      "kind": "candidate_import",
+      "sourceProvider": "RSSSF + WorldFootball + Wikipedia cross-check",
+      "area": "season_standings",
+      "season": "2010/11",
+      "competition": "Serie B",
+      "status": "succeeded",
+      "finishedAt": "2026-08-09T23:59:17.152Z"
+    },
+    {
+      "id": 16,
+      "kind": "candidate_import",
+      "sourceProvider": "RSSSF + Wikipedia + calcio-seriea.net cross-check",
+      "area": "season_standings",
+      "season": "2011/12",
+      "competition": "Serie B",
+      "status": "succeeded",
+      "finishedAt": "2026-08-10T00:07:28.485Z"
+    },
+    {
+      "id": 17,
+      "kind": "candidate_import",
+      "sourceProvider": "RSSSF + Wikipedia + WorldFootball cross-check",
+      "area": "season_standings",
+      "season": "2012/13",
+      "competition": "Serie B",
+      "status": "succeeded",
+      "finishedAt": "2026-08-10T00:14:38.060Z"
+    },
+    {
+      "id": 18,
+      "kind": "provider_sync",
+      "sourceProvider": "api-football",
+      "area": "season",
+      "season": "2025/26",
+      "competition": null,
+      "status": "partial",
+      "finishedAt": "2026-08-10T00:19:57.707Z"
+    },
+    {
+      "id": 19,
+      "kind": "candidate_import",
+      "sourceProvider": "RSSSF + WorldFootball + UEFA/license sources cross-check",
+      "area": "season_standings",
+      "season": "2013/14",
+      "competition": "Serie A",
+      "status": "succeeded",
+      "finishedAt": "2026-08-10T00:33:33.102Z"
+    },
+    {
+      "id": 20,
+      "kind": "candidate_import",
+      "sourceProvider": "RSSSF + Soccerway cross-check",
+      "area": "season_standings",
+      "season": "2014/15",
+      "competition": "Serie A",
+      "status": "succeeded",
+      "finishedAt": "2026-08-10T00:45:34.596Z"
+    },
+    {
+      "id": 21,
+      "kind": "candidate_import",
+      "sourceProvider": "RSSSF + WorldFootball cross-check",
+      "area": "season_standings",
+      "season": "2015/16",
+      "competition": "Serie A",
+      "status": "succeeded",
+      "finishedAt": "2026-08-10T00:56:31.027Z"
+    },
+    {
+      "id": 22,
+      "kind": "candidate_import",
+      "sourceProvider": "RSSSF + WorldFootball cross-check",
+      "area": "season_standings",
+      "season": "2016/17",
+      "competition": "Serie A",
+      "status": "succeeded",
+      "finishedAt": "2026-08-10T01:04:08.978Z"
+    },
+    {
+      "id": 23,
+      "kind": "candidate_import",
+      "sourceProvider": "RSSSF + WorldFootball cross-check",
+      "area": "season_standings",
+      "season": "2017/18",
+      "competition": "Serie A",
+      "status": "succeeded",
+      "finishedAt": "2026-08-10T01:12:54.115Z"
+    },
+    {
+      "id": 24,
+      "kind": "candidate_import",
+      "sourceProvider": "RSSSF + WorldFootball cross-check",
+      "area": "season_standings",
+      "season": "2018/19",
+      "competition": "Serie A",
+      "status": "succeeded",
+      "finishedAt": "2026-08-10T01:20:44.498Z"
+    },
+    {
+      "id": 25,
+      "kind": "candidate_import",
+      "sourceProvider": "RSSSF + WorldFootball cross-check",
+      "area": "season_standings",
+      "season": "2019/20",
+      "competition": "Serie A",
+      "status": "succeeded",
+      "finishedAt": "2026-08-10T01:27:36.342Z"
+    },
+    {
+      "id": 26,
+      "kind": "candidate_import",
+      "sourceProvider": "RSSSF + WorldFootball cross-check",
+      "area": "season_standings",
+      "season": "2020/21",
+      "competition": "Serie A",
+      "status": "succeeded",
+      "finishedAt": "2026-08-10T01:36:05.033Z"
+    },
+    {
+      "id": 27,
+      "kind": "candidate_import",
+      "sourceProvider": "RSSSF + WorldFootball cross-check",
+      "area": "season_standings",
+      "season": "2021/22",
+      "competition": "Serie A",
+      "status": "succeeded",
+      "finishedAt": "2026-08-10T01:47:00.839Z"
+    },
+    {
+      "id": 28,
+      "kind": "candidate_import",
+      "sourceProvider": "User-provided research workbook + Transfermarkt match sheets + fixture cross-checks",
+      "area": "match_details",
+      "season": "2008/09",
+      "competition": "Serie B",
+      "status": "succeeded",
+      "finishedAt": "2026-08-10T13:47:51.649Z"
+    },
+    {
+      "id": 29,
+      "kind": "provider_sync",
+      "sourceProvider": "api-football",
+      "area": "current-season",
+      "season": null,
+      "competition": null,
+      "status": "partial",
+      "finishedAt": "2026-08-10T15:11:10.995Z"
+    },
+    {
+      "id": 30,
+      "kind": "provider_sync",
+      "sourceProvider": "api-football",
+      "area": "current-season",
+      "season": null,
+      "competition": null,
+      "status": "partial",
+      "finishedAt": "2026-08-10T19:03:18.638Z"
+    },
+    {
+      "id": 32,
+      "kind": "candidate_import",
+      "sourceProvider": "Lega Serie B",
+      "area": "player_seasons",
+      "season": "2024/25",
+      "competition": "Serie B",
+      "status": "succeeded",
+      "finishedAt": "2026-08-11T16:48:53.677Z"
+    },
+    {
+      "id": 33,
+      "kind": "manual_change",
+      "sourceProvider": "UEFA",
+      "area": "competition_profile",
+      "season": "2016/17",
+      "competition": "Europa League",
+      "status": "succeeded",
+      "finishedAt": "2026-08-11T17:03:54.354Z"
+    },
+    {
+      "id": 34,
+      "kind": "candidate_import",
+      "sourceProvider": "La Stampa + ESPN + Sky Sports + SassuoloOnline",
+      "area": "matches",
+      "season": "2013/14",
+      "competition": "Coppa Italia",
+      "status": "succeeded",
+      "finishedAt": "2026-08-11T21:02:47.951Z"
+    },
+    {
+      "id": 35,
+      "kind": "provider_sync",
+      "sourceProvider": "api-football",
+      "area": "transfers",
+      "season": null,
+      "competition": null,
+      "status": "partial",
+      "finishedAt": "2026-08-12T01:00:41.492Z"
+    },
+    {
+      "id": 36,
+      "kind": "candidate_import",
+      "sourceProvider": "Lega Serie A + AC Milan + ANSA + Sky + La Gazzetta dello Sport + FBref",
+      "area": "matches",
+      "season": "2014/15",
+      "competition": "Coppa Italia",
+      "status": "succeeded",
+      "finishedAt": "2026-08-12T16:11:08.905Z"
+    },
+    {
+      "id": 37,
+      "kind": "local_import",
+      "sourceProvider": "controlled-upload",
+      "area": "seasons",
+      "season": null,
+      "competition": null,
+      "status": "succeeded",
+      "finishedAt": "2026-08-12T16:13:59.429Z"
+    },
+    {
+      "id": 38,
+      "kind": "manual_change",
+      "sourceProvider": "historical-reconciliation",
+      "area": "match_events+player_seasons",
+      "season": "2014/15",
+      "competition": "Coppa Italia",
+      "status": "succeeded",
+      "finishedAt": "2026-08-12T16:22:45.955Z"
+    },
+    {
+      "id": 39,
+      "kind": "candidate_import",
+      "sourceProvider": "RSSSF + Sassuolo 2000 + Salernitana News + Transfermarkt",
+      "area": "matches",
+      "season": "2007/08",
+      "competition": "Supercoppa di Serie C",
+      "status": "succeeded",
+      "finishedAt": "2026-08-12T16:43:33.160Z"
+    },
+    {
+      "id": 40,
+      "kind": "candidate_import",
+      "sourceProvider": "U.C. Sampdoria + la Repubblica + Sassuolo 2000 + Sassuolo Calcio",
+      "area": "matches",
+      "season": "2011/12",
+      "competition": "Serie B playoff",
+      "status": "succeeded",
+      "finishedAt": "2026-08-12T16:43:39.461Z"
+    },
+    {
+      "id": 41,
+      "kind": "candidate_import",
+      "sourceProvider": "Toro.it + Toro News + Sky + Sassuolo 2000 + Sassuolo Calcio",
+      "area": "matches",
+      "season": "2009/10",
+      "competition": "Serie B playoff",
+      "status": "succeeded",
+      "finishedAt": "2026-08-12T16:44:50.415Z"
+    },
+    {
+      "id": 42,
+      "kind": "candidate_import",
+      "sourceProvider": "FBref + Sassuolo 2000 + Rai News + Gazzetta + Transfermarkt",
+      "area": "matches",
+      "season": "2015/16",
+      "competition": "Coppa Italia",
+      "status": "succeeded",
+      "finishedAt": "2026-08-12T16:44:56.577Z"
+    },
+    {
+      "id": 46,
+      "kind": "candidate_import",
+      "sourceProvider": "StatsBomb Open Data",
+      "area": "match_details_statsbomb",
+      "season": "2015/16",
+      "competition": "Serie A",
+      "status": "succeeded",
+      "finishedAt": "2026-08-13T13:34:46.952Z"
+    },
+    {
+      "id": 47,
+      "kind": "candidate_import",
+      "sourceProvider": "StatsBomb Open Data",
+      "area": "match_details_statsbomb_season",
+      "season": "2015/16",
+      "competition": "Serie A",
+      "status": "succeeded",
+      "finishedAt": "2026-08-13T16:09:29.867Z"
+    },
+    {
+      "id": 48,
+      "kind": "candidate_import",
+      "sourceProvider": "Wyscout Soccer Match Event Dataset",
+      "area": "match_details_wyscout_season",
+      "season": "2017/18",
+      "competition": "Serie A",
+      "status": "succeeded",
+      "finishedAt": "2026-08-13T16:09:30.277Z"
+    },
+    {
+      "id": 49,
+      "kind": "candidate_import",
+      "sourceProvider": "Reep v0 2026.25",
+      "area": "player_identity_crosswalk",
+      "season": "2017/18",
+      "competition": "Serie A",
+      "status": "succeeded",
+      "finishedAt": "2026-08-13T16:09:31.167Z"
+    }
+  ],
+  "changes": [
+    {
+      "id": 470,
+      "entityType": "player_identity_crosswalk",
+      "action": "create",
+      "note": "Import sicuro crosswalk Reep/Wyscout",
+      "createdAt": "2026-08-13T16:09:31.168Z"
+    },
+    {
+      "id": 469,
+      "entityType": "research_candidate",
+      "action": "update",
+      "note": "Import open data stagionale candidato approvato",
+      "createdAt": "2026-08-13T16:09:30.280Z"
+    },
+    {
+      "id": 468,
+      "entityType": "research_candidate",
+      "action": "update",
+      "note": "Import open data stagionale candidato approvato",
+      "createdAt": "2026-08-13T16:09:29.868Z"
+    },
+    {
+      "id": 467,
+      "entityType": "player_seasons",
+      "action": "update",
+      "note": "Statistiche 2025/26 aggregate dai tabellini Kickoff e calendario reso riproducibile",
+      "createdAt": "2026-08-13T13:43:39.821Z"
+    },
+    {
+      "id": 466,
+      "entityType": "research_candidate",
+      "action": "update",
+      "note": "Import rich data StatsBomb candidato approvato",
+      "createdAt": "2026-08-13T13:34:46.952Z"
+    },
+    {
+      "id": 465,
+      "entityType": "research_candidate",
+      "action": "update",
+      "note": "Candidato data/reconciliation/candidates/match-details-statsbomb-serie-a-2015-16-poc: stato approved",
+      "createdAt": "2026-08-13T13:27:51.299Z"
+    },
+    {
+      "id": 464,
+      "entityType": "research_candidate",
+      "action": "update",
+      "note": "Import fixture storiche candidato approvato",
+      "createdAt": "2026-08-12T16:44:56.578Z"
+    },
+    {
+      "id": 463,
+      "entityType": "research_candidate",
+      "action": "update",
+      "note": "Candidato data/reconciliation/candidates/matches-coppa-italia-2015-16: stato approved",
+      "createdAt": "2026-08-12T16:44:54.610Z"
+    },
+    {
+      "id": 462,
+      "entityType": "research_candidate",
+      "action": "update",
+      "note": "Import fixture storiche candidato approvato",
+      "createdAt": "2026-08-12T16:44:50.417Z"
+    },
+    {
+      "id": 461,
+      "entityType": "research_candidate",
+      "action": "update",
+      "note": "Candidato data/reconciliation/candidates/matches-serie-b-playoff-2009-10: stato approved",
+      "createdAt": "2026-08-12T16:44:48.276Z"
+    },
+    {
+      "id": 460,
+      "entityType": "research_candidate",
+      "action": "update",
+      "note": "Import fixture storiche candidato approvato",
+      "createdAt": "2026-08-12T16:43:39.462Z"
+    },
+    {
+      "id": 459,
+      "entityType": "research_candidate",
+      "action": "update",
+      "note": "Candidato data/reconciliation/candidates/matches-serie-b-playoff-2011-12: stato approved",
+      "createdAt": "2026-08-12T16:43:37.157Z"
+    },
+    {
+      "id": 458,
+      "entityType": "research_candidate",
+      "action": "update",
+      "note": "Import fixture storiche candidato approvato",
+      "createdAt": "2026-08-12T16:43:33.166Z"
+    },
+    {
+      "id": 457,
+      "entityType": "research_candidate",
+      "action": "update",
+      "note": "Candidato data/reconciliation/candidates/matches-supercoppa-serie-c-2007-08: stato approved",
+      "createdAt": "2026-08-12T16:43:30.503Z"
+    },
+    {
+      "id": 456,
+      "entityType": "player_seasons",
+      "action": "create",
+      "note": "Statistiche Coppa Italia 2014/15: solo gol verificati; altri campi NULL",
+      "createdAt": "2026-08-12T16:22:45.955Z"
+    },
+    {
+      "id": 455,
+      "entityType": "match_event",
+      "action": "create",
+      "note": "Evento-gol storico strutturato",
+      "createdAt": "2026-08-12T16:22:45.955Z"
+    },
+    {
+      "id": 454,
+      "entityType": "match_event",
+      "action": "create",
+      "note": "Evento-gol storico strutturato",
+      "createdAt": "2026-08-12T16:22:45.955Z"
+    },
+    {
+      "id": 453,
+      "entityType": "match_event",
+      "action": "create",
+      "note": "Evento-gol storico strutturato",
+      "createdAt": "2026-08-12T16:22:45.955Z"
+    },
+    {
+      "id": 452,
+      "entityType": "match_event",
+      "action": "create",
+      "note": "Evento-gol storico strutturato",
+      "createdAt": "2026-08-12T16:22:45.954Z"
+    },
+    {
+      "id": 451,
+      "entityType": "match_event",
+      "action": "create",
+      "note": "Evento-gol storico strutturato",
+      "createdAt": "2026-08-12T16:22:45.954Z"
+    },
+    {
+      "id": 450,
+      "entityType": "match_event",
+      "action": "create",
+      "note": "Evento-gol storico strutturato",
+      "createdAt": "2026-08-12T16:22:45.954Z"
+    },
+    {
+      "id": 449,
+      "entityType": "match_event",
+      "action": "create",
+      "note": "Evento-gol storico strutturato",
+      "createdAt": "2026-08-12T16:22:45.954Z"
+    },
+    {
+      "id": 448,
+      "entityType": "match_event",
+      "action": "create",
+      "note": "Evento-gol storico strutturato",
+      "createdAt": "2026-08-12T16:22:45.954Z"
+    },
+    {
+      "id": 447,
+      "entityType": "match_event",
+      "action": "create",
+      "note": "Evento-gol storico strutturato",
+      "createdAt": "2026-08-12T16:22:45.954Z"
+    },
+    {
+      "id": 446,
+      "entityType": "import",
+      "action": "create",
+      "note": "Import controllato seasons",
+      "createdAt": "2026-08-12T16:13:59.429Z"
+    },
+    {
+      "id": 445,
+      "entityType": "research_candidate",
+      "action": "update",
+      "note": "Import fixture storiche candidato approvato",
+      "createdAt": "2026-08-12T16:11:08.907Z"
+    },
+    {
+      "id": 444,
+      "entityType": "research_candidate",
+      "action": "update",
+      "note": "Candidato data/reconciliation/candidates/matches-coppa-italia-2014-15: stato approved",
+      "createdAt": "2026-08-12T16:11:08.817Z"
+    },
+    {
+      "id": 443,
+      "entityType": "research_candidate",
+      "action": "update",
+      "note": "Candidato data/reconciliation/candidates/matches-coppa-italia-2014-15: stato in_review",
+      "createdAt": "2026-08-12T16:11:08.788Z"
+    },
+    {
+      "id": 442,
+      "entityType": "players",
+      "action": "create",
+      "note": "Separata collisione omonimica tra il portiere Alessandro Russo e l’attaccante Flavio Russo.",
+      "createdAt": "2026-08-12T01:57:24.150Z"
+    },
+    {
+      "id": 441,
+      "entityType": "players",
+      "action": "update",
+      "note": "Ruolo canonico verificato: difensore/terzino sinistro.",
+      "createdAt": "2026-08-12T01:57:24.150Z"
+    },
+    {
+      "id": 440,
+      "entityType": "research_candidate",
+      "action": "update",
+      "note": "Import fixture storiche candidato approvato",
+      "createdAt": "2026-08-11T21:02:47.952Z"
+    },
+    {
+      "id": 439,
+      "entityType": "research_candidate",
+      "action": "update",
+      "note": "Candidato data/reconciliation/candidates/matches-coppa-italia-2013-14: stato approved",
+      "createdAt": "2026-08-11T21:02:47.851Z"
+    },
+    {
+      "id": 438,
+      "entityType": "player_match_conflicts",
+      "action": "resolve-conflict",
+      "note": "Riclassificata la coda tecnica: record Sassuolo collegati, avversari e record obsoleti ignorati",
+      "createdAt": "2026-08-11T19:01:15.227Z"
+    },
+    {
+      "id": 437,
+      "entityType": "transfers",
+      "action": "update",
+      "note": "Collegato trasferimento al profilo Mert Müldür",
+      "createdAt": "2026-08-11T19:01:15.185Z"
+    },
+    {
+      "id": 436,
+      "entityType": "transfers",
+      "action": "update",
+      "note": "Collegato trasferimento al profilo Mert Müldür",
+      "createdAt": "2026-08-11T19:01:15.185Z"
+    },
+    {
+      "id": 435,
+      "entityType": "transfers",
+      "action": "update",
+      "note": "Collegato trasferimento al profilo Filip Djuricic",
+      "createdAt": "2026-08-11T19:01:15.185Z"
+    },
+    {
+      "id": 434,
+      "entityType": "transfers",
+      "action": "update",
+      "note": "Collegato trasferimento al profilo Filip Djuricic",
+      "createdAt": "2026-08-11T19:01:15.185Z"
+    },
+    {
+      "id": 433,
+      "entityType": "transfers",
+      "action": "update",
+      "note": "Collegato trasferimento al profilo Nicola Ferrari",
+      "createdAt": "2026-08-11T19:01:15.185Z"
+    },
+    {
+      "id": 432,
+      "entityType": "transfers",
+      "action": "update",
+      "note": "Collegato trasferimento al profilo Gianluca Sansone",
+      "createdAt": "2026-08-11T19:01:15.185Z"
+    },
+    {
+      "id": 431,
+      "entityType": "match_events",
+      "action": "update",
+      "note": "Corretto player_id dell’autogol attribuito a Martin Erlić",
+      "createdAt": "2026-08-11T19:01:15.185Z"
+    },
+    {
+      "id": 430,
+      "entityType": "match_events",
+      "action": "update",
+      "note": "Corretto player_id dell’autogol attribuito a Alessandro Longhi",
+      "createdAt": "2026-08-11T19:01:15.185Z"
+    },
+    {
+      "id": 429,
+      "entityType": "match_events",
+      "action": "update",
+      "note": "Corretto player_id dell’autogol attribuito a Raffaele Pucino",
+      "createdAt": "2026-08-11T19:01:15.184Z"
+    },
+    {
+      "id": 428,
+      "entityType": "players",
+      "action": "resolve-conflict",
+      "note": "Separati i dati storici di Salvatore Bruno dal profilo contemporaneo di Kevin Bruno",
+      "createdAt": "2026-08-11T19:01:15.184Z"
+    },
+    {
+      "id": 427,
+      "entityType": "players",
+      "action": "update",
+      "note": "Correzione identità Loris Nyarko -> Lorenzo Nyarko",
+      "createdAt": "2026-08-11T19:01:15.184Z"
+    },
+    {
+      "id": 426,
+      "entityType": "players",
+      "action": "delete",
+      "note": "Rimosso duplicato senza accento di Tarik Muharemović",
+      "createdAt": "2026-08-11T19:01:15.183Z"
+    },
+    {
+      "id": 425,
+      "entityType": "players",
+      "action": "delete",
+      "note": "Rimosso duplicato senza accento di Arijanet Murić",
+      "createdAt": "2026-08-11T19:01:15.182Z"
+    },
+    {
+      "id": 424,
+      "entityType": "players",
+      "action": "delete",
+      "note": "Rimosso duplicato senza accento di Armand Laurienté",
+      "createdAt": "2026-08-11T19:01:15.181Z"
+    },
+    {
+      "id": 423,
+      "entityType": "players",
+      "action": "update",
+      "note": "Merge duplicato 274 -> 4219",
+      "createdAt": "2026-08-11T18:59:20.419Z"
+    },
+    {
+      "id": 422,
+      "entityType": "players",
+      "action": "update",
+      "note": "Campi recuperati dal duplicato 274",
+      "createdAt": "2026-08-11T18:59:20.417Z"
+    },
+    {
+      "id": 421,
+      "entityType": "player_match_conflicts",
+      "action": "resolve-conflict",
+      "note": "Identità collegata a un giocatore esistente",
+      "createdAt": "2026-08-11T18:48:43.932Z"
+    },
+    {
+      "id": 420,
+      "entityType": "player_match_conflicts",
+      "action": "resolve-conflict",
+      "note": "Identità collegata a un giocatore esistente",
+      "createdAt": "2026-08-11T18:48:26.829Z"
+    },
+    {
+      "id": 419,
+      "entityType": "player_match_conflicts",
+      "action": "resolve-conflict",
+      "note": "Identità collegata a un giocatore esistente",
+      "createdAt": "2026-08-11T18:46:02.196Z"
+    },
+    {
+      "id": 418,
+      "entityType": "players",
+      "action": "update",
+      "note": "Correzione identità Luca Vignali -> Andrea Vignali",
+      "createdAt": "2026-08-11T18:41:49.443Z"
+    },
+    {
+      "id": 417,
+      "entityType": "player_match_conflicts",
+      "action": "resolve-conflict",
+      "note": "Identità collegata a un giocatore esistente",
+      "createdAt": "2026-08-11T18:39:09.622Z"
+    },
+    {
+      "id": 416,
+      "entityType": "players",
+      "action": "update",
+      "note": "Merge duplicato 372 -> 4240",
+      "createdAt": "2026-08-11T18:38:38.154Z"
+    },
+    {
+      "id": 415,
+      "entityType": "players",
+      "action": "update",
+      "note": "Campi recuperati dal duplicato 372",
+      "createdAt": "2026-08-11T18:38:38.153Z"
+    },
+    {
+      "id": 414,
+      "entityType": "players",
+      "action": "update",
+      "note": "Merge duplicato 353 -> 4237",
+      "createdAt": "2026-08-11T18:25:51.145Z"
+    },
+    {
+      "id": 413,
+      "entityType": "players",
+      "action": "update",
+      "note": "Campi recuperati dal duplicato 353",
+      "createdAt": "2026-08-11T18:25:51.143Z"
+    },
+    {
+      "id": 412,
+      "entityType": "players",
+      "action": "update",
+      "note": "Merge duplicato 333 -> 4241",
+      "createdAt": "2026-08-11T18:13:58.102Z"
+    },
+    {
+      "id": 411,
+      "entityType": "players",
+      "action": "update",
+      "note": "Campi recuperati dal duplicato 333",
+      "createdAt": "2026-08-11T18:13:58.101Z"
+    },
+    {
+      "id": 410,
+      "entityType": "player_match_conflicts",
+      "action": "resolve-conflict",
+      "note": "Identità collegata a un giocatore esistente",
+      "createdAt": "2026-08-11T18:12:34.927Z"
+    },
+    {
+      "id": 409,
+      "entityType": "player_match_conflicts",
+      "action": "resolve-conflict",
+      "note": "Nuovo giocatore confermato",
+      "createdAt": "2026-08-11T18:07:37.742Z"
+    },
+    {
+      "id": 408,
+      "entityType": "player_match_conflicts",
+      "action": "resolve-conflict",
+      "note": "Identità collegata a un giocatore esistente",
+      "createdAt": "2026-08-11T18:06:14.695Z"
+    },
+    {
+      "id": 407,
+      "entityType": "player_match_conflicts",
+      "action": "resolve-conflict",
+      "note": "Identità collegata a un giocatore esistente",
+      "createdAt": "2026-08-11T18:06:01.576Z"
+    },
+    {
+      "id": 406,
+      "entityType": "player_match_conflicts",
+      "action": "resolve-conflict",
+      "note": "Nuovo giocatore confermato",
+      "createdAt": "2026-08-11T18:05:14.432Z"
+    },
+    {
+      "id": 405,
+      "entityType": "player_match_conflicts",
+      "action": "resolve-conflict",
+      "note": "Nuovo giocatore confermato",
+      "createdAt": "2026-08-11T18:04:15.869Z"
+    },
+    {
+      "id": 404,
+      "entityType": "player_match_conflicts",
+      "action": "resolve-conflict",
+      "note": "Nuovo giocatore confermato",
+      "createdAt": "2026-08-11T18:03:47.999Z"
+    },
+    {
+      "id": 403,
+      "entityType": "player_match_conflicts",
+      "action": "resolve-conflict",
+      "note": "Nuovo giocatore confermato",
+      "createdAt": "2026-08-11T18:03:05.635Z"
+    },
+    {
+      "id": 402,
+      "entityType": "player_match_conflicts",
+      "action": "resolve-conflict",
+      "note": "Identità collegata a un giocatore esistente",
+      "createdAt": "2026-08-11T18:02:36.233Z"
+    },
+    {
+      "id": 401,
+      "entityType": "player_match_conflicts",
+      "action": "resolve-conflict",
+      "note": "Identità collegata a un giocatore esistente",
+      "createdAt": "2026-08-11T18:02:27.978Z"
+    },
+    {
+      "id": 400,
+      "entityType": "player_match_conflicts",
+      "action": "resolve-conflict",
+      "note": "Identità collegata a un giocatore esistente",
+      "createdAt": "2026-08-11T18:02:19.514Z"
+    },
+    {
+      "id": 399,
+      "entityType": "player_match_conflicts",
+      "action": "resolve-conflict",
+      "note": "Identità collegata a un giocatore esistente",
+      "createdAt": "2026-08-11T18:02:12.281Z"
+    },
+    {
+      "id": 398,
+      "entityType": "player_match_conflicts",
+      "action": "resolve-conflict",
+      "note": "Nuovo giocatore confermato",
+      "createdAt": "2026-08-11T18:02:01.066Z"
+    },
+    {
+      "id": 397,
+      "entityType": "competition_profile",
+      "action": "update",
+      "note": "Correzione risultati e riepilogo Europa League 2016/17.",
+      "createdAt": "2026-08-11T17:03:54.354Z"
+    },
+    {
+      "id": 396,
+      "entityType": "research_candidate",
+      "action": "update",
+      "note": "Import candidato approvato",
+      "createdAt": "2026-08-11T16:48:53.677Z"
+    },
+    {
+      "id": 395,
+      "entityType": "research_candidate",
+      "action": "update",
+      "note": "Candidato data/reconciliation/candidates/season-context-serie-b-2024-25: stato approved",
+      "createdAt": "2026-08-11T16:48:49.107Z"
+    },
+    {
+      "id": 394,
+      "entityType": "season",
+      "action": "update",
+      "note": "Allineamento del tecnico 2026/27 alla fonte ufficiale del club.",
+      "createdAt": "2026-08-11T15:34:44.425Z"
+    },
+    {
+      "id": 393,
+      "entityType": "players",
+      "action": "update",
+      "note": "Rimosso dalla rosa attuale: record storico/non appartenente alla rosa corrente",
+      "createdAt": "2026-08-10T19:35:13.876Z"
+    },
+    {
+      "id": 392,
+      "entityType": "players",
+      "action": "update",
+      "note": "Rimosso dalla rosa attuale: record storico/non appartenente alla rosa corrente",
+      "createdAt": "2026-08-10T19:35:13.876Z"
+    },
+    {
+      "id": 391,
+      "entityType": "players",
+      "action": "update",
+      "note": "Rimosso dalla rosa attuale: record storico/non appartenente alla rosa corrente",
+      "createdAt": "2026-08-10T19:35:13.876Z"
+    },
+    {
+      "id": 390,
+      "entityType": "players",
+      "action": "update",
+      "note": "Rimosso dalla rosa attuale: record storico/non appartenente alla rosa corrente",
+      "createdAt": "2026-08-10T19:35:13.876Z"
+    },
+    {
+      "id": 389,
+      "entityType": "player_match_conflicts",
+      "action": "resolve-conflict",
+      "note": "Nuovo giocatore confermato",
+      "createdAt": "2026-08-10T19:33:19.125Z"
+    },
+    {
+      "id": 388,
+      "entityType": "player_match_conflicts",
+      "action": "resolve-conflict",
+      "note": "Nuovo giocatore confermato",
+      "createdAt": "2026-08-10T19:33:01.734Z"
+    },
+    {
+      "id": 387,
+      "entityType": "player_match_conflicts",
+      "action": "resolve-conflict",
+      "note": "Identità collegata a un giocatore esistente",
+      "createdAt": "2026-08-10T19:32:37.916Z"
+    },
+    {
+      "id": 386,
+      "entityType": "player_match_conflicts",
+      "action": "resolve-conflict",
+      "note": "Identità collegata a un giocatore esistente",
+      "createdAt": "2026-08-10T19:27:21.324Z"
+    },
+    {
+      "id": 385,
+      "entityType": "players",
+      "action": "update",
+      "note": "Nome completo verificato su Transfermarkt",
+      "createdAt": "2026-08-10T19:25:07.584Z"
+    },
+    {
+      "id": 384,
+      "entityType": "players",
+      "action": "update",
+      "note": "Nome completo verificato su Transfermarkt",
+      "createdAt": "2026-08-10T19:25:07.583Z"
+    },
+    {
+      "id": 383,
+      "entityType": "players",
+      "action": "update",
+      "note": "Nome completo verificato su Transfermarkt",
+      "createdAt": "2026-08-10T19:25:07.583Z"
+    },
+    {
+      "id": 382,
+      "entityType": "players",
+      "action": "update",
+      "note": "Nome completo verificato su Transfermarkt",
+      "createdAt": "2026-08-10T19:25:07.583Z"
+    },
+    {
+      "id": 381,
+      "entityType": "players",
+      "action": "update",
+      "note": "Nome completo verificato su Transfermarkt",
+      "createdAt": "2026-08-10T19:25:07.583Z"
+    },
+    {
+      "id": 380,
+      "entityType": "players",
+      "action": "update",
+      "note": "Nome completo verificato su Transfermarkt",
+      "createdAt": "2026-08-10T19:25:07.582Z"
+    },
+    {
+      "id": 379,
+      "entityType": "players",
+      "action": "update",
+      "note": "Nome completo verificato su Transfermarkt",
+      "createdAt": "2026-08-10T19:25:07.582Z"
+    },
+    {
+      "id": 378,
+      "entityType": "players",
+      "action": "update",
+      "note": "Nome completo verificato su Transfermarkt",
+      "createdAt": "2026-08-10T19:25:07.582Z"
+    },
+    {
+      "id": 377,
+      "entityType": "players",
+      "action": "update",
+      "note": "Nome completo verificato su Transfermarkt",
+      "createdAt": "2026-08-10T19:25:07.582Z"
+    },
+    {
+      "id": 376,
+      "entityType": "players",
+      "action": "update",
+      "note": "Nome completo verificato su Transfermarkt",
+      "createdAt": "2026-08-10T19:25:07.582Z"
+    },
+    {
+      "id": 375,
+      "entityType": "players",
+      "action": "update",
+      "note": "Nome completo verificato su Transfermarkt",
+      "createdAt": "2026-08-10T19:25:07.582Z"
+    },
+    {
+      "id": 374,
+      "entityType": "players",
+      "action": "update",
+      "note": "Nome completo verificato su Transfermarkt",
+      "createdAt": "2026-08-10T19:25:07.581Z"
+    },
+    {
+      "id": 373,
+      "entityType": "players",
+      "action": "update",
+      "note": "Nome completo verificato su Transfermarkt",
+      "createdAt": "2026-08-10T19:25:07.581Z"
+    },
+    {
+      "id": 372,
+      "entityType": "players",
+      "action": "update",
+      "note": "Nome completo verificato su Transfermarkt",
+      "createdAt": "2026-08-10T19:25:07.581Z"
+    },
+    {
+      "id": 371,
+      "entityType": "players",
+      "action": "update",
+      "note": "Nome completo verificato su Transfermarkt",
+      "createdAt": "2026-08-10T19:25:07.581Z"
+    }
+  ]
+}
