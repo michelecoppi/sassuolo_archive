@@ -22,6 +22,7 @@ import { openApiDocument } from '../openapi.js';
 import { importStatsBombCandidate, previewStatsBombCandidate } from '../services/statsbombCandidate.js';
 import { importOpenDataSeasonCandidate, previewOpenDataSeasonCandidate } from '../services/openDataSeasonCandidate.js';
 import { frontendTelemetrySummary, recordFrontendTelemetry } from '../services/frontendTelemetry.js';
+import { getCurrentMatchPlayerRatings, saveCurrentMatchPlayerRatings } from '../services/archivePlayerRatings.js';
 
 type CupMetadata={exit:string;topScorer:string|null;topScorerGoals:number|null;sourceProvider?:string;sourceUrl?:string};
 const cupMetadataPath=path.resolve('data/cup-brackets/coppa-italia-sassuolo-metadata.json');
@@ -300,7 +301,7 @@ api.get('/matches/:id', (req,res)=>{
     ...x,
     statistics:x.stats_json?JSON.parse(x.stats_json):[]
   }));
-  const playerStats=db.prepare(`SELECT mps.*,p.id AS linked_player_id FROM match_player_stats mps LEFT JOIN players p ON p.id=mps.player_id WHERE mps.match_id=? ORDER BY COALESCE(mps.team_name,''),COALESCE(mps.rating,0) DESC,mps.minutes DESC,mps.player_name`).all(req.params.id);
+  const playerStats=db.prepare(`SELECT mps.*,p.id AS linked_player_id FROM match_player_stats mps LEFT JOIN players p ON p.id=mps.player_id WHERE mps.match_id=? ORDER BY COALESCE(mps.team_name,''),COALESCE(mps.archive_rating,mps.rating,0) DESC,mps.minutes DESC,mps.player_name`).all(req.params.id);
   const injuries=db.prepare(`SELECT mi.*,p.id AS linked_player_id FROM match_injuries mi LEFT JOIN players p ON p.id=mi.player_id WHERE mi.match_id=? ORDER BY COALESCE(mi.team_name,''),mi.player_name`).all(req.params.id);
   const sources=db.prepare(`SELECT id,field,source_url,note,source_provider,verified_at FROM source_references WHERE entity_id=? AND entity_type IN ('match','matches') ORDER BY verified_at DESC,id DESC`).all(req.params.id);
   if(details?.raw_json)delete details.raw_json;
@@ -410,14 +411,32 @@ api.get('/players/:id', (req,res)=>{
 api.get('/squad/current', (_req,res)=>{
   const season=currentSeason();
   if(!season)return res.json({season:null,competitions:[],players:[]});
-  const competitions=(db.prepare(`SELECT DISTINCT competition FROM player_seasons WHERE season=? AND competition IS NOT NULL ORDER BY competition`).all(season) as {competition:string}[]).map(row=>row.competition);
-  const players=db.prepare(`SELECT p.*,ps.appearances AS season_appearances,ps.starts AS season_starts,ps.minutes AS season_minutes,ps.goals AS season_goals,ps.assists AS season_assists,ps.rating AS season_rating,ps.yellow_cards AS season_yellow_cards,ps.red_cards AS season_red_cards
+  const competitions=(db.prepare(`SELECT competition FROM (SELECT competition FROM player_seasons WHERE season=? UNION SELECT competition FROM matches WHERE season=?) WHERE competition IS NOT NULL ORDER BY competition`).all(season,season) as {competition:string}[]).map(row=>row.competition);
+  const players=db.prepare(`SELECT p.*,
+      CASE WHEN COALESCE(ms.appearances,0)>COALESCE(ps.appearances,0) THEN ms.appearances ELSE ps.appearances END AS season_appearances,
+      CASE WHEN COALESCE(ms.starts,0)>COALESCE(ps.starts,0) THEN ms.starts ELSE ps.starts END AS season_starts,
+      CASE WHEN COALESCE(ms.minutes,0)>COALESCE(ps.minutes,0) THEN ms.minutes ELSE ps.minutes END AS season_minutes,
+      CASE WHEN COALESCE(ms.goals,0)>COALESCE(ps.goals,0) THEN ms.goals ELSE ps.goals END AS season_goals,
+      CASE WHEN COALESCE(ms.assists,0)>COALESCE(ps.assists,0) THEN ms.assists ELSE ps.assists END AS season_assists,
+      COALESCE(ms.archive_rating,ps.rating) AS season_rating,
+      CASE WHEN ms.archive_rating IS NOT NULL THEN 'sassuolo-archive' WHEN ps.rating IS NOT NULL THEN 'provider' ELSE NULL END AS season_rating_source,
+      ms.archive_rating_matches,ms.archive_rating_confidence,
+      CASE WHEN COALESCE(ms.yellow_cards,0)>COALESCE(ps.yellow_cards,0) THEN ms.yellow_cards ELSE ps.yellow_cards END AS season_yellow_cards,
+      CASE WHEN COALESCE(ms.red_cards,0)>COALESCE(ps.red_cards,0) THEN ms.red_cards ELSE ps.red_cards END AS season_red_cards
     FROM players p LEFT JOIN (
       SELECT player_id,SUM(appearances) AS appearances,SUM(starts) AS starts,SUM(minutes) AS minutes,SUM(goals) AS goals,SUM(assists) AS assists,AVG(rating) AS rating,SUM(yellow_cards) AS yellow_cards,SUM(red_cards) AS red_cards
       FROM player_seasons WHERE season=? GROUP BY player_id
-    ) ps ON ps.player_id=p.id
+    ) ps ON ps.player_id=p.id LEFT JOIN (
+      SELECT mps.player_id,COUNT(DISTINCT CASE WHEN COALESCE(mps.minutes,0)>0 THEN mps.match_id END) AS appearances,
+        SUM(CASE WHEN COALESCE(mps.minutes,0)>0 AND COALESCE(mps.substitute,0)=0 THEN 1 ELSE 0 END) AS starts,
+        SUM(COALESCE(mps.minutes,0)) AS minutes,SUM(COALESCE(mps.goals,0)) AS goals,SUM(COALESCE(mps.assists,0)) AS assists,
+        SUM(COALESCE(mps.yellow_cards,0)) AS yellow_cards,SUM(COALESCE(mps.red_cards,0)) AS red_cards,
+        ROUND(SUM(mps.archive_rating*MAX(15,COALESCE(mps.minutes,0)))/NULLIF(SUM(CASE WHEN mps.archive_rating IS NOT NULL THEN MAX(15,COALESCE(mps.minutes,0)) ELSE 0 END),0),2) AS archive_rating,
+        COUNT(mps.archive_rating) AS archive_rating_matches,ROUND(AVG(mps.archive_rating_confidence),2) AS archive_rating_confidence
+      FROM match_player_stats mps JOIN matches m ON m.id=mps.match_id WHERE m.season=? AND mps.player_id IS NOT NULL GROUP BY mps.player_id
+    ) ms ON ms.player_id=p.id
     WHERE p.current_squad=1
-    ORDER BY CASE p.position WHEN 'Goalkeeper' THEN 1 WHEN 'Defender' THEN 2 WHEN 'Midfielder' THEN 3 WHEN 'Attacker' THEN 4 ELSE 5 END,p.shirt_number,p.name`).all(season);
+    ORDER BY CASE p.position WHEN 'Goalkeeper' THEN 1 WHEN 'Defender' THEN 2 WHEN 'Midfielder' THEN 3 WHEN 'Attacker' THEN 4 ELSE 5 END,p.shirt_number,p.name`).all(season,season);
   res.json({season,competitions,players});
 });
 api.get('/transfers', (req,res)=>{
@@ -1046,6 +1065,18 @@ api.get('/current-season/matches/:id/events',(req,res)=>{
     const events=db.prepare(`SELECT * FROM match_events WHERE match_id=? ORDER BY COALESCE(minute,999),COALESCE(extra_minute,0),id`).all(id);
     res.json({match,events});
   }catch(e){res.status(500).json({error:String(e)});}
+});
+api.get('/current-season/matches/:id/player-stats',(req,res)=>{
+  try{
+    const id=asInt(req.params.id);if(id==null)return res.status(400).json({error:'ID partita non valido'});
+    res.json(getCurrentMatchPlayerRatings(id));
+  }catch(e){res.status(404).json({error:e instanceof Error?e.message:String(e)});}
+});
+api.put('/current-season/matches/:id/player-stats',(req,res)=>{
+  try{
+    const id=asInt(req.params.id);if(id==null)return res.status(400).json({error:'ID partita non valido'});
+    res.json(saveCurrentMatchPlayerRatings(id,{rows:req.body?.rows,sourceUrl:req.body?.sourceUrl,verifiedBy:res.locals.adminActor}));
+  }catch(e){res.status(400).json({error:e instanceof Error?e.message:String(e)});}
 });
 
 
