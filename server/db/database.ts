@@ -149,7 +149,6 @@ const schemaMigrations: SchemaMigration[] = [
       'archive_rating_breakdown_json TEXT', 'source_url TEXT', 'last_verified_at TEXT'
     ]) ensureColumn('match_player_stats', definition);
     db.exec(`
-      CREATE INDEX IF NOT EXISTS idx_match_player_stats_archive_rating ON match_player_stats(match_id,player_id,archive_rating);
       CREATE TRIGGER IF NOT EXISTS validate_archive_rating_insert
       BEFORE INSERT ON match_player_stats
       WHEN (NEW.archive_rating IS NOT NULL AND (NEW.archive_rating < 3 OR NEW.archive_rating > 10))
