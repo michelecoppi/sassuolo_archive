@@ -27,6 +27,12 @@ table { @apply w-full min-w-[720px] border-collapse text-sm; }
 th { @apply sticky top-0 z-10 bg-zinc-900/95 px-4 py-3.5 text-left text-xs font-bold uppercase tracking-wider text-zinc-400 backdrop-blur; }
 td { @apply border-t border-white/[0.06] px-4 py-3.5 text-zinc-200; }
 tbody tr { @apply transition-colors hover:bg-white/[0.035]; }
+.time-machine-range { appearance:none; height:.35rem; border-radius:999px; background:linear-gradient(90deg,rgba(52,211,153,.75),rgba(255,255,255,.16)); cursor:pointer; }
+.time-machine-range::-webkit-slider-thumb { appearance:none; width:1.25rem; height:1.25rem; border:3px solid #f4f4f5; border-radius:999px; background:#20a95a; box-shadow:0 0 0 .3rem rgba(32,169,90,.18); }
+.time-machine-range::-moz-range-thumb { width:.95rem; height:.95rem; border:3px solid #f4f4f5; border-radius:999px; background:#20a95a; box-shadow:0 0 0 .3rem rgba(32,169,90,.18); }
+.time-machine-range:focus-visible { outline:2px solid #6ee7a0; outline-offset:6px; }
+.time-machine-line { stroke-dasharray:1200; stroke-dashoffset:1200; animation:time-machine-draw .9s ease-out forwards; }
+@keyframes time-machine-draw { to { stroke-dashoffset:0; } }
 .reduce-motion *, .reduce-motion *::before, .reduce-motion *::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; scroll-behavior:auto !important; transition-duration:.01ms !important; }
 @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; scroll-behavior:auto !important; transition-duration:.01ms !important; } }
 @media (max-width: 640px) { .table-wrap table.mobile-cards { min-width:0; } .table-wrap table.mobile-cards thead { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); } .table-wrap table.mobile-cards, .table-wrap table.mobile-cards tbody, .table-wrap table.mobile-cards tr, .table-wrap table.mobile-cards td { display:block; width:100%; } .table-wrap table.mobile-cards tr { border-top:1px solid rgb(63 63 70); padding:.35rem 0; } .table-wrap table.mobile-cards td { border:0; display:flex; justify-content:space-between; gap:1rem; padding:.5rem 1rem; text-align:right; } .table-wrap table.mobile-cards td::before { content:attr(data-label); text-align:left; color:#a1a1aa; font-size:.75rem; font-weight:700; } }

@@ -138,6 +138,8 @@ Le schede stagione espongono inoltre affidabilità, allenatori e relativi interv
 
 Le pagine **Club** e **Timeline** condividono `data/club-history.json`, che raccoglie palmarès, passaggi di categoria, stadi, proprietà, presidenti, maglie e ricorrenze con fonti. **Allenatori e staff** usa incarichi espliciti da `data/technical-staff.json`: i cambi in corsa e i ritorni multipli non vengono inferiti dal campo testuale della stagione.
 
+La homepage include la **Sassuolo Time Machine**: un selettore interattivo 2007/08–stagione corrente con riepilogo, protagonisti, migliore vittoria, percorso punti, milestone e copertura. Legge esclusivamente dati già presenti nell'archivio tramite `/api/time-machine`; stagioni incomplete e valori assenti rimangono selezionabili e visibili come `N/D`. Metodo, spareggi e casi limite sono documentati in [`docs/product/TIME_MACHINE.md`](docs/product/TIME_MACHINE.md).
+
 I **Trasferimenti** sono filtrabili per stagione, sessione e tipo di movimento; costo, valuta e fonte restano campi distinti e l’interfaccia evidenzia le identità non riconciliate. Da **Segnala correzione** chiunque può proporre un valore con una fonte: la proposta non modifica il dato pubblico e viene approvata o rifiutata dalla coda del Data Manager, alimentando il change log.
 
 Il centro partita deriva il livello effettivo dai blocchi disponibili: `BASIC` limita la vista al risultato, `STANDARD` aggiunge metadati documentati, `DETAILED` indica almeno un blocco avanzato tra eventi, formazioni e statistiche. Intervallo, supplementari, rigori, arbitro, stadio e spettatori compaiono solo quando presenti; non vengono renderizzate sezioni vuote.

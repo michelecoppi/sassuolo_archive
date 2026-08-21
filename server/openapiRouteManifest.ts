@@ -112,6 +112,7 @@ export const API_ROUTE_MANIFEST = [
   ['post','/telemetry/frontend'],
   ['get','/telemetry/frontend/summary'],
   ['get','/timeline'],
+  ['get','/time-machine'],
   ['get','/transfers'],
   ['post','/update/current-season'],
   ['post','/update/enrich'],
