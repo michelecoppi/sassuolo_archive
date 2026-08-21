@@ -68,10 +68,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Avvia staging dallo stesso digest della release
-        run: docker volume create sassuolo-staging-data && docker run -d --name sassuolo-staging -p 8787:8787 -v sassuolo-staging-data:/data -e NODE_ENV=production -e ADMIN_API_TOKEN -e CORS_ORIGINS ghcr.io/${{ github.repository }}@${{ needs.publish.outputs.digest }}
+        run: docker volume create sassuolo-staging-data && docker run -d --name sassuolo-staging -p 8787:8787 -v sassuolo-staging-data:/data -e NODE_ENV=production -e ADMIN_API_TOKEN -e CORS_ORIGINS -e PUBLIC_APP_URL ghcr.io/${{ github.repository }}@${{ needs.publish.outputs.digest }}
         env:
           ADMIN_API_TOKEN: staging-${{ github.run_id }}-${{ github.run_attempt }}
           CORS_ORIGINS: http://127.0.0.1:8787
+          PUBLIC_APP_URL: http://127.0.0.1:8787
       - name: Attendi health check
         run: for i in {1..30}; do curl --fail --silent http://127.0.0.1:8787/api/health && exit 0; sleep 2; done; docker logs sassuolo-staging; exit 1
       - name: Smoke funzionale

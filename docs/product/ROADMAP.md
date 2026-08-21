@@ -30,11 +30,10 @@ Una voce è conclusa solo se soddisfa il relativo criterio di accettazione, non 
 ### Ordine consigliato di esecuzione
 
 1. **DATA-01** — completare la prossima tranche storica già individuata: è il valore principale del progetto e il processo di import è già pronto.
-2. **POLISH-04** — raccontare ogni pubblicazione dati nel changelog pubblico.
-3. **POLISH-01** — completare condivisione e indicizzazione.
-4. **POLISH-02** — centralizzare testi e formati per la localizzazione.
+2. **POLISH-01** — completare condivisione e indicizzazione.
+3. **POLISH-02** — centralizzare testi e formati per la localizzazione.
 
-DATA-01 può proseguire per tranche indipendenti; il prossimo pacchetto tecnico consigliato è POLISH-04.
+DATA-01 può proseguire per tranche indipendenti; il prossimo pacchetto tecnico consigliato è POLISH-01.
 
 ### P0 — integrità dei dati e pubblicazione affidabile
 
@@ -59,7 +58,6 @@ DATA-01 può proseguire per tranche indipendenti; il prossimo pacchetto tecnico 
 
 - [ ] **POLISH-01 — Migliorare condivisione e indicizzazione.** Aggiungere title/description specifici, Open Graph, sitemap e dati strutturati dove appropriati. **Accettazione:** schede giocatore, stagione e partita generano anteprime comprensibili e URL canonici.
 - [ ] **POLISH-02 — Preparare localizzazione e formati.** Centralizzare testi, date, numeri e nomi delle competizioni, mantenendo l'italiano come lingua primaria. **Accettazione:** nessun formato locale è hardcoded nei componenti principali e una seconda lingua può essere aggiunta senza riscriverli.
-- [ ] **POLISH-04 — Creare una pagina stato e changelog pubblico.** Comunicare aggiornamenti del dataset, nuove fonti, correzioni e incidenti. **Accettazione:** ogni release dati ha data, sintesi, copertura interessata e collegamento alle modifiche verificabili.
 
 ## Completati
 
@@ -110,6 +108,8 @@ Le voci seguenti risultavano già completate al momento del riordino. Mantenerle
 - [x] **DONE-DATA-16** Avanzamento dettagliato per import e sincronizzazioni con conteggio di inseriti, aggiornati, ignorati e scartati.
 
 ### Prodotto ed esperienza utente
+
+- [x] **POLISH-04 — Creare una pagina stato e changelog pubblico.** La pagina pubblica riunisce stato editoriale, versione/checksum, conteggi, copertura e cronologia filtrabile di release, fonti, correzioni e incidenti; il feed RSS usa URL assoluti configurati e supporta `ETag`. Il generatore aggiorna idempotentemente la voce della release e la CI blocca manifesti privi di data, sintesi, perimetro o link verificabile. **Completato: 2026-08-21 · Evidenza:** `server/services/publicStatus.ts`, `data/releases/changelog.json`, `src/pages/Status.tsx`, `scripts/generate-data-release.ts`, `docs/data/PUBLIC_CHANGELOG.md` · **Verifica:** contratto e API su casi validi/invalidi, incidenti aperti/risolti, XML e URL ostili, idempotenza e revalidazione; TypeScript, 122/122 test, build, budget bundle, secret scan e supply-chain verdi; E2E WCAG/mobile e smoke estesi nella CI della PR.
 
 - [x] **UX-06 — Aggiungere una modalità offline di sola lettura.** Le GET pubbliche salvano snapshot JSON versionati con data, usano il dato locale soltanto quando la rete fallisce e distinguono esplicitamente l'assenza di cache; il service worker conserva app shell e asset senza intercettare le API. **Completato: 2026-08-11 · Evidenza:** `src/services/api.ts`, `src/context/ExperienceContext.tsx`, `public/sw.js`, `public/manifest.webmanifest` · **Verifica:** test unitario, E2E online→errore rete e matrice Chromium/WebKit/mobile.
 - [x] **UX-07 — Completare accessibilità e navigazione da tastiera.** Aggiunti skip link, landmark e stati ARIA, focus del contenuto, controlli espansi/attivi, riduzione movimento di sistema/applicativa e contrasto AA dei testi secondari; axe blocca le rotte principali. **Completato: 2026-08-11 · Evidenza:** `src/layouts/AppLayout.tsx`, `src/index.css`, `e2e/critical-flows.spec.ts`, `docs/quality/ACCESSIBILITY_AUDIT.md` · **Verifica:** axe WCAG 2/2.1/2.2 AA senza violazioni sulle cinque rotte principali, tastiera, 21 E2E verdi e 6 skip intenzionali di matrice.

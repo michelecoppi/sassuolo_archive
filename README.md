@@ -43,6 +43,8 @@ La versione pubblicabile serve frontend e API dallo stesso processo Express. Con
 
 Le letture pubbliche riuscite vengono conservate come snapshot locali versionati. Se la rete dati cade, le pagine già consultate usano l'ultima copia indicando la data; il service worker mantiene l'app shell. La pagina **Preferiti** salva raccolte locali senza account e consente import, export e cancellazione JSON.
 
+La pagina **Stato e novità** espone versione e checksum del dataset, conteggi e copertura, nuove fonti, correzioni e incidenti senza mostrare dettagli operativi privati. La stessa cronologia è disponibile come feed RSS; ogni release deve dichiarare sintesi, perimetro e almeno un collegamento verificabile prima di superare la CI.
+
 Il contratto API OpenAPI 3.1 è disponibile a `http://localhost:8787/api/openapi.json`. Documenta versione, filtri, limiti/paginazione, errori, import controllati, workflow qualità e job di sincronizzazione. Il client TypeScript validato a runtime è in `src/services/adminApiClient.ts`; `npm run test:api-contract` lo verifica contro gli endpoint Express reali.
 
 Nel **Data Manager**:

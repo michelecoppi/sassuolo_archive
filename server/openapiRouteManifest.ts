@@ -44,6 +44,8 @@ export const API_ROUTE_MANIFEST = [
   ['post','/data/candidates/:id/status'],
   ['get','/data/provenance/:entity/:id'],
   ['get','/dataset-release'],
+  ['get','/status'],
+  ['get','/status/feed.xml'],
   ['get','/h2h/:opponent'],
   ['get','/h2h/suggestions'],
   ['get','/hall-of-fame'],

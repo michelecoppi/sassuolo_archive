@@ -3,7 +3,7 @@
 ## Prerequisiti
 
 - volume persistente montato in `/data`;
-- `ADMIN_API_TOKEN` e `CORS_ORIGINS` valorizzati fuori dal repository;
+- `ADMIN_API_TOKEN`, `CORS_ORIGINS` e `PUBLIC_APP_URL` valorizzati fuori dal repository;
 - destinazione esterna separata per `BACKUP_EXPORT_DIR`;
 - monitor HTTP su `/api/health`, in allarme per stato `degraded` o `unhealthy`.
 
@@ -14,6 +14,7 @@
 3. Solo dopo tutti gli smoke riusciti il job protetto dall'environment GitHub `production` sposta il tag `production` su quel digest. Un errore impedisce automaticamente la promozione.
 4. In installazioni esterne a GitHub Actions, impostare `APP_VERSION` a un tag o digest verificato e avviare `docker compose -f compose.production.yml up -d`.
 5. Non usare `latest` in produzione: annotare il digest precedente per il rollback.
+6. Prima del tag generare la release dati con sintesi, copertura e link verificabile: lo stesso comando aggiorna il changelog pubblico e la CI rifiuta una release non raccontata.
 
 ## Backup esterno e prova di ripristino
 
