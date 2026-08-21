@@ -53,6 +53,31 @@ Il voto mostrato nella Rosa attuale è la media dei SAR di partita pesata per i 
 
 Le statistiche stagionali già verificate non vengono cancellate. Se i dati per partita coprono più gare del riepilogo stagionale, presenze, titolarità, minuti, gol, assist e cartellini possono essere letti dall'aggregato locale; il SAR ha priorità soltanto per la colonna voto.
 
+## Validazione e calibrazione
+
+La suite automatica usa scenari calcistici verosimili per verificare sia il valore finale sia i fattori mostrati nella spiegazione:
+
+| Scenario di controllo | Esito atteso con `sar-1.0.0` |
+| --- | --- |
+| Portiere, 90 minuti, 7 parate, 1 rigore parato e 1 gol subito | 7,7–8,1 |
+| Difensore, 90 minuti, clean sheet e volume difensivo alto | 7,2–7,6 |
+| Centrocampista, 90 minuti, 1 assist e 4 passaggi chiave | 7,2–7,6 |
+| Attaccante, 86 minuti, doppietta con alcune inefficienze | 7,5–8,0 |
+| Difensore con autogol, rosso e rigore causato | limite minimo 3,0 |
+| Subentro di 6 minuti senza evento decisivo | `N/D` |
+
+Sono inoltre verificati limite massimo e minimo, sensibilità al ruolo, aggiornamento idempotente, precompilazione da eventi, fonte obbligatoria e rifiuto di minuti o rapporti statistici impossibili.
+
+Dopo le prime **10 partite reali** con copertura almeno `STANDARD` va eseguita una revisione di calibrazione:
+
+1. controllare distribuzione, mediana e valori anomali separatamente per ruolo;
+2. rileggere gli estremi insieme a referto, eventi e statistiche sorgente;
+3. verificare che un singolo gruppo di dati non domini sistematicamente il voto;
+4. annotare eventuali modifiche proposte con esempi riproducibili;
+5. se cambiano i pesi, pubblicare `sar-1.1.0` (o versione successiva) senza riscrivere silenziosamente i voti `sar-1.0.0`.
+
+La calibrazione non usa voti copiati da API esterne come verità di riferimento: serve a controllare coerenza interna, stabilità tra ruoli e aderenza agli eventi verificabili della partita.
+
 ## Limiti noti
 
 - Il voto misura ciò che è presente nei dati: errori individuali non codificati, movimenti senza palla e qualità tattica possono mancare.
