@@ -25,6 +25,7 @@ import { frontendTelemetrySummary, recordFrontendTelemetry } from '../services/f
 import { getCurrentMatchPlayerRatings, saveCurrentMatchPlayerRatings } from '../services/archivePlayerRatings.js';
 import { getArchiveRatingCalibration } from '../services/archiveRatingCalibration.js';
 import { getPublicArchiveStatus, publicArchiveStatusRss } from '../services/publicStatus.js';
+import { getTimeMachine } from '../services/timeMachine.js';
 
 type CupMetadata={exit:string;topScorer:string|null;topScorerGoals:number|null;sourceProvider?:string;sourceUrl?:string};
 const cupMetadataPath=path.resolve('data/cup-brackets/coppa-italia-sassuolo-metadata.json');
@@ -460,6 +461,7 @@ api.get('/transfers', (req,res)=>{
   res.json(req.query.page||req.query.pageSize?{rows,total,page,pageSize}:rows);
 });
 api.get('/club-history',(_req,res)=>res.json(getClubHistory()));
+api.get('/time-machine',(_req,res)=>res.json(getTimeMachine()));
 api.get('/coaches',(_req,res)=>res.json(getTechnicalArchive()));
 api.post('/corrections',(req,res)=>{
   try{

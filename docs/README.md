@@ -7,6 +7,7 @@ Questo è il punto di ingresso unico per la documentazione del progetto. Il `REA
 - [Specifica tecnica](product/PROJECT_SPEC.md) — architettura, modello dati e regole di contributo.
 - [Roadmap](product/ROADMAP.md) — priorità, criteri di accettazione e storico dei miglioramenti.
 - [Guida di stile](product/STYLE_GUIDE.md) — regole visuali, linguistiche e di interazione.
+- [Sassuolo Time Machine](product/TIME_MACHINE.md) — contratto dati, regole di calcolo e interazione della timeline stagionale in homepage.
 
 ## Architettura
 

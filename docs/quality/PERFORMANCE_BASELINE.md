@@ -18,3 +18,7 @@ La misura è ripetibile con `npm run perf:pagination`. Le liste pubbliche e ammi
 Il file versionato `perf-baseline.json` contiene p95 di riferimento, tolleranza di regressione del 20%, limiti payload e memoria. Il comando fallisce anche se `EXPLAIN QUERY PLAN` non usa gli indici dichiarati per partite stagionali, carriere, eventi, statistiche e fonti. La CI esegue questo gate a ogni push e pull request.
 
 Playwright verifica inoltre `/matches`, `/players`, il dettaglio stagione e il Data Manager sia nel viewport desktop sia mobile: `DOMContentLoaded < 5 s`, caricamento `< 7,5 s`, meno di 5.000 nodi DOM e nessun overflow orizzontale mobile. Sono soglie CI conservative; il benchmark API resta il segnale sensibile per regressioni sul volume finale.
+
+## Baseline frontend Time Machine
+
+Misurazione del 21 agosto 2026: la Sassuolo Time Machine è caricata separatamente dalla pagina Club in un chunk da **14,36 KiB** (**4,56 KiB gzip**) e disegna il percorso con SVG/CSS, senza una nuova dipendenza. Il JavaScript iniziale resta **273,3 KiB su 300 KiB**; il chunk massimo resta **362,5 KiB su 400 KiB**. `e2e/critical-flows.spec.ts` include selezione di stagioni con e senza dati e controllo dell'overflow mobile.

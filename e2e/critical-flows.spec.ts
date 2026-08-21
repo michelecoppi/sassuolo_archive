@@ -45,6 +45,21 @@ test('stato pubblico, filtri e feed restano utilizzabili anche su mobile',async(
   if(isMobile)expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBe(true);
 });
 
+test('la Sassuolo Time Machine attraversa dati completi e stagioni ancora vuote',async({page,isMobile})=>{
+  await page.goto('/');
+  await expect(page.getByRole('heading',{name:'Sassuolo Time Machine'})).toBeVisible();
+  const slider=page.getByRole('slider',{name:'Seleziona stagione'});
+  await expect(slider).toHaveAttribute('aria-valuetext','2025/26');
+  await page.getByRole('button',{name:'Stagione precedente'}).click();
+  await expect(page).toHaveURL(/era=2024%2F25/);
+  await expect(slider).toHaveAttribute('aria-valuetext','2024/25');
+  await slider.focus();await slider.press('End');
+  await expect(slider).toHaveAttribute('aria-valuetext','2026/27');
+  await expect(page.getByText('Nessuna vittoria verificata disponibile per questa stagione.')).toBeVisible();
+  await expect(page.getByRole('link',{name:/Apri la stagione/})).toBeVisible();
+  if(isMobile)expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBe(true);
+});
+
 test('stati lenti e offline restano espliciti e navigabili',async({page,context})=>{
   await page.route('**/api/matches*',async route=>{await new Promise(resolve=>setTimeout(resolve,500));await route.continue()});
   await page.goto('/matches');await expect(page.getByLabel('Caricamento')).toBeVisible();await expect(page.getByRole('heading',{name:'Partite'})).toBeVisible();
