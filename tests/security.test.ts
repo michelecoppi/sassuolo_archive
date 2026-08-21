@@ -22,6 +22,7 @@ test('le letture sono pubbliche ma scritture e letture amministrative richiedono
   assert.equal((await fetch(`${base}/health`)).status,200);
   assert.equal((await fetch(`${base}/data-manager`)).status,401);
   assert.equal((await fetch(`${base}/current-season/matches/validate`,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'})).status,401);
+  assert.equal((await fetch(`${base}/current-season/matches/1/player-stats`,{method:'PUT',headers:{'Content-Type':'application/json'},body:'{}'})).status,401);
   const missingCsrf=await fetch(`${base}/current-season/matches/validate`,{method:'POST',headers:{'Content-Type':'application/json',Cookie:authenticated.cookie},body:'{}'});assert.equal(missingCsrf.status,403);
   const authorized=await fetch(`${base}/current-season/matches/validate`,{method:'POST',headers:authenticated.headers,body:'{}'});
   assert.notEqual(authorized.status,401);

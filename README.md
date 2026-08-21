@@ -66,6 +66,8 @@ Copertura:
 
 La pagina **Partite e calendario** è il centro della stagione corrente: mostra ultima e prossima gara, forma recente, classifica, rosa, infortuni/squalifiche e calendario operativo. Il riquadro di freschezza indica l'ultimo sync riuscito e rende consultabili gli errori dei provider; **Aggiorna dati** registra ogni tentativo nel ledger degli import senza usare una sync incompleta per modificare le stagioni storiche.
 
+Per le gare concluse, **Statistiche e voti** apre un editor basato sulla rosa: accetta compilazione rapida, CSV/TSV e un modello scaricabile. Il **Sassuolo Archive Rating** viene calcolato localmente senza copiare rating esterni; ogni voto conserva formula, confidenza e bonus/malus applicati. Metodo e limiti sono descritti in [`docs/data/PLAYER_RATINGS.md`](docs/data/PLAYER_RATINGS.md).
+
 ### Metodo 1 — dal sito
 
 1. Avvia `npm run dev`.

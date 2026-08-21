@@ -17,7 +17,7 @@ test('il centro stagione riunisce gare, forma, classifica, rosa, indisponibili e
   db.prepare(`INSERT INTO seasons(season,competition,matches) VALUES(?,?,?)`).run('2026/27','Serie A',38);
   const insertMatch=db.prepare(`INSERT INTO matches(external_key,date,season,competition,home_team,away_team,home_score,away_score,source_provider,last_verified_at) VALUES(?,?,?,?,?,?,?,?,?,?)`);
   insertMatch.run('current-old','2026-08-01','2026/27','Serie A','U.S. Sassuolo Calcio','Modena',2,1,'verified','2026-08-01T22:00:00.000Z');
-  const nextId=Number(insertMatch.run('current-next','2026-08-20','2026/27','Serie A','Parma','U.S. Sassuolo Calcio',null,null,'kickoff','2026-08-10T09:00:00.000Z').lastInsertRowid);
+  const nextId=Number(insertMatch.run('current-next','2099-08-20','2026/27','Serie A','Parma','U.S. Sassuolo Calcio',null,null,'kickoff','2026-08-10T09:00:00.000Z').lastInsertRowid);
   db.prepare(`INSERT INTO season_standings(season,competition,api_football_team_id,team_name,rank,played,points,goals_diff,group_name,source_provider,last_verified_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)`).run('2026/27','Serie A',794,'U.S. Sassuolo Calcio',4,1,3,1,'','api-football','2026-08-10T09:05:00.000Z');
   const injuredId=Number(db.prepare(`INSERT INTO players(name,position,current_squad,injured,source_provider,last_verified_at) VALUES(?,?,?,?,?,?)`).run('Giocatore Infortunato','Defender',1,1,'api-football','2099-08-10T09:05:00.000Z').lastInsertRowid);
   db.prepare(`INSERT INTO player_seasons(player_id,season,competition,appearances,goals) VALUES(?,?,?,?,?)`).run(injuredId,'2026/27','Serie A',1,0);

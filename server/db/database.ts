@@ -142,6 +142,26 @@ const schemaMigrations: SchemaMigration[] = [
       CREATE INDEX IF NOT EXISTS idx_frontend_telemetry_release_type ON frontend_telemetry(release,event_type,created_at DESC);
     `);
   } },
+  { version: 11, name: 'archive-player-ratings', apply: () => {
+    for (const definition of [
+      'own_goals INTEGER', 'archive_rating REAL', 'archive_rating_version TEXT',
+      'archive_rating_confidence REAL', 'archive_rating_level TEXT',
+      'archive_rating_breakdown_json TEXT', 'source_url TEXT', 'last_verified_at TEXT'
+    ]) ensureColumn('match_player_stats', definition);
+    db.exec(`
+      CREATE INDEX IF NOT EXISTS idx_match_player_stats_archive_rating ON match_player_stats(match_id,player_id,archive_rating);
+      CREATE TRIGGER IF NOT EXISTS validate_archive_rating_insert
+      BEFORE INSERT ON match_player_stats
+      WHEN (NEW.archive_rating IS NOT NULL AND (NEW.archive_rating < 3 OR NEW.archive_rating > 10))
+        OR (NEW.archive_rating_confidence IS NOT NULL AND (NEW.archive_rating_confidence < 0 OR NEW.archive_rating_confidence > 1))
+      BEGIN SELECT RAISE(ABORT,'invalid archive rating or confidence'); END;
+      CREATE TRIGGER IF NOT EXISTS validate_archive_rating_update
+      BEFORE UPDATE OF archive_rating,archive_rating_confidence ON match_player_stats
+      WHEN (NEW.archive_rating IS NOT NULL AND (NEW.archive_rating < 3 OR NEW.archive_rating > 10))
+        OR (NEW.archive_rating_confidence IS NOT NULL AND (NEW.archive_rating_confidence < 0 OR NEW.archive_rating_confidence > 1))
+      BEGIN SELECT RAISE(ABORT,'invalid archive rating or confidence'); END;
+    `);
+  } },
 ];
 
 function runSchemaMigrations() {
@@ -614,6 +634,14 @@ export function initDb() {
       penalty_scored INTEGER,
       penalty_missed INTEGER,
       penalty_saved INTEGER,
+      own_goals INTEGER,
+      archive_rating REAL,
+      archive_rating_version TEXT,
+      archive_rating_confidence REAL,
+      archive_rating_level TEXT,
+      archive_rating_breakdown_json TEXT,
+      source_url TEXT,
+      last_verified_at TEXT,
       statistics_json TEXT,
       UNIQUE(match_id, api_football_player_id, team_api_id)
     );
@@ -963,7 +991,9 @@ export function initDb() {
     'source_provider TEXT', 'provider_match_id TEXT', 'provider_team_id TEXT', 'raw_json TEXT'
   ]) ensureColumn('match_team_stats', definition);
   for (const definition of [
-    'source_provider TEXT', 'provider_match_id TEXT', 'provider_team_id TEXT', 'provider_player_id TEXT'
+    'source_provider TEXT', 'provider_match_id TEXT', 'provider_team_id TEXT', 'provider_player_id TEXT',
+    'own_goals INTEGER', 'archive_rating REAL', 'archive_rating_version TEXT', 'archive_rating_confidence REAL',
+    'archive_rating_level TEXT', 'archive_rating_breakdown_json TEXT', 'source_url TEXT', 'last_verified_at TEXT'
   ]) ensureColumn('match_player_stats', definition);
 
   try { db.exec(`CREATE UNIQUE INDEX IF NOT EXISTS idx_players_api_football_id ON players(api_football_id) WHERE api_football_id IS NOT NULL`); } catch {}

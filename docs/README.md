@@ -34,6 +34,7 @@ Questo è il punto di ingresso unico per la documentazione del progetto. Il `REA
 ## Dati e ricerca
 
 - [Indice della documentazione dati](data/README.md)
+- [Sassuolo Archive Rating](data/PLAYER_RATINGS.md) — formula autonoma, confidenza e flusso di acquisizione delle statistiche per partita.
 - [Piano dati](data/DATA_MASTER_PLAN.md) e [stato di esecuzione](data/DATA_EXECUTION_STATUS.md)
 - [Registro dei duplicati e delle identità](data/DUPLICATI_IDENTITA_GIOCATORI.md)
 - [Perimetro archivio P1](data/P1_ARCHIVE.md)
