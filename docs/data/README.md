@@ -10,6 +10,7 @@ Questa cartella è il punto di raccolta della documentazione narrativa sui dati.
 | [`DATA_EXECUTION_STATUS.md`](DATA_EXECUTION_STATUS.md) | Markdown | Avanzamento implementazione e input esterni richiesti | import, candidati, fonti | Stato operativo corrente | aggiornare a ogni tranche |
 | [`DUPLICATI_IDENTITA_GIOCATORI.md`](DUPLICATI_IDENTITA_GIOCATORI.md) | Markdown | Duplicati e identità giocatore da riconciliare | giocatori | Registro di supporto | consultare durante la revisione identità |
 | [`P1_ARCHIVE.md`](P1_ARCHIVE.md) | Markdown | Fonti e riproducibilità dell’archivio P1 | storico | Regole attive | seguire per gli import storici |
+| [`PUBLIC_CHANGELOG.md`](PUBLIC_CHANGELOG.md) | Markdown | Release, fonti, correzioni, incidenti e feed RSS | pubblicazione dati | Contratto attivo e bloccante in CI | aggiornare con ogni release |
 | [`audits/DATA_AUDIT_REPORT_2026-08-09.md`](audits/DATA_AUDIT_REPORT_2026-08-09.md) | Markdown | Snapshot DB e Data Manager | tutte | Snapshot utile, alcuni conteggi superati dall'audit successivo | archiviare come evidenza |
 | [`research/DATA_RESEARCH_BRIEF_2026-08-09.md`](research/DATA_RESEARCH_BRIEF_2026-08-09.md) | Markdown | Lacune e regole di ricerca 2008/09–2026/27 | giocatori, statistiche, match, classifiche, trasferimenti | Brief ancora utile; non è un dataset | usare per pacchetti candidati |
 | [`research/EXTERNAL_AGENT_DATA_REQUEST.md`](research/EXTERNAL_AGENT_DATA_REQUEST.md) | Markdown | Mandato autosufficiente per ricerca senza accesso al codice | PlayerSeason, classifiche, coppe, trasferimenti, dettagli match | Istruzioni operative attive | consegnare una tranche per volta |
@@ -24,7 +25,7 @@ Questa cartella è il punto di raccolta della documentazione narrativa sui dati.
 
 ## Release del dataset
 
-`npm run data:release -- --version YYYY.MM.DD.N` genera `data/releases/current.json` con versione, schema, checksum SQLite, conteggi, copertura, import e changelog. In CI `npm run data:release:check` ne verifica il contratto; `/api/dataset-release`, il footer e gli export espongono gli stessi identificativi. Per una generazione riproducibile passare `--generated-at` oppure `SOURCE_DATE_EPOCH`.
+`npm run data:release -- --version YYYY.MM.DD.N --summary "…" --coverage "…|…"` genera `data/releases/current.json` con versione, schema, checksum SQLite, conteggi, copertura, import e modifiche, poi aggiorna nella stessa operazione la relativa voce in `data/releases/changelog.json`. In CI `npm run data:release:check` verifica entrambi i contratti e la corrispondenza esatta della release corrente; `/api/dataset-release`, `/api/status`, il footer e gli export espongono gli stessi identificativi. Per una generazione riproducibile passare `--generated-at` oppure `SOURCE_DATE_EPOCH`. Il formato completo è descritto in [`PUBLIC_CHANGELOG.md`](PUBLIC_CHANGELOG.md).
 
 ## Regola di collocazione
 

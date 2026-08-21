@@ -16,10 +16,16 @@ const release = await (await response('/api/dataset-release')).json() as { versi
 if (!release.version || !/^sha256:[a-f0-9]{64}$/.test(release.databaseSha256 ?? '')) throw new Error('Manifest dataset non valido');
 if (expectedDataset && release.version !== expectedDataset) throw new Error(`Dataset ${release.version}, atteso ${expectedDataset}`);
 
+const publicStatus = await (await response('/api/status')).json() as { dataset?: { version?: string }; entries?: Array<{ type?: string; releaseVersion?: string }> };
+if (publicStatus.dataset?.version !== release.version || !publicStatus.entries?.some(entry => entry.type === 'release' && entry.releaseVersion === release.version)) throw new Error('Stato pubblico non allineato alla release dati');
+
+const feed = await response('/api/status/feed.xml');
+if (!(feed.headers.get('content-type') ?? '').includes('application/rss+xml') || !(await feed.text()).includes('<rss version="2.0">')) throw new Error('Feed RSS dello stato pubblico non valido');
+
 const archive = await (await response('/api/matches?page=1&pageSize=10')).json() as { rows?: unknown[]; total?: number };
 if (!Array.isArray(archive.rows) || !archive.rows.length || !archive.total) throw new Error('Archivio partite vuoto o non paginabile');
 
 const directRoute = await response('/players');
 if (!(directRoute.headers.get('content-type') ?? '').includes('text/html')) throw new Error('Fallback SPA non disponibile sulla route diretta');
 
-console.log(JSON.stringify({ ok: true, base, dataset: release.version, matches: archive.total, checks: 4 }));
+console.log(JSON.stringify({ ok: true, base, dataset: release.version, matches: archive.total, checks: 6 }));

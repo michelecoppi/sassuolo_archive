@@ -9,6 +9,7 @@ services:
       SASSUOLO_BACKUPS_DIR: /data/backups
       ADMIN_API_TOKEN: ${ADMIN_API_TOKEN:?required}
       CORS_ORIGINS: ${CORS_ORIGINS:?required}
+      PUBLIC_APP_URL: ${PUBLIC_APP_URL:?required}
     ports:
       - "8787:8787"
     volumes:

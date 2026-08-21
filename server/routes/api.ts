@@ -24,6 +24,7 @@ import { importOpenDataSeasonCandidate, previewOpenDataSeasonCandidate } from '.
 import { frontendTelemetrySummary, recordFrontendTelemetry } from '../services/frontendTelemetry.js';
 import { getCurrentMatchPlayerRatings, saveCurrentMatchPlayerRatings } from '../services/archivePlayerRatings.js';
 import { getArchiveRatingCalibration } from '../services/archiveRatingCalibration.js';
+import { getPublicArchiveStatus, publicArchiveStatusRss } from '../services/publicStatus.js';
 
 type CupMetadata={exit:string;topScorer:string|null;topScorerGoals:number|null;sourceProvider?:string;sourceUrl?:string};
 const cupMetadataPath=path.resolve('data/cup-brackets/coppa-italia-sassuolo-metadata.json');
@@ -163,6 +164,8 @@ api.get('/health', (req,res)=>{
   res.status(status.ok?200:503).json({ok:status.ok,status:status.status,service:status.service,checkedAt:status.checkedAt});
 });
 api.get('/dataset-release', (_req,res)=>{const file=path.resolve('data/releases/current.json');if(!fs.existsSync(file))return res.status(503).json({error:'Release dati non generata'});res.json(JSON.parse(fs.readFileSync(file,'utf8')));});
+api.get('/status', (_req,res)=>{try{res.json(getPublicArchiveStatus());}catch(error){res.status(503).json({error:error instanceof Error?error.message:String(error)});}});
+api.get('/status/feed.xml', (req,res)=>{try{const status=getPublicArchiveStatus(),feed=publicArchiveStatusRss(status,process.env.PUBLIC_APP_URL??'http://localhost:5173'),etag=`"${crypto.createHash('sha256').update(feed).digest('base64url')}"`;res.setHeader('Cache-Control','public, max-age=0, must-revalidate');res.setHeader('ETag',etag);if(String(req.headers['if-none-match']??'').split(/\s*,\s*/).includes(etag))return res.status(304).end();res.type('application/rss+xml').send(feed);}catch(error){res.status(503).json({error:error instanceof Error?error.message:String(error)});}});
 api.get('/health/details', (req,res)=>{const status=getOperationalStatus(db,req.app.locals.responseCache.snapshot(),req.app.locals.observability.snapshot());res.status(status.ok?200:503).json(status);});
 api.post('/telemetry/frontend', (req,res)=>{try{
   const event=recordFrontendTelemetry(db,req.body??{});

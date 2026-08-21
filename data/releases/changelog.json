@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "release-2026-08-13-1",
+      "type": "release",
+      "status": "published",
+      "publishedAt": "2026-08-13T20:00:00.000Z",
+      "title": "Prima release dati versionata",
+      "summary": "Pubblicato il manifesto verificabile dell’archivio con checksum del database, conteggi, matrice di copertura, import inclusi e modifiche curate.",
+      "coverage": [
+        "Archivio dalla Serie C1 2007/08 alla stagione corrente",
+        "28 stagioni e competizioni censite",
+        "778 partite e 337 giocatori"
+      ],
+      "links": [
+        {
+          "label": "Consulta fonti e copertura",
+          "href": "/methodology"
+        },
+        {
+          "label": "Esplora le stagioni",
+          "href": "/seasons"
+        }
+      ],
+      "releaseVersion": "2026.08.13.1"
+    }
+  ]
+}

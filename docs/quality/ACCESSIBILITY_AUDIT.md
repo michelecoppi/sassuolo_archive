@@ -1,10 +1,10 @@
 # Audit accessibilità WCAG 2.2 AA
 
-Data: 11 agosto 2026.
+Data: 11 agosto 2026. Aggiornato il 21 agosto 2026.
 
 ## Copertura automatica
 
-Playwright + axe-core blocca la CI sulle rotte Panoramica, Partite, Giocatori, Stagioni e Preferiti con tag WCAG 2 A/AA, 2.1 A/AA e 2.2 AA. Il flusso E2E verifica inoltre skip link, destinazione del focus, route dirette e breakpoint mobile.
+Playwright + axe-core blocca la CI sulle rotte Panoramica, Partite, Giocatori, Stagioni, Preferiti e Stato e novità con tag WCAG 2 A/AA, 2.1 A/AA e 2.2 AA. Il flusso E2E verifica inoltre skip link, destinazione del focus, route dirette e breakpoint mobile; la pagina Stato controlla anche filtri persistenti nell’URL e assenza di overflow.
 
 ## Verifica manuale richiesta a ogni modifica strutturale
 

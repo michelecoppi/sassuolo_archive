@@ -34,6 +34,17 @@ test('una risposta API fallita non lascia bianca la pagina',async({page})=>{
   await expect(page.getByText(/Qualcosa non ha funzionato|Caricamento dati/)).toBeVisible();
 });
 
+test('stato pubblico, filtri e feed restano utilizzabili anche su mobile',async({page,isMobile})=>{
+  await page.goto('/status');
+  await expect(page.getByRole('heading',{name:'Stato e novità'})).toBeVisible();
+  await expect(page.getByRole('status')).toContainText('Archivio operativo');
+  await expect(page.getByRole('link',{name:'Feed RSS'})).toHaveAttribute('href','/api/status/feed.xml');
+  await page.getByRole('button',{name:/Incidenti/}).click();
+  await expect(page).toHaveURL(/type=incident/);
+  await expect(page.getByText('Nessuna voce per questo filtro')).toBeVisible();
+  if(isMobile)expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBe(true);
+});
+
 test('stati lenti e offline restano espliciti e navigabili',async({page,context})=>{
   await page.route('**/api/matches*',async route=>{await new Promise(resolve=>setTimeout(resolve,500));await route.continue()});
   await page.goto('/matches');await expect(page.getByLabel('Caricamento')).toBeVisible();await expect(page.getByRole('heading',{name:'Partite'})).toBeVisible();
@@ -72,7 +83,7 @@ test('un aggiornamento pronto richiede consenso e conserva i dati locali',async(
 
 test('le rotte principali non hanno violazioni WCAG 2.2 AA automatiche',async({page},testInfo)=>{
   test.skip(testInfo.project.name!=='chromium-desktop','Audit automatico unico; le altre matrici verificano navigazione e layout');
-  for(const route of ['/','/matches?season=2025%2F26','/players','/seasons','/favorites']){
+  for(const route of ['/','/matches?season=2025%2F26','/players','/seasons','/favorites','/status']){
     await page.goto(route);await expect(page.locator('h1')).toBeVisible();
     const results=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();
     expect(results.violations,`${route}: ${results.violations.map(item=>`${item.id} (${item.nodes.length})`).join(', ')}`).toEqual([]);
