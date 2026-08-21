@@ -28,6 +28,7 @@ const numberOrNull = (value: unknown) => value == null || value === '' || Number
 const intOrNull = (value: unknown) => { const valueNumber=numberOrNull(value);return valueNumber==null?null:Math.trunc(valueNumber); };
 const clamp = (value: number, min: number, max: number) => Math.max(min,Math.min(max,value));
 const rounded = (value: number) => Math.round(value*10)/10;
+const roundedDelta = (value: number) => Math.round(value*100)/100;
 const isSassuolo = (value: unknown) => /sassuolo/i.test(String(value??''));
 
 function roleOf(position: unknown) {
@@ -40,7 +41,7 @@ function roleOf(position: unknown) {
 }
 
 function addFactor(items: BreakdownItem[], key: string, label: string, delta: number) {
-  const value=rounded(delta);
+  const value=roundedDelta(delta);
   if(value!==0)items.push({key,label,delta:value});
   return delta;
 }
