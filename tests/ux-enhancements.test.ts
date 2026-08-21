@@ -42,6 +42,17 @@ test('export dichiara NULL, unità, filtri, fonti e data di generazione',()=>{
   for(const token of ['generated_at','null_value','source_providers','filters','[${column.unit}]','window.print()'])assert.ok(source.includes(token),token);
 });
 
+test('la navigazione mobile mantiene le destinazioni principali e un overflow accessibile',()=>{
+  const source=fs.readFileSync(path.resolve('src/layouts/AppLayout.tsx'),'utf8');
+  for(const token of [
+    "const mobilePrimaryPaths=new Set(['/','/current-season','/seasons','/players','/favorites'])",
+    '<MobileNavigation/>',
+    'aria-controls="mobile-more-navigation"',
+    'aria-label="Altre sezioni"',
+    "event.key==='Escape'",
+  ])assert.ok(source.includes(token),token);
+});
+
 test('la revisione identità mostra destinazione e impatto prima della conferma',async()=>{
   const playerId=Number(db.prepare(`INSERT INTO players(name,position) VALUES(?,?)`).run('Profilo Canonico UX','Centrocampista').lastInsertRowid);
   db.prepare(`INSERT INTO player_seasons(player_id,season,competition,appearances,minutes) VALUES(?,?,?,?,?)`).run(playerId,'2023/24','Serie B',12,800);
