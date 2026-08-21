@@ -158,7 +158,8 @@ export function getCurrentMatchPlayerRatings(matchId: number) {
   const match=currentMatch(matchId);
   if(!match)throw new Error('Partita della stagione corrente non trovata');
   const existing=db.prepare(`SELECT mps.*,p.name AS canonical_player_name,p.position AS canonical_position,p.shirt_number AS canonical_shirt_number
-    FROM match_player_stats mps LEFT JOIN players p ON p.id=mps.player_id WHERE mps.match_id=? AND (lower(COALESCE(mps.team_name,'')) LIKE '%sassuolo%' OR mps.player_id IN (SELECT id FROM players WHERE current_squad=1)) ORDER BY mps.minutes DESC,mps.player_name`).all(matchId) as any[];
+    FROM match_player_stats mps LEFT JOIN players p ON p.id=mps.player_id WHERE mps.match_id=? AND (lower(COALESCE(mps.team_name,'')) LIKE '%sassuolo%' OR mps.player_id IN (SELECT id FROM players WHERE current_squad=1))
+    ORDER BY CASE WHEN mps.source_provider='manual-match-stats' THEN 0 ELSE 1 END,mps.last_verified_at DESC,mps.id DESC`).all(matchId) as any[];
   const byPlayer=new Map<number,any>();
   for(const row of existing)if(row.player_id&&!byPlayer.has(Number(row.player_id)))byPlayer.set(Number(row.player_id),row);
   const defaults=eventDefaults(matchId);
@@ -168,7 +169,9 @@ export function getCurrentMatchPlayerRatings(matchId: number) {
     const derived=defaults.get(normalizeNameForMatch(player.name))??{};
     const row:any={player_id:player.id,player_name:player.name,position:stored.position??player.position,shirt_number:stored.shirt_number??player.shirt_number,selected:Number(stored.minutes??0)>0};
     for(const field of EDITABLE_FIELDS)row[field]=stored[field]??derived[field]??null;
-    return publicRow({...row,...stored,player_id:player.id,player_name:player.name,position:stored.position??player.position,shirt_number:stored.shirt_number??player.shirt_number,selected:Number(stored.minutes??0)>0});
+    // Keep provider metadata, but let the effective row (including event-derived
+    // goals/assists) win over nullable fields from the stored snapshot.
+    return publicRow({...stored,...row,player_id:player.id,player_name:player.name,position:stored.position??player.position,shirt_number:stored.shirt_number??player.shirt_number,selected:Number(stored.minutes??0)>0});
   });
   for(const stored of existing.filter(row=>!row.player_id))rows.push(publicRow({...stored,selected:Number(stored.minutes??0)>0}));
   return {match,version:ARCHIVE_RATING_VERSION,methodology:'/docs/data/PLAYER_RATINGS.md',sourceSuggestions:['Referto ufficiale Lega Serie A','CSV o tabella di una fonte statistica verificabile','Inserimento manuale da formazione ed eventi'],rows};
@@ -198,12 +201,11 @@ export function saveCurrentMatchPlayerRatings(matchId: number, payload: {rows?:A
   let parsedSource:URL;try{parsedSource=new URL(sourceUrl);}catch{throw new Error('Inserisci un URL fonte valido.');}
   if(!['http:','https:'].includes(parsedSource.protocol))throw new Error('La fonte deve usare http o https.');
   const rows=Array.isArray(payload.rows)?payload.rows:[];
-  if(!rows.length)throw new Error('Seleziona almeno un giocatore sceso in campo.');
   if(rows.length>30)throw new Error('Una partita non può contenere più di 30 righe del Sassuolo.');
   const errors=rows.flatMap(validateRow);
   if(errors.length)throw new Error(errors.join(' '));
   const defaults=eventDefaults(matchId),context=matchContext(match),seen=new Set<number>();
-  const saved:any[]=[];
+  const saved:any[]=[];let removed=0;
   db.transaction(()=>{
     for(const [index,input] of rows.entries()){
       const requestedId=intOrNull(input.player_id);
@@ -215,12 +217,14 @@ export function saveCurrentMatchPlayerRatings(matchId: number, payload: {rows?:A
       }
       if(!player)throw new Error(`Riga ${index+1}: giocatore non trovato.`);
       if(seen.has(player.id))throw new Error(`Il giocatore ${player.name} compare più di una volta.`);seen.add(player.id);
-      const existing=db.prepare(`SELECT * FROM match_player_stats WHERE match_id=? AND player_id=? ORDER BY CASE WHEN source_provider='manual-match-stats' THEN 0 ELSE 1 END,id LIMIT 1`).get(matchId,player.id) as any;
+      const existing=db.prepare(`SELECT * FROM match_player_stats WHERE match_id=? AND player_id=? AND source_provider='manual-match-stats' ORDER BY id DESC LIMIT 1`).get(matchId,player.id) as any;
+      const providerBase=db.prepare(`SELECT * FROM match_player_stats WHERE match_id=? AND player_id=? AND source_provider<>'manual-match-stats' ORDER BY last_verified_at DESC,id DESC LIMIT 1`).get(matchId,player.id) as any;
       const derived=defaults.get(normalizeNameForMatch(player.name))??{};
-      const merged:any={...existing,player_id:player.id,player_name:player.name,position:input.position??existing?.position??player.position,shirt_number:input.shirt_number??existing?.shirt_number??player.shirt_number};
+      const base=existing??providerBase??{};
+      const merged:any={...base,player_id:player.id,player_name:player.name,position:input.position??base.position??player.position,shirt_number:input.shirt_number??base.shirt_number??player.shirt_number};
       for(const field of EDITABLE_FIELDS){
         const supplied=Object.prototype.hasOwnProperty.call(input,field)?input[field]:undefined;
-        merged[field]=supplied!==undefined?(field==='pass_accuracy'?numberOrNull(supplied):intOrNull(supplied)):(existing?.[field]??derived[field]??null);
+        merged[field]=supplied!==undefined?(field==='pass_accuracy'?numberOrNull(supplied):intOrNull(supplied)):(base[field]??derived[field]??null);
       }
       const calculated=calculateArchiveRating(merged,context);
       const ratingValues={archive_rating:calculated.rating,archive_rating_version:calculated.version,archive_rating_confidence:calculated.confidence,archive_rating_level:calculated.level,archive_rating_breakdown_json:JSON.stringify(calculated.breakdown)};
@@ -233,10 +237,16 @@ export function saveCurrentMatchPlayerRatings(matchId: number, payload: {rows?:A
         db.prepare(`INSERT INTO match_player_stats(${columns.join(',')}) VALUES(${columns.map(column=>`@${column}`).join(',')})`).run(values);
       }
       const after=db.prepare(`SELECT * FROM match_player_stats WHERE match_id=? AND player_id=? ORDER BY CASE WHEN source_provider='manual-match-stats' THEN 0 ELSE 1 END,id LIMIT 1`).get(matchId,player.id) as any;
-      recordChange({entityType:'match_player_stats',entityId:after.id,action:existing?'update':'create',before:existing??undefined,after,sourceUrl,note:`Sassuolo Archive Rating ${ARCHIVE_RATING_VERSION}`});
+      recordChange({entityType:'match_player_stats',entityId:after.id,action:existing?'update':'create',before:existing??undefined,after,sourceUrl,note:`Sassuolo Archive Rating ${ARCHIVE_RATING_VERSION}`,author:String(payload.verifiedBy??'Curatore').slice(0,120)});
       recordSourceReference({entityType:'match_player_stats',entityId:after.id,field:'archive_rating',sourceUrl,note:`Voto calcolato localmente con ${ARCHIVE_RATING_VERSION}`,author:String(payload.verifiedBy??'Curatore').slice(0,120),sourceProvider:'manual-match-stats',verifiedAt:after.last_verified_at});
       saved.push(publicRow(after));
     }
+    const stale=db.prepare(`SELECT * FROM match_player_stats WHERE match_id=? AND source_provider='manual-match-stats'`).all(matchId) as any[];
+    for(const row of stale.filter(row=>row.player_id==null||!seen.has(Number(row.player_id)))){
+      db.prepare(`DELETE FROM match_player_stats WHERE id=?`).run(row.id);
+      recordChange({entityType:'match_player_stats',entityId:row.id,action:'delete',before:row,sourceUrl,note:`Rimozione dalla distinta SAR ${ARCHIVE_RATING_VERSION}`,author:String(payload.verifiedBy??'Curatore').slice(0,120)});
+      removed++;
+    }
   })();
-  return {ok:true,matchId,version:ARCHIVE_RATING_VERSION,saved};
+  return {ok:true,matchId,version:ARCHIVE_RATING_VERSION,saved,removed};
 }

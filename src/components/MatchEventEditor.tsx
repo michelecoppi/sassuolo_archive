@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { CheckCircle2, Edit3, Plus, Save, Trash2, X } from 'lucide-react';
 import { api } from '../services/api';
 import { Loading } from './Ui';
+import { useModalA11y } from '../hooks/useModalA11y';
 
 type MatchContext = {id:number;date:string;home_team:string;away_team:string;home_score:number|null;away_score:number|null;source_url?:string|null};
 type EventRow = Record<string,any>&{id:number;minute:number|null;extra_minute:number|null;team_name:string|null;player_name:string|null;assist_name:string|null;type:string|null;detail:string|null};
@@ -33,8 +34,9 @@ const kindFor=(event:EventRow):EventKind=>{
 const minuteLabel=(event:EventRow)=>event.minute==null?'Minuto N/D':`${event.minute}${event.extra_minute?`+${event.extra_minute}`:''}'`;
 
 export default function MatchEventEditor({matchId,onClose,onChanged}:{matchId:number;onClose:()=>void;onChanged:()=>void}){
-  const [data,setData]=useState<Payload|null>(null);const[form,setForm]=useState<EventForm>(emptyForm());const[editing,setEditing]=useState<number|null>(null);const[busy,setBusy]=useState(false);const[status,setStatus]=useState('');
-  const load=async()=>{const value=await api<Payload>(`/current-season/matches/${matchId}/events`);setData(value);setForm(current=>current.source_url?current:{...current,source_url:value.match.source_url??''});};
+  const [data,setData]=useState<Payload|null>(null);const[form,setForm]=useState<EventForm>(emptyForm());const[editing,setEditing]=useState<number|null>(null);const[busy,setBusy]=useState(false);const[status,setStatus]=useState('');const[loadError,setLoadError]=useState('');
+  const dialogRef=useModalA11y(onClose,Boolean(data||loadError));
+  const load=async()=>{setLoadError('');try{const value=await api<Payload>(`/current-season/matches/${matchId}/events`);setData(value);setForm(current=>current.source_url?current:{...current,source_url:value.match.source_url??''});}catch(error){setLoadError(String(error).replace(/^Error:\s*/,''));}};
   useEffect(()=>{void load()},[matchId]);
   const standard=EVENT_STANDARD[form.kind],isVar=standard.type==='Var',isSub=form.kind==='substitution',isGoal=['goal','penalty','own-goal'].includes(form.kind),showsAssist=form.kind==='goal'||isSub;
   const ordered=useMemo(()=>[...(data?.events??[])].sort((a,b)=>(a.minute??999)-(b.minute??999)||(a.extra_minute??0)-(b.extra_minute??0)||a.id-b.id),[data]);
@@ -45,9 +47,9 @@ export default function MatchEventEditor({matchId,onClose,onChanged}:{matchId:nu
     setStatus(editing?'Evento aggiornato.':'Evento aggiunto alla sequenza.');setEditing(null);setForm(emptyForm(data.match.source_url??''));await load();onChanged();
   }catch(error){setStatus(String(error).replace(/^Error:\s*/,''));}finally{setBusy(false)}};
   const remove=async(event:EventRow)=>{if(!confirm(`Eliminare l’evento al ${minuteLabel(event)}? Verrà creato un backup.`))return;setBusy(true);try{await api(`/manual/match-events/${event.id}`,{method:'DELETE'});await load();onChanged();setStatus('Evento eliminato; backup creato.');}catch(error){setStatus(String(error).replace(/^Error:\s*/,''));}finally{setBusy(false)}};
-  if(!data)return <div className="fixed inset-0 z-50 grid place-items-center bg-black/85"><Loading/></div>;
+  if(!data)return <div ref={dialogRef} tabIndex={-1} role={loadError?'dialog':undefined} aria-modal={loadError?'true':undefined} aria-label={loadError?'Errore caricamento eventi':undefined} className="fixed inset-0 z-50 grid place-items-center bg-black/85 p-4">{loadError?<div className="card max-w-lg p-6 text-center"><h2 className="text-xl font-black">Eventi non disponibili</h2><p role="alert" className="mt-2 text-sm text-red-200">{loadError}</p><div className="mt-5 flex justify-center gap-2"><button className="btn-primary" onClick={()=>void load()}>Riprova</button><button className="btn-secondary" onClick={onClose}>Chiudi</button></div></div>:<Loading/>}</div>;
   const match=data.match,completed=match.home_score!=null&&match.away_score!=null;
-  return <div className="fixed inset-0 z-50 overflow-y-auto bg-black/85 p-3 backdrop-blur-sm md:p-6" role="dialog" aria-modal="true" aria-label="Eventi della partita"><div className="mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/10 bg-zinc-950 shadow-2xl">
+  return <div ref={dialogRef} tabIndex={-1} className="fixed inset-0 z-50 overflow-y-auto bg-black/85 p-3 backdrop-blur-sm md:p-6" role="dialog" aria-modal="true" aria-label="Eventi della partita"><div className="mx-auto max-w-6xl overflow-hidden rounded-3xl border border-white/10 bg-zinc-950 shadow-2xl">
     <header className="sticky top-0 z-20 flex items-start justify-between gap-4 border-b border-white/[.08] bg-zinc-950/95 px-5 py-4 backdrop-blur md:px-7"><div><div className="text-xs font-black uppercase tracking-[.18em] text-neroverde-300">Partite e calendario · eventi</div><h2 className="mt-1 text-xl font-black">{match.home_team} <span className="text-zinc-400">–</span> {match.away_team}</h2><p className="mt-1 text-xs text-zinc-400">{String(match.date).slice(0,10)} · risultato {completed?`${match.home_score}–${match.away_score}`:'N/D'}</p></div><button className="btn-secondary !min-h-9 !px-2" onClick={onClose} aria-label="Chiudi"><X className="h-4 w-4"/></button></header>
     <div className="grid gap-6 p-4 md:p-7 xl:grid-cols-[1.1fr_.9fr]">
       <form onSubmit={save} className="rounded-2xl border border-white/[.08] bg-zinc-900/40 p-4 md:p-5"><div className="mb-5 flex items-start justify-between"><div><h3 className="font-black">{editing?'Modifica evento':'Nuovo evento'}</h3><p className="mt-1 text-xs leading-5 text-zinc-400">Usa una voce standard: il modulo mostra solo i campi pertinenti e non deduce dati dal risultato.</p></div>{editing&&<button type="button" className="btn-secondary !min-h-8 !px-2" onClick={reset}><X className="h-3.5 w-3.5"/>Annulla</button>}</div>

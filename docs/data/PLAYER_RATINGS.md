@@ -45,6 +45,12 @@ Il flusso consigliato per ogni partita conclusa è:
 5. indicare l'URL puntuale della fonte;
 6. salvare e controllare voto, livello dati e spiegazione.
 
+### Snapshot provider e revisione curatoriale
+
+Le statistiche ricevute da KickoffAPI o da altri provider sono snapshot grezzi e non vengono trasformate in una correzione manuale. Quando il curatore salva la distinta, il sistema crea o aggiorna una riga separata con `source_provider=manual-match-stats`, copiando come base i campi disponibili ma conservando intatta la riga del provider. Nel dettaglio partita viene mostrata una sola riga effettiva per giocatore, con precedenza alla versione curatoriale.
+
+Un nuovo sync sostituisce in transazione soltanto lo snapshot del provider. Se la risposta è vuota, mantiene l'ultima fotografia valida; se l'inserimento fallisce, il rollback conserva sia lo snapshot precedente sia i voti SAR. Salvare la distinta senza un giocatore rimuove soltanto la sua riga curatoriale; salvare una distinta vuota rimuove tutte le righe `manual-match-stats` della gara senza cancellare i dati grezzi.
+
 La pagina partita ufficiale della [Lega Serie A](https://www.legaseriea.it/serie-a) è la fonte primaria consigliata per risultato, formazioni, eventi e statistiche disponibili. [FBref](https://fbref.com/en/comps/11/Serie-A-Stats) può essere usato come riscontro o come tabella esportabile. Non viene effettuato scraping automatico di endpoint interni o non documentati: l'importazione tabellare evita dipendenze fragili e conserva l'URL usato dal curatore.
 
 ## Aggregato stagionale
@@ -77,6 +83,8 @@ Dopo le prime **10 partite reali** con copertura almeno `STANDARD` va eseguita u
 5. se cambiano i pesi, pubblicare `sar-1.1.0` (o versione successiva) senza riscrivere silenziosamente i voti `sar-1.0.0`.
 
 La calibrazione non usa voti copiati da API esterne come verità di riferimento: serve a controllare coerenza interna, stabilità tra ruoli e aderenza agli eventi verificabili della partita.
+
+Il **Laboratorio SAR** nel Centro stagione rende questo controllo operativo. Espone numero di voti, partite e giocatori coperti, media e mediana, distribuzione per fascia, medie per ruolo, versioni della formula, valori estremi e indicatori di salute della provenienza. Prima di 10 partite il pannello indica esplicitamente quante ne mancano al campione minimo; non presenta il modello come calibrato in anticipo.
 
 ## Limiti noti
 

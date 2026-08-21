@@ -7,8 +7,9 @@ import { api } from './routes/api.js';
 import { db, initDb, nowIso } from './db/database.js';
 import { createApiResponseCache, createRequestObservability } from './services/operations.js';
 import { safeRemoteFetch } from './services/outboundUrlPolicy.js';
+import { isAdminReadPath, isPublicMutation } from './services/accessPolicy.js';
 
-type AppOptions={adminToken?:string|null;nodeEnv?:string;corsOrigins?:string[];mutationLimit?:number;cacheTtlMs?:number;adminSessionTtlMs?:number};
+type AppOptions={adminToken?:string|null;nodeEnv?:string;corsOrigins?:string[];mutationLimit?:number;cacheTtlMs?:number;adminSessionTtlMs?:number;trustProxy?:boolean|number|string;securityAuditRetentionDays?:number;securityAuditMaxRows?:number};
 type CachedImage={body:Buffer;contentType:string;expiresAt:number};
 type AdminSession={actor:string;csrfToken:string;expiresAt:number};
 
@@ -18,6 +19,20 @@ const safeEqual=(left:string,right:string)=>{
   const a=Buffer.from(left);const b=Buffer.from(right);
   return a.length===b.length&&crypto.timingSafeEqual(a,b);
 };
+
+const configuredTrustProxy=(value:string|undefined):boolean|number|string=>{
+  const normalized=String(value??'').trim();
+  if(!normalized||normalized.toLowerCase()==='false')return false;
+  if(normalized.toLowerCase()==='true')return true;
+  if(/^\d+$/.test(normalized))return Number(normalized);
+  return normalized;
+};
+
+function pruneWindowMap(map:Map<string,{windowStart:number}>,cutoff:number,maxEntries=10_000){
+  for(const [key,value] of map)if(value.windowStart<cutoff)map.delete(key);
+  if(map.size<=maxEntries)return;
+  for(const key of map.keys()){map.delete(key);if(map.size<=maxEntries)break;}
+}
 
 export function createApp(options:AppOptions={}){
   initDb();
@@ -31,7 +46,7 @@ export function createApp(options:AppOptions={}){
   const adminSessions=new Map<string,AdminSession>();
   const app=express();
   app.disable('x-powered-by');
-  app.set('trust proxy',false);
+  app.set('trust proxy',options.trustProxy??configuredTrustProxy(process.env.TRUST_PROXY));
   app.use((_req,res,next)=>{res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('X-Frame-Options','DENY');res.setHeader('Referrer-Policy','strict-origin-when-cross-origin');res.setHeader('Permissions-Policy','camera=(), microphone=(), geolocation=()');res.setHeader('Content-Security-Policy',`default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'`);if(nodeEnv==='production')res.setHeader('Strict-Transport-Security','max-age=31536000; includeSubDomains');next();});
   app.use(cors({origin(origin,callback){if(!origin||allowedOrigins.has(origin))return callback(null,true);callback(new Error('Origine CORS non autorizzata'));},credentials:true,methods:['GET','HEAD','POST','PUT','PATCH','DELETE'],allowedHeaders:['Content-Type','X-CSRF-Token']}));
   app.use(express.json({limit:'2mb',strict:true}));
@@ -51,7 +66,10 @@ export function createApp(options:AppOptions={}){
   const loginAttempts=new Map<string,{windowStart:number,count:number}>();
   app.post('/api/auth/login',(req,res)=>{
     if(!adminToken)return res.status(503).json({error:'Accesso amministrativo non configurato'});
-    const key=req.ip||req.socket.remoteAddress||'unknown',now=Date.now(),previous=loginAttempts.get(key);
+    const key=req.ip||req.socket.remoteAddress||'unknown',now=Date.now();
+    pruneWindowMap(loginAttempts,now-15*60_000);
+    for(const [id,session] of adminSessions)if(session.expiresAt<=now)adminSessions.delete(id);
+    const previous=loginAttempts.get(key);
     const state=!previous||now-previous.windowStart>=15*60_000?{windowStart:now,count:1}:{...previous,count:previous.count+1};loginAttempts.set(key,state);
     if(state.count>10)return res.status(429).json({error:'Troppi tentativi di accesso: riprova più tardi'});
     const supplied=String(req.body?.token??'');
@@ -115,21 +133,31 @@ export function createApp(options:AppOptions={}){
   app.use('/api',(_req,res,next)=>{res.setHeader('X-API-Version','1.0.0');next();});
 
   const attempts=new Map<string,{windowStart:number,count:number}>();const limit=options.mutationLimit??60;
+  const auditRetentionDays=Math.max(1,Math.trunc(options.securityAuditRetentionDays??Number(process.env.SECURITY_AUDIT_RETENTION_DAYS||90))||90);
+  const auditMaxRows=Math.max(1_000,Math.trunc(options.securityAuditMaxRows??Number(process.env.SECURITY_AUDIT_MAX_ROWS||50_000))||50_000);
+  let lastAuditCleanup=0;
+  const cleanupSecurityAudit=(now:number)=>{
+    if(now-lastAuditCleanup<60*60_000)return;
+    lastAuditCleanup=now;
+    db.prepare(`DELETE FROM security_audit_log WHERE created_at < datetime('now',?)`).run(`-${auditRetentionDays} days`);
+    db.prepare(`DELETE FROM security_audit_log WHERE id IN (SELECT id FROM security_audit_log ORDER BY id DESC LIMIT -1 OFFSET ?)`).run(auditMaxRows);
+  };
   app.use('/api',(req:Request,res:Response,next:NextFunction)=>{
-    const protectedRead=req.method==='GET'&&(['/corrections','/data-manager','/data-quality','/sync/jobs','/telemetry/frontend/summary','/health/details'].includes(req.path)||req.path.startsWith('/player-identity-conflicts/')||req.path.startsWith('/data/candidates/')||req.path.startsWith('/data/provenance/'));
+    const protectedRead=req.method==='GET'&&isAdminReadPath(req.path);
     if(protectedRead)res.setHeader('Cache-Control','no-store');
     if(['GET','HEAD','OPTIONS'].includes(req.method)&&!protectedRead)return next();
-    const now=Date.now();const key=req.ip||req.socket.remoteAddress||'unknown';const state=attempts.get(key);
+    const now=Date.now();pruneWindowMap(attempts,now-60_000);const key=req.ip||req.socket.remoteAddress||'unknown';const state=attempts.get(key);
     const rateState=!state||now-state.windowStart>=60_000?{windowStart:now,count:1}:{...state,count:state.count+1};attempts.set(key,rateState);
     const publicCorrection=req.method==='POST'&&req.path==='/corrections';
     const publicTelemetry=req.method==='POST'&&req.path==='/telemetry/frontend';
+    const publicMutation=isPublicMutation(req.method,req.path);
     const currentSession=activeSession(req);
     const actor=String(currentSession?.session.actor??(publicCorrection?'public-reporter':publicTelemetry?'frontend-telemetry':adminToken?'anonymous':'local-development')).slice(0,120);
     res.locals.adminActor=actor;
-    if(!publicTelemetry)res.on('finish',()=>{try{db.prepare(`INSERT INTO security_audit_log(method,path,actor,role,ip,status_code,created_at) VALUES(?,?,?,?,?,?,?)`).run(req.method,req.path,actor,res.statusCode===401?'anonymous':publicCorrection?'reporter':'admin',key,res.statusCode,nowIso());}catch{/* il log non deve interrompere la risposta già conclusa */}});
+    if(!publicTelemetry)res.on('finish',()=>{try{db.prepare(`INSERT INTO security_audit_log(method,path,actor,role,ip,status_code,created_at) VALUES(?,?,?,?,?,?,?)`).run(req.method,req.path,actor,res.statusCode===401?'anonymous':publicCorrection?'reporter':'admin',key,res.statusCode,nowIso());cleanupSecurityAudit(Date.now());}catch{/* il log non deve interrompere la risposta già conclusa */}});
     res.setHeader('X-RateLimit-Limit',String(limit));res.setHeader('X-RateLimit-Remaining',String(Math.max(0,limit-rateState.count)));
     if(rateState.count>limit)return res.status(429).json({error:'Troppe operazioni di scrittura: riprova tra un minuto'});
-    if(adminToken&&!publicCorrection&&!publicTelemetry){
+    if(adminToken&&!publicMutation){
       if(!currentSession)return res.status(401).json({error:'Sessione amministrativa richiesta o scaduta'});
       if(!['GET','HEAD','OPTIONS'].includes(req.method)&&!safeEqual(String(req.headers['x-csrf-token']??''),currentSession.session.csrfToken))return res.status(403).json({error:'Token CSRF non valido'});
     }

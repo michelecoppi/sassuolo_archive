@@ -28,6 +28,20 @@ test('le letture sono pubbliche ma scritture e letture amministrative richiedono
   assert.notEqual(authorized.status,401);
 });
 
+test('tutte le letture operative e dell’editor manuale restano private',async()=>{
+  const routes=['/manual/changes','/manual/seasons','/manual/seasons/1/impact','/news/dedupe-preview','/api-football/status','/kickoff/status'];
+  for(const route of routes){
+    const denied=await fetch(`${base}${route}`);assert.equal(denied.status,401,route);assert.equal(denied.headers.get('cache-control'),'no-store');
+    const allowed=await fetch(`${base}${route}`,{headers:{Cookie:authenticated.cookie}});assert.notEqual(allowed.status,401,route);
+  }
+});
+
+test('il log di sicurezza elimina gli indirizzi oltre la retention dichiarata',async()=>{
+  db.prepare(`INSERT INTO security_audit_log(method,path,actor,role,ip,status_code,created_at) VALUES('POST','/old','old','admin','192.0.2.1',200,'2000-01-01T00:00:00.000Z')`).run();
+  const retentionApp=createApp({adminToken:'retention-test-token-long',nodeEnv:'test',securityAuditRetentionDays:30});const retentionServer=retentionApp.listen(0);const retentionAddress=retentionServer.address();if(!retentionAddress||typeof retentionAddress==='string')throw new Error('Server retention non disponibile');const retentionBase=`http://127.0.0.1:${retentionAddress.port}/api`;
+  try{await fetch(`${retentionBase}/data-manager`);assert.equal((db.prepare(`SELECT COUNT(*) AS count FROM security_audit_log WHERE ip='192.0.2.1'`).get() as any).count,0);}finally{retentionServer.close();}
+});
+
 test('il cookie di sessione è HttpOnly e logout revoca immediatamente la sessione',async()=>{
   const isolatedApp=createApp({adminToken:'logout-test-token-long',nodeEnv:'production'});const isolatedServer=isolatedApp.listen(0);const isolatedAddress=isolatedServer.address();if(!isolatedAddress||typeof isolatedAddress==='string')throw new Error('Server logout non disponibile');const isolatedBase=`http://127.0.0.1:${isolatedAddress.port}/api`;
   try{const auth=await login(isolatedBase,'logout-test-token-long');assert.match(auth.cookie,/HttpOnly/i);assert.match(auth.cookie,/SameSite=Strict/i);assert.match(auth.cookie,/Secure/i);assert.equal((await fetch(`${isolatedBase}/auth/session`,{headers:{Cookie:auth.cookie}})).status,200);assert.equal((await fetch(`${isolatedBase}/auth/logout`,{method:'POST',headers:auth.headers})).status,200);const afterLogout=await fetch(`${isolatedBase}/data-manager`,{headers:{Cookie:auth.cookie}});assert.equal(afterLogout.status,401);}finally{isolatedServer.close();}

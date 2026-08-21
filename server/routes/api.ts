@@ -23,6 +23,7 @@ import { importStatsBombCandidate, previewStatsBombCandidate } from '../services
 import { importOpenDataSeasonCandidate, previewOpenDataSeasonCandidate } from '../services/openDataSeasonCandidate.js';
 import { frontendTelemetrySummary, recordFrontendTelemetry } from '../services/frontendTelemetry.js';
 import { getCurrentMatchPlayerRatings, saveCurrentMatchPlayerRatings } from '../services/archivePlayerRatings.js';
+import { getArchiveRatingCalibration } from '../services/archiveRatingCalibration.js';
 
 type CupMetadata={exit:string;topScorer:string|null;topScorerGoals:number|null;sourceProvider?:string;sourceUrl?:string};
 const cupMetadataPath=path.resolve('data/cup-brackets/coppa-italia-sassuolo-metadata.json');
@@ -301,7 +302,13 @@ api.get('/matches/:id', (req,res)=>{
     ...x,
     statistics:x.stats_json?JSON.parse(x.stats_json):[]
   }));
-  const playerStats=db.prepare(`SELECT mps.*,p.id AS linked_player_id FROM match_player_stats mps LEFT JOIN players p ON p.id=mps.player_id WHERE mps.match_id=? ORDER BY COALESCE(mps.team_name,''),COALESCE(mps.archive_rating,mps.rating,0) DESC,mps.minutes DESC,mps.player_name`).all(req.params.id);
+  const playerStats=db.prepare(`SELECT * FROM (
+    SELECT mps.*,p.id AS linked_player_id,ROW_NUMBER() OVER(
+      PARTITION BY CASE WHEN mps.player_id IS NOT NULL THEN 'player:'||mps.player_id ELSE 'row:'||mps.id END
+      ORDER BY CASE WHEN mps.source_provider='manual-match-stats' THEN 0 ELSE 1 END,mps.last_verified_at DESC,mps.id DESC
+    ) AS effective_rank
+    FROM match_player_stats mps LEFT JOIN players p ON p.id=mps.player_id WHERE mps.match_id=?
+  ) WHERE effective_rank=1 ORDER BY COALESCE(team_name,''),COALESCE(archive_rating,rating,0) DESC,minutes DESC,player_name`).all(req.params.id);
   const injuries=db.prepare(`SELECT mi.*,p.id AS linked_player_id FROM match_injuries mi LEFT JOIN players p ON p.id=mi.player_id WHERE mi.match_id=? ORDER BY COALESCE(mi.team_name,''),mi.player_name`).all(req.params.id);
   const sources=db.prepare(`SELECT id,field,source_url,note,source_provider,verified_at FROM source_references WHERE entity_id=? AND entity_type IN ('match','matches') ORDER BY verified_at DESC,id DESC`).all(req.params.id);
   if(details?.raw_json)delete details.raw_json;
@@ -1036,13 +1043,17 @@ api.get('/current-season', (_req,res)=>{
   try{res.json(getCurrentSeasonDashboard());}
   catch(e){res.status(500).json({error:String(e)});}
 });
+api.get('/current-season/ratings/calibration',(_req,res)=>{
+  try{res.json(getArchiveRatingCalibration());}
+  catch(e){res.status(500).json({error:e instanceof Error?e.message:String(e)});}
+});
 api.post('/current-season/matches/validate',(req,res)=>{
   try{res.json(validateCurrentMatch(req.body??{},asInt(req.body?.id)??undefined));}
   catch(e){res.status(400).json({error:String(e)});}
 });
 api.post('/current-season/matches',(req,res)=>{
   try{
-    const result=saveCurrentMatch(req.body??{});
+    const result=saveCurrentMatch(req.body??{},undefined,res.locals.adminActor);
     if(!result.valid)return res.status(400).json(result);
     if(result.warnings?.length&&!req.body?.forceWarnings)return res.status(422).json(result);
     res.json(result);
@@ -1051,7 +1062,7 @@ api.post('/current-season/matches',(req,res)=>{
 api.put('/current-season/matches/:id',(req,res)=>{
   try{
     const id=asInt(req.params.id);if(id==null)return res.status(400).json({error:'ID partita non valido'});
-    const result=saveCurrentMatch(req.body??{},id);
+    const result=saveCurrentMatch(req.body??{},id,res.locals.adminActor);
     if(!result.valid)return res.status(400).json(result);
     if(result.warnings?.length&&!req.body?.forceWarnings)return res.status(422).json(result);
     res.json(result);

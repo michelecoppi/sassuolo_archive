@@ -6,6 +6,8 @@
 
 Le sessioni durano otto ore, risiedono soltanto nella memoria del processo e vengono quindi revocate anche a ogni riavvio. Ogni scrittura richiede inoltre `X-CSRF-Token`, separato dal cookie. Logout elimina la sessione immediatamente. Le letture del Data Manager, della qualità dati, dei candidati e delle identità richiedono a loro volta una sessione valida.
 
+La stessa policy centralizzata protegge anche le letture operative che possono esporre stato interno: scheduler e sync, configurazione dei provider, anteprime di deduplicazione, modifiche manuali, telemetria aggregata e health dettagliato. Le risposte protette usano `Cache-Control: no-store`; il manifesto OpenAPI viene confrontato in CI con tutte le route Express per evitare endpoint non documentati o con sicurezza dichiarata in modo errato.
+
 ## Minacce considerate
 
 - furto del token tramite JavaScript o storage del browser: il token non persiste e il cookie non è leggibile da JavaScript;
@@ -25,3 +27,9 @@ Una vulnerabilità XSS può comunque operare con i privilegi della sessione aper
 4. Esaminare `security_audit_log` per tentativi o operazioni inattese.
 
 Non inserire mai il token in URL, log, ticket o file del repository.
+
+## Proxy e conservazione dell'audit
+
+In produzione configurare `TRUST_PROXY` in base al numero di proxy realmente davanti a Express (`1` è il caso comune con un singolo reverse proxy). Non abilitarlo genericamente se l'app è esposta direttamente: l'indirizzo client alimenta il rate limit e l'audit di sicurezza.
+
+`SECURITY_AUDIT_RETENTION_DAYS` elimina gli eventi più vecchi della finestra configurata (90 giorni per impostazione predefinita). `SECURITY_AUDIT_MAX_ROWS` applica anche un limite massimo di righe (50.000 predefinite), mantenendo le più recenti. La pulizia è opportunistica, al massimo una volta l'ora, e non contiene token o corpi richiesta.

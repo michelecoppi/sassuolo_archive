@@ -1,4 +1,4 @@
-import { db, normalizeTeamName, nowIso, recordChange } from '../db/database.js';
+import { db, normalizeTeamName, nowIso, recordChange, recordSourceReference } from '../db/database.js';
 
 const NUMERIC_FIELDS = [
   'home_score','away_score','attendance','possession_home','possession_away','shots_home','shots_away',
@@ -15,7 +15,16 @@ export function normalizeSeason(value: unknown) {
 export function currentSeason() {
   const configured=normalizeSeason(process.env.CURRENT_SEASON);
   if(configured)return configured;
+  // In produzione una stagione implicita può far scrivere sul campionato
+  // sbagliato al cambio d'anno: senza configurazione lavoriamo fail-closed.
+  if(String(process.env.NODE_ENV).toLowerCase()==='production')return '';
   return (db.prepare(`SELECT season FROM seasons ORDER BY CAST(substr(season,1,4) AS INTEGER) DESC LIMIT 1`).get() as {season:string}|undefined)?.season??'';
+}
+
+export function archiveToday(date=new Date(),timeZone=process.env.ARCHIVE_TIMEZONE?.trim()||'Europe/Rome') {
+  const parts=new Intl.DateTimeFormat('en-CA',{timeZone,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(date);
+  const value=(type:Intl.DateTimeFormatPartTypes)=>parts.find(part=>part.type===type)?.value??'';
+  return `${value('year')}-${value('month')}-${value('day')}`;
 }
 
 const n=(value:unknown)=>value==null||value===''?null:Number(value);
@@ -46,16 +55,22 @@ function completeness(match:any) {
     {key:'referee',label:'Arbitro',done:Boolean(match.referee)},
     {key:'stats',label:'Statistiche',done:[match.shots_home,match.shots_away,match.corners_home,match.corners_away].some(value=>value!=null)},
     {key:'events',label:'Eventi',done:Number(match.event_count)>0},
+    {key:'lineup',label:'Formazioni',done:Number(match.lineup_count)>0},
+    {key:'playerStats',label:'Statistiche giocatori',done:Number(match.player_stat_count)>0},
+    {key:'ratings',label:'Voti SAR',done:Number(match.archive_rating_count)>0},
   ];
   const relevant=result?checks:checks.filter(item=>['fixture','venue'].includes(item.key));
-  return {score:Math.round(relevant.filter(item=>item.done).length/relevant.length*100),checks};
+  const missing=relevant.filter(item=>!item.done);
+  return {score:Math.round(relevant.filter(item=>item.done).length/relevant.length*100),checks,nextMissing:missing[0]?.key??null,nextMissingLabel:missing[0]?.label??null};
 }
 
 export function getCurrentSeasonDashboard() {
   const season=currentSeason();
-  const today=new Date().toISOString().slice(0,10);
+  const today=archiveToday();
   const rows=db.prepare(`SELECT m.*,(SELECT COUNT(*) FROM match_events e WHERE e.match_id=m.id) AS event_count,
-    (SELECT COUNT(*) FROM match_lineups l WHERE l.match_id=m.id) AS lineup_count
+    (SELECT COUNT(*) FROM match_lineups l WHERE l.match_id=m.id) AS lineup_count,
+    (SELECT COUNT(DISTINCT COALESCE(ps.player_id,ps.player_name)) FROM match_player_stats ps WHERE ps.match_id=m.id) AS player_stat_count,
+    (SELECT COUNT(*) FROM match_player_stats ar WHERE ar.match_id=m.id AND ar.source_provider='manual-match-stats' AND ar.archive_rating IS NOT NULL) AS archive_rating_count
     FROM matches m WHERE m.season=? ORDER BY m.date,m.id`).all(season) as any[];
   const matches=rows.map(match=>({...match,state:matchState(match,today),completeness:completeness(match)}));
   const seasonRows=db.prepare(`SELECT * FROM seasons WHERE season=? ORDER BY competition`).all(season) as any[];
@@ -135,14 +150,16 @@ export function validateCurrentMatch(payload:CurrentMatchPayload, editingId?:num
   if(ht){const parsed=ht.match(/^(\d+)\s*[-–]\s*(\d+)$/);if(!parsed)errors.push('Il risultato del primo tempo deve avere il formato 1-0.');else if(hs!=null&&as!=null&&(Number(parsed[1])>hs||Number(parsed[2])>as))errors.push('Il risultato del primo tempo non può superare quello finale.');}
   if(i(payload.shots_on_target_home)!=null&&i(payload.shots_home)!=null&&i(payload.shots_on_target_home)!>i(payload.shots_home)!)errors.push('I tiri in porta della squadra di casa non possono superare i tiri totali.');
   if(i(payload.shots_on_target_away)!=null&&i(payload.shots_away)!=null&&i(payload.shots_on_target_away)!>i(payload.shots_away)!)errors.push('I tiri in porta della squadra in trasferta non possono superare i tiri totali.');
+  const sourceUrl=text(payload.source_url);
+  if(sourceUrl){try{const parsed=new URL(sourceUrl);if(!['http:','https:'].includes(parsed.protocol))errors.push('La fonte deve usare http o https.');}catch{errors.push('Inserisci un URL fonte valido.');}}
   const duplicate=date&&home&&away?db.prepare(`SELECT id,date,competition,round,home_team,away_team,home_score,away_score FROM matches WHERE substr(date,1,10)=substr(?,1,10) AND lower(home_team)=lower(?) AND lower(away_team)=lower(?) AND id<>? LIMIT 1`).get(date,home,away,editingId??-1) as any:null;
   if(duplicate)errors.push('Esiste già una partita con la stessa data, squadra di casa e squadra in trasferta.');
   const round=roundNumber(payload.round);
-  if(round&&competition){const previous=db.prepare(`SELECT 1 FROM matches WHERE season=? AND competition=? AND CAST(round AS INTEGER)=? AND id<>? LIMIT 1`).get(season,competition,round-1,editingId??-1);if(round>1&&!previous)warnings.push(`La giornata ${round-1} non risulta presente. Potrebbe trattarsi di un recupero o di una partita rinviata.`);}
+  if(round&&competition){const priorRounds=db.prepare(`SELECT round FROM matches WHERE season=? AND competition=? AND id<>?`).all(season,competition,editingId??-1) as {round:unknown}[];const previous=priorRounds.some(item=>roundNumber(item.round)===round-1);if(round>1&&!previous)warnings.push(`La giornata ${round-1} non risulta presente. Potrebbe trattarsi di un recupero o di una partita rinviata.`);}
   return {valid:errors.length===0,errors,warnings,duplicate,normalized:{...payload,season,competition,date,home_team:home,away_team:away}};
 }
 
-export function saveCurrentMatch(payload:CurrentMatchPayload, editingId?:number) {
+export function saveCurrentMatch(payload:CurrentMatchPayload, editingId?:number,author?:string|null) {
   const validation=validateCurrentMatch(payload,editingId);
   if(!validation.valid||validation.warnings.length&&!payload.forceWarnings)return validation;
   const x=validation.normalized as any;
@@ -152,12 +169,14 @@ export function saveCurrentMatch(payload:CurrentMatchPayload, editingId?:number)
     if(!before)return {valid:false,errors:['Partita della stagione corrente non trovata.'],warnings:[]};
     db.prepare(`UPDATE matches SET date=?,season=?,competition=?,round=?,home_team=?,away_team=?,home_score=?,away_score=?,halftime_score=?,stadium=?,attendance=?,referee=?,possession_home=?,possession_away=?,shots_home=?,shots_away=?,shots_on_target_home=?,shots_on_target_away=?,corners_home=?,corners_away=?,fouls_home=?,fouls_away=?,xg_home=?,xg_away=?,source_provider='manual',source_url=?,last_verified_at=? WHERE id=?`).run(...values,editingId);
     const after=db.prepare(`SELECT * FROM matches WHERE id=?`).get(editingId);
-    recordChange({entityType:'matches',entityId:editingId,action:'update',before,after,sourceUrl:text(x.source_url),note:'Aggiornamento dalla gestione stagione corrente'});
+    recordChange({entityType:'matches',entityId:editingId,action:'update',before,after,sourceUrl:text(x.source_url),note:'Aggiornamento dalla gestione stagione corrente',author});
+    if(text(x.source_url))recordSourceReference({entityType:'matches',entityId:editingId,field:'record',sourceUrl:String(x.source_url),sourceProvider:'manual',author:author??undefined,note:'Fonte dichiarata per l’aggiornamento della partita'});
     return {valid:true,errors:[],warnings:validation.warnings,id:editingId,created:false};
   }
   const key=`manual|${x.season}|${x.date}|${x.home_team}|${x.away_team}|${x.competition}`;
   const result=db.prepare(`INSERT INTO matches(external_key,date,season,competition,round,home_team,away_team,home_score,away_score,halftime_score,stadium,attendance,referee,possession_home,possession_away,shots_home,shots_away,shots_on_target_home,shots_on_target_away,corners_home,corners_away,fouls_home,fouls_away,xg_home,xg_away,source_provider,source_url,last_verified_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(key,...values.slice(0,24),'manual',values[24],values[25]);
   const id=Number(result.lastInsertRowid),after=db.prepare(`SELECT * FROM matches WHERE id=?`).get(id);
-  recordChange({entityType:'matches',entityId:id,action:'create',after,sourceUrl:text(x.source_url),note:'Creazione dalla gestione stagione corrente'});
+  recordChange({entityType:'matches',entityId:id,action:'create',after,sourceUrl:text(x.source_url),note:'Creazione dalla gestione stagione corrente',author});
+  if(text(x.source_url))recordSourceReference({entityType:'matches',entityId:id,field:'record',sourceUrl:String(x.source_url),sourceProvider:'manual',author:author??undefined,note:'Fonte dichiarata per la partita'});
   return {valid:true,errors:[],warnings:validation.warnings,id,created:true};
 }

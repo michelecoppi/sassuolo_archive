@@ -1,6 +1,7 @@
 import { db, getSetting, normalizePlayerPosition, normalizeTeamName, nowIso, recordFixtureConflicts, setSetting } from '../db/database.js';
 import { recomputeDerivedPlayerStats } from './importer.js';
 import { resolvePlayer } from './playerResolver.js';
+import { currentSeason } from './currentSeason.js';
 
 const API_BASE = 'https://v3.football.api-sports.io';
 const PROVIDER = 'api-football';
@@ -759,13 +760,15 @@ export async function syncApiFootballSeason(season: string) {
 }
 
 export async function syncApiFootballCurrent() {
-  const latest = db.prepare(`SELECT season,competition FROM seasons ORDER BY substr(season,1,4) DESC LIMIT 1`).get() as { season: string; competition: string } | undefined;
-  if (!latest) return { errors: ['Nessuna stagione nel database'] };
+  const activeSeason=currentSeason();
+  if(!activeSeason)return {errors:['Configura CURRENT_SEASON prima della sincronizzazione']};
+  const available=db.prepare(`SELECT 1 FROM seasons WHERE season=? LIMIT 1`).get(activeSeason);
+  if(!available)return {currentSeason:activeSeason,errors:[`La stagione corrente ${activeSeason} non è presente nel database`]};
   const squad = await syncApiFootballSquad();
-  const season = await syncApiFootballSeason(latest.season);
+  const season = await syncApiFootballSeason(activeSeason);
   const transfers = await syncApiFootballTransfers();
   const coach = await syncApiFootballCoach();
-  return { currentSeason: latest.season, squad, season, transfers, coach, errors: [...(squad.errors ?? []), ...(season.errors ?? []), ...(transfers.errors ?? []), ...(coach.errors ?? [])] };
+  return { currentSeason: activeSeason, squad, season, transfers, coach, errors: [...(squad.errors ?? []), ...(season.errors ?? []), ...(transfers.errors ?? []), ...(coach.errors ?? [])] };
 }
 
 export async function testApiFootball() {
