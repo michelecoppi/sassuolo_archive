@@ -49,7 +49,7 @@ test('partite, giocatori, trasferimenti e liste amministrative applicano limiti 
   assert.equal(players.page,2);assert.equal(players.pageSize,20);assert.equal(players.rows.length,20);assert.ok(players.total>=65);
   const transfers=await (await fetch(`${base}/transfers?season=2099%2F00&page=2&pageSize=20`)).json() as any;
   assert.equal(transfers.total,65);assert.equal(transfers.rows.length,20);
-  const manual=await (await fetch(`${base}/manual/players?page=1&pageSize=10&q=Paged`)).json() as any;
+  const manual=await (await fetch(`${base}/manual/players?page=1&pageSize=10&q=Paged`,{headers:{Cookie:adminHeaders.Cookie}})).json() as any;
   assert.equal(manual.total,65);assert.equal(manual.rows.length,10);
   assert.ok(JSON.stringify(manual).length<JSON.stringify(await db.prepare(`SELECT * FROM players`).all()).length);
 });

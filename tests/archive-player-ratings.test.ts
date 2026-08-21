@@ -111,6 +111,25 @@ test('il salvataggio è idempotente e aggiorna il voto senza duplicare la riga',
   assert.ok((db.prepare(`SELECT COUNT(*) AS count FROM change_log WHERE entity_type='match_player_stats' AND entity_id=?`).get(updated.saved[0].id) as any).count>=2);
 });
 
+test('il salvataggio manuale non cambia provenienza né contenuto del raw provider',()=>{
+  db.prepare(`INSERT INTO match_player_stats(match_id,source_provider,provider_match_id,team_api_id,team_name,player_id,api_football_player_id,player_name,minutes,rating) VALUES(?,?,?,?,?,?,?,?,?,?)`).run(matchId,'kickoff','provider-rating',794,'U.S. Sassuolo Calcio',attackerId,7009,'Attaccante Test',88,6.7);
+  const result=saveCurrentMatchPlayerRatings(matchId,{sourceUrl:'https://example.test/referto-separato',verifiedBy:'Curatore',rows:[{player_id:defenderId,minutes:90,position:'Defender',tackles_total:4},{player_id:attackerId,minutes:88,position:'Attacker',shots_total:3,shots_on:1}]});
+  assert.equal(result.saved.length,2);
+  assert.equal((db.prepare(`SELECT source_provider FROM match_player_stats WHERE match_id=? AND api_football_player_id=7009`).get(matchId) as any).source_provider,'kickoff');
+  assert.equal((db.prepare(`SELECT COUNT(*) AS count FROM match_player_stats WHERE match_id=? AND player_id=?`).get(matchId,attackerId) as any).count,2);
+});
+
+test('la distinta sostitutiva elimina solo righe manuali deselezionate e può essere svuotata',()=>{
+  const partial=saveCurrentMatchPlayerRatings(matchId,{sourceUrl:'https://example.test/distinta-ridotta',verifiedBy:'Curatore',rows:[{player_id:attackerId,minutes:20,position:'Attacker'}]});
+  assert.ok(partial.removed>=1);
+  assert.equal((db.prepare(`SELECT COUNT(*) AS count FROM match_player_stats WHERE match_id=? AND player_id=? AND source_provider='manual-match-stats'`).get(matchId,defenderId) as any).count,0);
+  assert.equal((db.prepare(`SELECT COUNT(*) AS count FROM match_player_stats WHERE match_id=? AND player_id=? AND source_provider='kickoff'`).get(matchId,attackerId) as any).count,1);
+  const emptied=saveCurrentMatchPlayerRatings(matchId,{sourceUrl:'https://example.test/distinta-vuota',verifiedBy:'Curatore',rows:[]});
+  assert.equal(emptied.saved.length,0);assert.equal(emptied.removed,1);
+  assert.equal((db.prepare(`SELECT COUNT(*) AS count FROM match_player_stats WHERE match_id=? AND source_provider='manual-match-stats'`).get(matchId) as any).count,0);
+  assert.equal((db.prepare(`SELECT COUNT(*) AS count FROM match_player_stats WHERE match_id=? AND source_provider='kickoff'`).get(matchId) as any).count,1);
+});
+
 test('gli eventi già registrati precompilano gol e assist',()=>{
   db.prepare(`INSERT INTO match_events(match_id,source_provider,provider_match_id,provider_event_id,minute,team_name,player_id,player_name,assist_player_id,assist_name,type,detail,scoring_play,is_own_goal) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(matchId,'manual','rating-match','goal-1',52,'U.S. Sassuolo Calcio',attackerId,'Attaccante Test',midfielderId,'Centrocampista Test','Goal','Normal Goal',1,0);
   const payload=getCurrentMatchPlayerRatings(matchId);

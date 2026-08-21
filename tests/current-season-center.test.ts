@@ -8,7 +8,7 @@ const tempRoot=fs.mkdtempSync(path.join(os.tmpdir(),'sassuolo-current-center-'))
 process.env.SASSUOLO_DB_PATH=path.join(tempRoot,'current-center.db');
 process.env.CURRENT_SEASON='2026/27';
 const {db,initDb}=await import('../server/db/database.js');
-const {getCurrentSeasonDashboard}=await import('../server/services/currentSeason.js');
+const {archiveToday,currentSeason,getCurrentSeasonDashboard,validateCurrentMatch}=await import('../server/services/currentSeason.js');
 initDb();
 after(()=>{db.close();fs.rmSync(tempRoot,{recursive:true,force:true});});
 
@@ -36,4 +36,25 @@ test('il centro stagione riunisce gare, forma, classifica, rosa, indisponibili e
   assert.deepEqual(new Set(dashboard.absences.map(item=>item.kind)),new Set(['injury','suspension']));
   assert.equal(dashboard.freshness.lastSyncAt,'2026-08-10T09:05:00.000Z');
   assert.deepEqual(db.prepare(`SELECT * FROM seasons WHERE season='2008/09'`).get(),historicalBefore);
+});
+
+test('la data operativa rispetta il fuso dell’archivio anche attorno a mezzanotte',()=>{
+  const instant=new Date('2026-08-20T22:30:00.000Z');
+  assert.equal(archiveToday(instant,'Europe/Rome'),'2026-08-21');
+  assert.equal(archiveToday(instant,'UTC'),'2026-08-20');
+});
+
+test('i turni testuali sono normalizzati prima del controllo della giornata precedente',()=>{
+  db.prepare(`INSERT INTO matches(external_key,date,season,competition,round,home_team,away_team,source_provider) VALUES(?,?,?,?,?,?,?,?)`)
+    .run('round-one-text','2099-08-21','2026/27','Serie A','Regular Season - Giornata 1','U.S. Sassuolo Calcio','Udinese','manual');
+  const validation=validateCurrentMatch({date:'2099-08-28',competition:'Serie A',round:'Giornata 2',home_team:'Torino',away_team:'U.S. Sassuolo Calcio'});
+  assert.equal(validation.valid,true);
+  assert.equal(validation.warnings.some(message=>message.includes('giornata 1')),false);
+});
+
+test('in produzione la stagione corrente non viene dedotta implicitamente',()=>{
+  const previousSeason=process.env.CURRENT_SEASON,previousNodeEnv=process.env.NODE_ENV;
+  delete process.env.CURRENT_SEASON;process.env.NODE_ENV='production';
+  try{assert.equal(currentSeason(),'');}
+  finally{process.env.CURRENT_SEASON=previousSeason;process.env.NODE_ENV=previousNodeEnv;}
 });

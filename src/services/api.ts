@@ -22,11 +22,11 @@ export async function loginAdmin(token:string,name:string){return publishAdminSe
 export async function logoutAdmin(){await authRequest('logout',{method:'POST'});return publishAdminSession({authenticated:false,actor:null,csrfToken:null,expiresAt:null});}
 
 const cacheKey=(path:string)=>`${CACHE_PREFIX}${encodeURIComponent(path)}`;
-const readCached=<T>(path:string):T|null=>{
+const readCached=<T>(path:string):CachedPayload&{data:T}|null=>{
   if(typeof window==='undefined')return null;
   try{
     const cached=JSON.parse(localStorage.getItem(cacheKey(path))||'null') as CachedPayload|null;
-    return cached?.version===CACHE_VERSION?cached.data as T:null;
+    return cached?.version===CACHE_VERSION?cached as CachedPayload&{data:T}:null;
   }catch{return null;}
 };
 const writeCached=(path:string,data:unknown)=>{
@@ -36,8 +36,10 @@ const writeCached=(path:string,data:unknown)=>{
     localStorage.setItem(cacheKey(path),JSON.stringify(payload));
     window.dispatchEvent(new CustomEvent('sassuolo-cache-updated',{detail:{savedAt:payload.savedAt}}));
   }catch{
-    const entries=Object.keys(localStorage).filter(key=>key.startsWith(CACHE_PREFIX)).sort();
-    for(const key of entries.slice(0,Math.max(1,Math.ceil(entries.length/4))))localStorage.removeItem(key);
+    const entries=Object.keys(localStorage).filter(key=>key.startsWith(CACHE_PREFIX)).map(key=>{
+      try{return {key,savedAt:String((JSON.parse(localStorage.getItem(key)||'{}') as CachedPayload).savedAt??'')}}catch{return {key,savedAt:''}}
+    }).sort((a,b)=>a.savedAt.localeCompare(b.savedAt));
+    for(const entry of entries.slice(0,Math.max(1,Math.ceil(entries.length/4))))localStorage.removeItem(entry.key);
     try{localStorage.setItem(cacheKey(path),JSON.stringify(payload));}catch{/* La rete resta la fonte primaria. */}
   }
 };
@@ -45,22 +47,25 @@ const writeCached=(path:string,data:unknown)=>{
 export async function api<T>(path:string, init?:RequestInit):Promise<T>{
   const method=String(init?.method??'GET').toUpperCase();
   const cacheable=method==='GET'&&!path.startsWith('/data-manager')&&!path.startsWith('/data-quality')&&!path.startsWith('/health')&&!path.startsWith('/player-identity-conflicts');
+  const {headers:requestHeaders,...requestInit}=init??{};
+  let res:Response;
   try{
-    const {headers:requestHeaders,...requestInit}=init??{};
-    const res=await fetch(`/api${path}`,{...requestInit,credentials:'same-origin',cache:init?.cache??(method==='GET'?'default':'no-store'),headers:{'Content-Type':'application/json',...(!['GET','HEAD','OPTIONS'].includes(method)&&adminCsrfToken?{'X-CSRF-Token':adminCsrfToken}:{}),...(requestHeaders||{})}});
-    if(!res.ok){
-      const body=await res.text();
-      let detail=body;
-      try{detail=JSON.parse(body)?.error||body;}catch{/* response is not JSON */}
-      if(res.status===401)publishAdminSession({authenticated:false,actor:null,csrfToken:null,expiresAt:null});
-      throw new Error(detail||`HTTP ${res.status}`);
-    }
-    const data=await res.json() as T;
-    if(cacheable)writeCached(path,data);
-    return data;
+    res=await fetch(`/api${path}`,{...requestInit,credentials:'same-origin',cache:init?.cache??(method==='GET'?'default':'no-store'),headers:{'Content-Type':'application/json',...(!['GET','HEAD','OPTIONS'].includes(method)&&adminCsrfToken?{'X-CSRF-Token':adminCsrfToken}:{}),...(requestHeaders||{})}});
   }catch(error){
-    if(cacheable){const cached=readCached<T>(path);if(cached!==null)return cached;}
+    const aborted=error instanceof DOMException&&error.name==='AbortError';
+    if(cacheable&&!aborted){const cached=readCached<T>(path);if(cached){window.dispatchEvent(new CustomEvent('sassuolo-cache-fallback',{detail:{path,savedAt:cached.savedAt}}));return cached.data;}}
     throw error;
   }
+  if(!res.ok){
+    const body=await res.text();
+    let detail=body;
+    try{detail=JSON.parse(body)?.error||body;}catch{/* response is not JSON */}
+    if(res.status===401)publishAdminSession({authenticated:false,actor:null,csrfToken:null,expiresAt:null});
+    throw new Error(detail||`HTTP ${res.status}`);
+  }
+  const data=await res.json() as T;
+  if(cacheable)writeCached(path,data);
+  if(typeof window!=='undefined')window.dispatchEvent(new CustomEvent('sassuolo-network-response',{detail:{path}}));
+  return data;
 }
 export const post=<T>(path:string)=>api<T>(path,{method:'POST'});

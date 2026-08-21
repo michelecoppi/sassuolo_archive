@@ -1,4 +1,5 @@
 import { db, getSetting, normalizePlayerPosition, normalizeSearchText, normalizeTeamName, nowIso, recordDataConflict, recordFixtureConflicts, setSetting } from '../db/database.js';
+import { currentSeason } from './currentSeason.js';
 
 const API_BASE = 'https://api.kickoffapi.com';
 const PROVIDER = 'kickoff';
@@ -455,9 +456,9 @@ async function saveEvents(matchId: number, fixtureId: number, body: any, homeId:
 
 async function saveLineups(matchId: number, fixtureId: number, body: any, sassuoloId: number) {
   const rows = responseRows(body);
-  db.prepare(`DELETE FROM match_lineups WHERE match_id=?`).run(matchId);
-  const stmt = db.prepare(`INSERT INTO match_lineups(match_id,source_provider,provider_match_id,api_fixture_id,provider_team_id,team_api_id,team_name,team_logo,formation,coach_name,colors_json,start_xi_json,substitutes_json,raw_json) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
+  if(!rows.length)return {stored:0,requests:0};
   let extraRequests = 0;
+  const prepared:any[][]=[];
   for (const l of rows) {
     const teamId = nInt(l?.teamId ?? l?.team?.id);
     const coachId = nInt(l?.coachId ?? l?.coach?.id);
@@ -474,10 +475,15 @@ async function saveLineups(matchId: number, fixtureId: number, body: any, sassuo
     });
     const startXI = linkLineupEntries(Array.isArray(l?.startXI) ? l.startXI : []);
     const substitutes = linkLineupEntries(Array.isArray(l?.substitutes) ? l.substitutes : []);
-    stmt.run(matchId, PROVIDER, String(fixtureId), fixtureId, teamId == null ? null : String(teamId), teamId ?? -fixtureId, text(l?.team?.name), text(l?.team?.logo), text(l?.formation), coachName, l?.colors ? JSON.stringify(l.colors) : null, JSON.stringify(startXI), JSON.stringify(substitutes), JSON.stringify(l));
+    prepared.push([matchId, PROVIDER, String(fixtureId), fixtureId, teamId == null ? null : String(teamId), teamId ?? -fixtureId, text(l?.team?.name), text(l?.team?.logo), text(l?.formation), coachName, l?.colors ? JSON.stringify(l.colors) : null, JSON.stringify(startXI), JSON.stringify(substitutes), JSON.stringify(l)]);
   }
-  setDetailFlag(matchId, 'lineups_synced');
-  if (rows.length) setDetailFlag(matchId, 'coaches_synced');
+  db.transaction(()=>{
+    db.prepare(`DELETE FROM match_lineups WHERE match_id=?`).run(matchId);
+    const stmt = db.prepare(`INSERT INTO match_lineups(match_id,source_provider,provider_match_id,api_fixture_id,provider_team_id,team_api_id,team_name,team_logo,formation,coach_name,colors_json,start_xi_json,substitutes_json,raw_json) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
+    for(const values of prepared)stmt.run(...values);
+    setDetailFlag(matchId, 'lineups_synced');
+    if (rows.length) setDetailFlag(matchId, 'coaches_synced');
+  })();
   return { stored: rows.length, requests: extraRequests };
 }
 
@@ -501,47 +507,57 @@ function cleanPercentOrNumber(v: any) {
 
 async function saveTeamStats(matchId: number, fixtureId: number, body: any, homeId: number | null, awayId: number | null) {
   const groups = groupTeamStatistics(responseRows(body));
-  db.prepare(`DELETE FROM match_team_stats WHERE match_id=?`).run(matchId);
-  const stmt = db.prepare(`INSERT INTO match_team_stats(match_id,source_provider,provider_match_id,api_fixture_id,provider_team_id,team_api_id,team_name,team_logo,stats_json,raw_json) VALUES(?,?,?,?,?,?,?,?,?,?)`);
-  for (const g of groups) stmt.run(matchId, PROVIDER, String(fixtureId), fixtureId, String(g.teamId), g.teamId, text(g.team?.name), text(g.team?.logo), JSON.stringify(g.stats), JSON.stringify(g));
+  if(!groups.length)return 0;
   const get = (teamId: number | null, names: string[]) => {
     const g = groups.find(x => x.teamId === teamId); if (!g) return null;
     for (const n of names) { const s = g.stats.find(x => String(x.type).toLowerCase() === n.toLowerCase()); if (s) return cleanPercentOrNumber(s.value); }
     return null;
   };
-  db.prepare(`UPDATE matches SET possession_home=COALESCE(?,possession_home),possession_away=COALESCE(?,possession_away),shots_home=COALESCE(?,shots_home),shots_away=COALESCE(?,shots_away),shots_on_target_home=COALESCE(?,shots_on_target_home),shots_on_target_away=COALESCE(?,shots_on_target_away),corners_home=COALESCE(?,corners_home),corners_away=COALESCE(?,corners_away),fouls_home=COALESCE(?,fouls_home),fouls_away=COALESCE(?,fouls_away),xg_home=COALESCE(?,xg_home),xg_away=COALESCE(?,xg_away),last_verified_at=? WHERE id=?`)
-    .run(get(homeId, ['Ball Possession']), get(awayId, ['Ball Possession']), get(homeId, ['Total Shots']), get(awayId, ['Total Shots']), get(homeId, ['Shots on Goal']), get(awayId, ['Shots on Goal']), get(homeId, ['Corner Kicks']), get(awayId, ['Corner Kicks']), get(homeId, ['Fouls']), get(awayId, ['Fouls']), get(homeId, ['expected_goals', 'Expected Goals']), get(awayId, ['expected_goals', 'Expected Goals']), nowIso(), matchId);
-  setDetailFlag(matchId, 'team_stats_synced');
+  db.transaction(()=>{
+    db.prepare(`DELETE FROM match_team_stats WHERE match_id=?`).run(matchId);
+    const stmt = db.prepare(`INSERT INTO match_team_stats(match_id,source_provider,provider_match_id,api_fixture_id,provider_team_id,team_api_id,team_name,team_logo,stats_json,raw_json) VALUES(?,?,?,?,?,?,?,?,?,?)`);
+    for (const g of groups) stmt.run(matchId, PROVIDER, String(fixtureId), fixtureId, String(g.teamId), g.teamId, text(g.team?.name), text(g.team?.logo), JSON.stringify(g.stats), JSON.stringify(g));
+    db.prepare(`UPDATE matches SET possession_home=COALESCE(?,possession_home),possession_away=COALESCE(?,possession_away),shots_home=COALESCE(?,shots_home),shots_away=COALESCE(?,shots_away),shots_on_target_home=COALESCE(?,shots_on_target_home),shots_on_target_away=COALESCE(?,shots_on_target_away),corners_home=COALESCE(?,corners_home),corners_away=COALESCE(?,corners_away),fouls_home=COALESCE(?,fouls_home),fouls_away=COALESCE(?,fouls_away),xg_home=COALESCE(?,xg_home),xg_away=COALESCE(?,xg_away),last_verified_at=? WHERE id=?`)
+      .run(get(homeId, ['Ball Possession']), get(awayId, ['Ball Possession']), get(homeId, ['Total Shots']), get(awayId, ['Total Shots']), get(homeId, ['Shots on Goal']), get(awayId, ['Shots on Goal']), get(homeId, ['Corner Kicks']), get(awayId, ['Corner Kicks']), get(homeId, ['Fouls']), get(awayId, ['Fouls']), get(homeId, ['expected_goals', 'Expected Goals']), get(awayId, ['expected_goals', 'Expected Goals']), nowIso(), matchId);
+    setDetailFlag(matchId, 'team_stats_synced');
+  })();
   return groups.length;
 }
 
 function firstStat(row: any) { return Array.isArray(row?.statistics) ? row.statistics[0] ?? {} : row?.statistics ?? {}; }
 
-async function savePlayerStats(matchId: number, fixtureId: number, body: any, sassuoloId: number) {
+export async function saveKickoffPlayerStats(matchId: number, fixtureId: number, body: any, sassuoloId: number) {
   const rows = responseRows(body);
-  db.prepare(`DELETE FROM match_player_stats WHERE match_id=?`).run(matchId);
-  const stmt = db.prepare(`INSERT INTO match_player_stats(match_id,source_provider,provider_match_id,api_fixture_id,provider_team_id,team_api_id,team_name,team_logo,player_id,provider_player_id,api_football_player_id,player_name,player_photo,minutes,shirt_number,position,rating,captain,substitute,offsides,shots_total,shots_on,goals,goals_conceded,assists,saves,passes_total,passes_key,pass_accuracy,tackles_total,blocks,interceptions,duels_total,duels_won,dribbles_attempts,dribbles_success,dribbles_past,fouls_drawn,fouls_committed,yellow_cards,red_cards,penalty_won,penalty_committed,penalty_scored,penalty_missed,penalty_saved,statistics_json) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
-  for (const row of rows) {
-    const st = firstStat(row); const games = st?.games ?? {}; const goals = st?.goals ?? {}; const shots = st?.shots ?? {}; const passes = st?.passes ?? {}; const tackles = st?.tackles ?? {}; const duels = st?.duels ?? {}; const dribbles = st?.dribbles ?? {}; const fouls = st?.fouls ?? {}; const cards = st?.cards ?? {}; const penalty = st?.penalty ?? {};
-    const team = row?.team ?? {}; const player = row?.player ?? {};
-    const teamId = nInt(row?.teamId ?? team?.id); const playerApiId = nInt(row?.playerId ?? player?.id);
-    const local = localSassuoloPlayer(playerApiId, { ...player, number: games?.number, position: games?.position }, teamId, sassuoloId);
-    stmt.run(matchId, PROVIDER, String(fixtureId), fixtureId, teamId == null ? null : String(teamId), teamId, text(team?.name), text(team?.logo), local, playerApiId == null ? null : String(playerApiId), playerApiId, text(player?.name) ?? `Player ${playerApiId ?? ''}`, text(player?.photo), nInt(games?.minutes), nInt(games?.number), normalizePlayerPosition(games?.position), nNum(games?.rating), boolInt(games?.captain), boolInt(games?.substitute), nInt(st?.offsides), nInt(shots?.total), nInt(shots?.on), nInt(goals?.total), nInt(goals?.conceded), nInt(goals?.assists), nInt(goals?.saves), nInt(passes?.total), nInt(passes?.key), cleanPercentOrNumber(passes?.accuracy), nInt(tackles?.total), nInt(tackles?.blocks), nInt(tackles?.interceptions), nInt(duels?.total), nInt(duels?.won), nInt(dribbles?.attempts), nInt(dribbles?.success), nInt(dribbles?.past), nInt(fouls?.drawn), nInt(fouls?.committed), nInt(cards?.yellow), nInt(cards?.red), nInt(penalty?.won), nInt(penalty?.commited), nInt(penalty?.scored), nInt(penalty?.missed), nInt(penalty?.saved), JSON.stringify(st));
-  }
-  setDetailFlag(matchId, 'player_stats_synced');
+  if(!rows.length)return 0;
+  db.transaction(()=>{
+    // Kickoff owns raw match detail in the hybrid architecture. Replace only
+    // imported rows and keep every curator-authored row and SAR vote intact.
+    db.prepare(`DELETE FROM match_player_stats WHERE match_id=? AND source_provider=?`).run(matchId,PROVIDER);
+    const stmt = db.prepare(`INSERT INTO match_player_stats(match_id,source_provider,provider_match_id,api_fixture_id,provider_team_id,team_api_id,team_name,team_logo,player_id,provider_player_id,api_football_player_id,player_name,player_photo,minutes,shirt_number,position,rating,captain,substitute,offsides,shots_total,shots_on,goals,goals_conceded,assists,saves,passes_total,passes_key,pass_accuracy,tackles_total,blocks,interceptions,duels_total,duels_won,dribbles_attempts,dribbles_success,dribbles_past,fouls_drawn,fouls_committed,yellow_cards,red_cards,penalty_won,penalty_committed,penalty_scored,penalty_missed,penalty_saved,statistics_json) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
+    for (const row of rows) {
+      const st = firstStat(row); const games = st?.games ?? {}; const goals = st?.goals ?? {}; const shots = st?.shots ?? {}; const passes = st?.passes ?? {}; const tackles = st?.tackles ?? {}; const duels = st?.duels ?? {}; const dribbles = st?.dribbles ?? {}; const fouls = st?.fouls ?? {}; const cards = st?.cards ?? {}; const penalty = st?.penalty ?? {};
+      const team = row?.team ?? {}; const player = row?.player ?? {};
+      const teamId = nInt(row?.teamId ?? team?.id); const playerApiId = nInt(row?.playerId ?? player?.id);
+      const local = localSassuoloPlayer(playerApiId, { ...player, number: games?.number, position: games?.position }, teamId, sassuoloId);
+      stmt.run(matchId, PROVIDER, String(fixtureId), fixtureId, teamId == null ? null : String(teamId), teamId, text(team?.name), text(team?.logo), local, playerApiId == null ? null : String(playerApiId), playerApiId, text(player?.name) ?? `Player ${playerApiId ?? ''}`, text(player?.photo), nInt(games?.minutes), nInt(games?.number), normalizePlayerPosition(games?.position), nNum(games?.rating), boolInt(games?.captain), boolInt(games?.substitute), nInt(st?.offsides), nInt(shots?.total), nInt(shots?.on), nInt(goals?.total), nInt(goals?.conceded), nInt(goals?.assists), nInt(goals?.saves), nInt(passes?.total), nInt(passes?.key), cleanPercentOrNumber(passes?.accuracy), nInt(tackles?.total), nInt(tackles?.blocks), nInt(tackles?.interceptions), nInt(duels?.total), nInt(duels?.won), nInt(dribbles?.attempts), nInt(dribbles?.success), nInt(dribbles?.past), nInt(fouls?.drawn), nInt(fouls?.committed), nInt(cards?.yellow), nInt(cards?.red), nInt(penalty?.won), nInt(penalty?.commited), nInt(penalty?.scored), nInt(penalty?.missed), nInt(penalty?.saved), JSON.stringify(st));
+    }
+    setDetailFlag(matchId, 'player_stats_synced');
+  })();
   return rows.length;
 }
 
 async function saveInjuries(matchId: number, fixtureId: number, body: any, sassuoloId: number) {
   const rows = responseRows(body);
-  db.prepare(`DELETE FROM match_injuries WHERE match_id=?`).run(matchId);
-  const stmt = db.prepare(`INSERT INTO match_injuries(match_id,source_provider,provider_match_id,api_fixture_id,team_api_id,team_name,player_api_id,player_id,player_name,type,reason,start_date,end_date,raw_json) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
-  for (const x of rows) {
-    const teamId = nInt(x?.teamId ?? x?.team?.id); const p = x?.player ?? {}; const playerApiId = nInt(x?.playerId ?? p?.id);
-    const local = localSassuoloPlayer(playerApiId, p, teamId, sassuoloId);
-    stmt.run(matchId, PROVIDER, String(fixtureId), fixtureId, teamId, text(x?.team?.name), playerApiId, local, text(p?.name ?? x?.playerName) ?? 'N/D', text(x?.type), text(x?.reason), text(x?.start ?? x?.startDate), text(x?.end ?? x?.endDate), JSON.stringify(x));
-  }
-  setDetailFlag(matchId, 'injuries_synced');
+  db.transaction(()=>{
+    db.prepare(`DELETE FROM match_injuries WHERE match_id=?`).run(matchId);
+    const stmt = db.prepare(`INSERT INTO match_injuries(match_id,source_provider,provider_match_id,api_fixture_id,team_api_id,team_name,player_api_id,player_id,player_name,type,reason,start_date,end_date,raw_json) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`);
+    for (const x of rows) {
+      const teamId = nInt(x?.teamId ?? x?.team?.id); const p = x?.player ?? {}; const playerApiId = nInt(x?.playerId ?? p?.id);
+      const local = localSassuoloPlayer(playerApiId, p,teamId, sassuoloId);
+      stmt.run(matchId, PROVIDER, String(fixtureId), fixtureId, teamId, text(x?.team?.name), playerApiId, local, text(p?.name ?? x?.playerName) ?? 'N/D', text(x?.type), text(x?.reason), text(x?.start ?? x?.startDate), text(x?.end ?? x?.endDate), JSON.stringify(x));
+    }
+    setDetailFlag(matchId, 'injuries_synced');
+  })();
   return rows.length;
 }
 
@@ -587,7 +603,7 @@ export async function syncKickoffMatchDetails(matchId: number, force = false, ma
     { flag: 'events_synced', name: 'events', run: async () => { const r = await fixtureResource('events', fixtureId); requests += r.meta.requests; if (!r.ok) { warnings.push(`events: ${r.error}`); return; } await saveEvents(matchId, fixtureId, r.raw, teams.homeId, teams.awayId, sass.teamId); } },
     { flag: 'lineups_synced', name: 'lineups', run: async () => { const r = await fixtureResource('lineups', fixtureId); requests += r.meta.requests; if (!r.ok) { warnings.push(`lineups: ${r.error}`); return; } const saved = await saveLineups(matchId, fixtureId, r.raw, sass.teamId); requests += saved.requests; } },
     { flag: 'team_stats_synced', name: 'statistics', run: async () => { const r = await fixtureResource('statistics', fixtureId); requests += r.meta.requests; if (!r.ok) { warnings.push(`statistics: ${r.error}`); return; } await saveTeamStats(matchId, fixtureId, r.raw, teams.homeId, teams.awayId); } },
-    { flag: 'player_stats_synced', name: 'players', run: async () => { const r = await fixtureResource('players', fixtureId); requests += r.meta.requests; if (!r.ok) { warnings.push(`players: ${r.error}`); return; } await savePlayerStats(matchId, fixtureId, r.raw, sass.teamId); } },
+    { flag: 'player_stats_synced', name: 'players', run: async () => { const r = await fixtureResource('players', fixtureId); requests += r.meta.requests; if (!r.ok) { warnings.push(`players: ${r.error}`); return; } await saveKickoffPlayerStats(matchId, fixtureId, r.raw, sass.teamId); } },
     { flag: 'injuries_synced', name: 'injuries', run: async () => { const r = await request<any>('fixture-injuries', '/api/v1/injuries', { fixture: fixtureId }); requests += r.meta.requests; if (!r.ok) { warnings.push(`injuries: ${r.error}`); return; } await saveInjuries(matchId, fixtureId, r.raw, sass.teamId); } }
   ];
 
@@ -646,9 +662,11 @@ export async function syncKickoffSeason(season: string, forceDetails = false, ma
 }
 
 export async function syncKickoffCurrent(forceDetails = false) {
-  const latest = db.prepare(`SELECT season FROM seasons WHERE lower(competition)='serie a' ORDER BY substr(season,1,4) DESC LIMIT 1`).get() as { season: string } | undefined;
-  if (!latest) return { season: null, storedMatches: 0, requests: 0, errors: ['Nessuna stagione Serie A nel database'] };
-  return syncKickoffSeason(latest.season, forceDetails, smartRunBudget());
+  const season=currentSeason();
+  if (!season) return { season: null, storedMatches: 0, requests: 0, errors: ['Configura CURRENT_SEASON prima della sincronizzazione'] };
+  const available=db.prepare(`SELECT 1 FROM seasons WHERE season=? AND lower(competition)='serie a' LIMIT 1`).get(season);
+  if(!available)return {season,storedMatches:0,requests:0,errors:[`La stagione corrente ${season} non è configurata per la Serie A`]};
+  return syncKickoffSeason(season, forceDetails, smartRunBudget());
 }
 
 export function kickoffSeasonProgress(season: string) {
@@ -677,6 +695,6 @@ export async function testKickoff() {
 
 export function kickoffStatus() {
   const q = db.prepare(`SELECT estimated_remaining,last_request,last_successful_sync,last_error FROM sync_state WHERE provider=? ORDER BY last_request DESC LIMIT 1`).get(PROVIDER) as any;
-  const latest = db.prepare(`SELECT season FROM seasons WHERE lower(competition)='serie a' ORDER BY substr(season,1,4) DESC LIMIT 1`).get() as any;
-  return { configured: Boolean(apiKey()) && enabled(), enabled: enabled(), teamId: getCachedSassuoloId(), serieALeagueId: nInt(process.env.KICKOFF_SERIE_A_LEAGUE_ID) ?? 135, quotaRemaining: q?.estimated_remaining ?? lastRemaining, lastRequest: q?.last_request ?? null, lastSuccess: q?.last_successful_sync ?? null, lastError: q?.last_error ?? null, maxRequestsPerRun: explicitRunBudget(), smartMaxRequests: smartRunBudget(), latestProgress: latest?.season ? kickoffSeasonProgress(latest.season) : null, latestSeason: latest?.season ?? null };
+  const latest=currentSeason();
+  return { configured: Boolean(apiKey()) && enabled(), enabled: enabled(), teamId: getCachedSassuoloId(), serieALeagueId: nInt(process.env.KICKOFF_SERIE_A_LEAGUE_ID) ?? 135, quotaRemaining: q?.estimated_remaining ?? lastRemaining, lastRequest: q?.last_request ?? null, lastSuccess: q?.last_successful_sync ?? null, lastError: q?.last_error ?? null, maxRequestsPerRun: explicitRunBudget(), smartMaxRequests: smartRunBudget(), latestProgress: latest ? kickoffSeasonProgress(latest) : null, latestSeason: latest || null };
 }
