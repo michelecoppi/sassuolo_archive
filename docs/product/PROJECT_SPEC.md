@@ -70,6 +70,8 @@ La homepage usa `server/services/timeMachine.ts` come read model stagionale. Il 
 
 Il dettaglio partita carica `MatchCinema.tsx` soltanto su richiesta. `matchCinemaModel.ts` trasforma eventi ordinari e speciali già presenti in `/matches/:id` in capitoli deterministici: non chiama API aggiuntive, non inventa coordinate e non deduce i punteggi intermedi mancanti. Il capitolo attivo vive nella query `cinema`; il fallback delle gare `BASIC` contiene solo apertura e finale. Le regole complete sono in [`MATCH_CINEMA.md`](MATCH_CINEMA.md).
 
+Il Museo Neroverde è intenzionalmente fuori dal flusso dati pubblico. `personalMuseum.ts` valida e aggrega memorie di partite, giocatori e stagioni; `MuseumContext` le conserva in una chiave `localStorage` separata e versionata. Nessun endpoint, tabella SQLite o evento telemetrico riceve nota, emozione, dedica o backup. Import ed export sono JSON controllati dall’utente; il tour è caricato lazy e deriva soltanto dallo stato locale. Contratto e limiti sono in [`PERSONAL_MUSEUM.md`](PERSONAL_MUSEUM.md).
+
 ## 4. Modello dati essenziale
 
 - `teams`, `team_aliases`: nomi canonici e alias degli avversari.
@@ -85,6 +87,8 @@ Il dettaglio partita carica `MatchCinema.tsx` soltanto su richiesta. `matchCinem
 - `news_articles`: articoli RSS con cache e deduplicazione.
 - `sync_state`, `import_runs`, `audit_runs`, `change_log`, `backup_runs`, `data_conflicts`, `research_candidates`: tracciabilità operativa.
 - `app_settings`: configurazione/cache non sensibile, ad esempio ID dei provider.
+
+Le memorie personali non appartengono al modello SQLite: non aggiungere una tabella museo o una route API senza una nuova decisione architetturale e un consenso esplicito. Lo schema client v1 impone chiavi `type:entityId`, route locali coerenti, massimo 500 elementi e lunghezze limitate.
 
 Prima di aggiungere una colonna o una tabella, verificare lo schema in `database.ts` e aggiornare anche i tipi in `src/types/index.ts`, l'importer e gli endpoint che la espongono.
 

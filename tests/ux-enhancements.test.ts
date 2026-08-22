@@ -45,7 +45,7 @@ test('export dichiara NULL, unità, filtri, fonti e data di generazione',()=>{
 test('la navigazione mobile mantiene le destinazioni principali e un overflow accessibile',()=>{
   const source=fs.readFileSync(path.resolve('src/layouts/AppLayout.tsx'),'utf8');
   for(const token of [
-    "const mobilePrimaryPaths=new Set(['/','/current-season','/seasons','/players','/favorites'])",
+    "const mobilePrimaryPaths=new Set(['/','/current-season','/museum','/seasons','/players'])",
     '<MobileNavigation/>',
     'aria-controls="mobile-more-navigation"',
     'aria-label="Altre sezioni"',

@@ -26,3 +26,7 @@ Misurazione del 21 agosto 2026: la Sassuolo Time Machine è caricata separatamen
 ## Baseline frontend Match Cinema
 
 Misurazione del 22 agosto 2026: Match Cinema è un secondo livello lazy del dettaglio partita e produce un chunk autonomo da **22,78 KiB** (**7,37 KiB gzip**). Campo, luci e texture sono SVG/CSS e non aggiungono dipendenze né richieste decorative. Il JavaScript iniziale resta **273,3 KiB su 300 KiB** e il chunk massimo resta Dashboard a **362,5 KiB su 400 KiB**. La matrice E2E copre un racconto `DETAILED`, fallback `BASIC`, collegamento diretto, tastiera, axe e overflow mobile.
+
+## Baseline frontend Museo Neroverde
+
+Misurazione del 22 agosto 2026: la route Museo produce un chunk lazy da **11,93 KiB** (**4,09 KiB gzip**); il tour fullscreen è un secondo livello lazy da **9,83 KiB** (**3,32 KiB gzip**) e l’editor condiviso pesa **6,61 KiB** (**2,49 KiB gzip**). Porta, sale, costellazione, texture e animazioni sono CSS/SVG senza nuove dipendenze o asset remoti. Il JavaScript iniziale è **280,5 KiB su 300 KiB** e il chunk massimo resta Dashboard a **362,5 KiB su 400 KiB**. La suite E2E copre persistenza, tour, axe e overflow mobile; il dominio ha nove test mirati inclusi nei **139/139** test verdi.

@@ -4,6 +4,7 @@ import { AlertTriangle, BadgeCheck, CalendarDays, Database, MapPin, Ruler, Scale
 import { Link, useParams } from 'react-router-dom';
 import { api } from '../services/api';
 import { Empty,Loading,PageTitle,RemoteImage,SourceBadge,StatCard,fmt } from '../components/Ui';
+import MemoryButton from '../components/MemoryButton';
 import type { Player,PlayerSeason,Transfer } from '../types';
 
 type Aggregate=Pick<PlayerSeason,'competition'|'appearances'|'starts'|'minutes'|'goals'|'assists'|'yellow_cards'|'yellow_red_cards'|'red_cards'|'clean_sheets'>&{seasons:number};
@@ -24,7 +25,7 @@ export default function PlayerDetail(){
   const profileSources=data.sources.filter((source,index,all)=>all.findIndex(other=>other.source_url===source.source_url&&other.source_provider===source.source_provider)===index);
   const sourceProviders=[...new Set(profileSources.map(source=>source.source_provider??'Fonte non indicata'))];
   return <>
-    <PageTitle title={player.name} subtitle={[player.position,player.nationality].filter(Boolean).join(' · ')||'Profilo giocatore'}/>
+    <PageTitle title={player.name} subtitle={[player.position,player.nationality].filter(Boolean).join(' · ')||'Profilo giocatore'} action={<MemoryButton target={{type:'player',entityId:String(player.id),label:player.name,url:`/players/${player.id}`}}/>}/>
     <div className={`mb-5 flex items-start gap-3 rounded-xl border p-4 ${data.identity.status==='review'?'border-amber-400/30 bg-amber-400/10':'border-zinc-800 bg-zinc-900/60'}`}>{data.identity.status==='verified'?<BadgeCheck className="h-5 w-5 shrink-0 text-neroverde-300"/>:<AlertTriangle className="h-5 w-5 shrink-0 text-amber-300"/>}<div><div className="font-bold">{identityLabel}</div><p className="mt-1 text-xs text-zinc-400">{data.identity.status==='review'?`${data.identity.conflicts.length} segnalazioni aperte: gli aggregati restano collegati al profilo corrente finché la revisione non è conclusa.`:data.identity.status==='verified'?`${data.identity.sourceIds.length} identificativi di fonte collegati al profilo.`:'Nessun conflitto aperto, ma manca ancora un identificativo esterno stabile.'}</p></div></div>
 
     <div className="mb-6 grid gap-4 lg:grid-cols-[220px_1fr]">

@@ -10,6 +10,8 @@ La Time Machine in Panoramica usa un `input[type=range]` con nome e valore stagi
 
 Match Cinema è un dialogo fullscreen con nome accessibile, focus intrappolato e ripristinato alla chiusura, `Escape`, frecce, barra spaziatrice e controlli equivalenti visibili. La riproduzione parte in pausa e si ferma quando la scheda è nascosta. La decorazione SVG è esclusa dall'albero accessibile, il racconto resta testuale e la riduzione del movimento elimina reveal e pulsazioni. L'E2E apre direttamente un capitolo `DETAILED`, esegue axe sul dialogo e controlla anche il fallback `BASIC` e l'assenza di overflow mobile.
 
+Il Museo Neroverde aggiunge due dialoghi: l’editor del ricordo e il tour fullscreen. Entrambi usano nome/descrizione accessibili, focus trap, `Escape` e ripristino; il tour aggiunge frecce e pulsanti equivalenti, indicatori di sala etichettati e contenuto testuale per timeline e costellazione. Range, selettori di emozione e conferma distruttiva hanno stato accessibile. L’E2E esegue axe sul tour popolato, persistenza da tastiera e controllo dell’overflow mobile; il movimento ridotto spegne porta, stelle, orbite e reveal.
+
 ## Verifica manuale richiesta a ogni modifica strutturale
 
 - tastiera: ordine logico, focus sempre visibile, nessun blocco e chiusura delle finestre con Escape;
