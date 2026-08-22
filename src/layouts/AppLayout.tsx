@@ -1,14 +1,14 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { Accessibility, Activity, ArrowLeftRight, BarChart3, Bookmark, BookOpen, CalendarClock, CalendarDays, ChevronDown, Database, GitCompareArrows, History, Home, Medal, Menu, MessageSquareWarning, Milestone, Newspaper, RotateCcw, Shield, Swords, Trophy, Users, WifiOff, X } from 'lucide-react';
+import { Accessibility, Activity, ArrowLeftRight, BarChart3, Bookmark, BookOpen, CalendarClock, CalendarDays, ChevronDown, Database, GitCompareArrows, History, Home, Landmark, Medal, Menu, MessageSquareWarning, Milestone, Newspaper, RotateCcw, Shield, Swords, Trophy, Users, WifiOff, X } from 'lucide-react';
 import GlobalSearch from '../components/GlobalSearch';
 import { useExperience } from '../context/ExperienceContext';
 
 type Item=[string,string,any];
 const groups:[string,any,Item[]][]=[['Club',Shield,[['/','Panoramica',Home],['/dashboard','Dashboard',BarChart3],['/records','Records',Trophy],['/timeline','Timeline',Milestone],['/coaches','Allenatori e staff',Users]]],['Stagione attuale',CalendarClock,[['/current-season','Partite e calendario',CalendarClock],['/squad','Rosa attuale',Shield]]],['Archivio',CalendarDays,[['/seasons','Stagioni',CalendarDays],['/matches','Partite',History]]],['Confronti',Swords,[['/h2h','Head to Head',Swords],['/compare','Confronta',GitCompareArrows]]],['Mercato',ArrowLeftRight,[['/transfers','Trasferimenti',ArrowLeftRight],['/news','News',Newspaper]]],['Giocatori',Users,[['/players','Players',Users],['/hall-of-fame','Hall of Fame',Medal]]]];
-const utility:Item[]=[['/favorites','Preferiti',Bookmark],['/methodology','Fonti e metodo',BookOpen],['/status','Stato e novità',Activity],['/corrections','Segnala correzione',MessageSquareWarning]];
+const utility:Item[]=[['/museum','Il mio museo',Landmark],['/favorites','Preferiti',Bookmark],['/methodology','Fonti e metodo',BookOpen],['/status','Stato e novità',Activity],['/corrections','Segnala correzione',MessageSquareWarning]];
 
-const mobilePrimaryPaths=new Set(['/','/current-season','/seasons','/players','/favorites']);
+const mobilePrimaryPaths=new Set(['/','/current-season','/museum','/seasons','/players']);
 const allMobileItems=[...groups.flatMap(group=>group[2]),...utility];
 const mobilePrimary=allMobileItems.filter(([path])=>mobilePrimaryPaths.has(path));
 const mobileMore=allMobileItems.filter(([path])=>!mobilePrimaryPaths.has(path));

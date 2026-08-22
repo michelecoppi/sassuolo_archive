@@ -102,6 +102,37 @@ test('Match Cinema BASIC mostra soltanto apertura e risultato verificato',async(
   await expect(cinema.getByText(/cronaca evento per evento non è disponibile/i)).toBeVisible();
 });
 
+test('il Museo Neroverde conserva un ricordo privato e costruisce il tour anche su mobile',async({page,isMobile},testInfo)=>{
+  await page.goto('/matches/1');
+  await page.getByRole('button',{name:'Aggiungi al museo'}).click();
+  const editor=page.getByRole('dialog',{name:'Avversario 0 – Sassuolo'});await expect(editor).toBeVisible();
+  await editor.getByLabel('Come l’hai vissuta').selectOption('stadium');
+  await editor.getByRole('button',{name:'Gioia',exact:true}).click();
+  await editor.getByRole('slider',{name:'Intensità del ricordo'}).fill('5');
+  await editor.getByLabel('Momento preferito').fill('Il gol sotto la curva al novantesimo');
+  await editor.getByLabel('La tua nota').fill('Ero con mio padre: per qualche secondo non si sentiva più nulla.');
+  await editor.getByRole('button',{name:'Porta nel museo'}).click();
+  await expect(editor).toBeHidden();await expect(page.getByRole('button',{name:'Nel mio museo'})).toBeVisible();
+  const stored=await page.evaluate(()=>JSON.parse(localStorage.getItem('sassuolo-history-personal-museum:v1')??'null'));
+  expect(stored.memories).toHaveLength(1);expect(stored.memories[0]).toMatchObject({key:'match:1',experience:'stadium',emotion:'joy',intensity:5});
+
+  await page.goto('/museum');await expect(page.getByRole('heading',{name:'Il mio Museo Neroverde',level:1})).toBeVisible();
+  await expect(page.getByRole('heading',{name:'Avversario 0 – Sassuolo'})).toBeVisible();
+  await page.getByLabel('Neroverde dal').fill('2008');await page.getByLabel('Dedica').fill('A chi non ha mai smesso di crederci.');await page.getByRole('button',{name:'Salva dedica'}).click();
+  await page.getByRole('button',{name:'Entra nel mio museo'}).click();
+  const tour=page.getByRole('dialog',{name:'Il mio Museo Neroverde'});await expect(tour).toBeVisible();
+  await expect(tour.getByText('Solo su questo dispositivo')).toBeVisible();
+  await page.keyboard.press('ArrowRight');const timelineTour=page.getByRole('dialog',{name:'La mia linea del tempo'});await expect(timelineTour.getByRole('heading',{name:'La mia linea del tempo'})).toBeVisible();
+  await expect(timelineTour.getByText('Il gol sotto la curva al novantesimo')).toBeVisible();
+  if(testInfo.project.name==='chromium-desktop'){
+    const results=await new AxeBuilder({page}).include('.museum-tour').withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();
+    expect(results.violations,results.violations.map(item=>item.id).join(', ')).toEqual([]);
+  }
+  if(isMobile)expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBe(true);
+  await page.keyboard.press('Escape');await expect(timelineTour).toBeHidden();
+  await page.reload();await expect(page.getByRole('heading',{name:'Avversario 0 – Sassuolo'})).toBeVisible();await expect(page.getByLabel('Dedica')).toHaveValue('A chi non ha mai smesso di crederci.');
+});
+
 test('stati lenti e offline restano espliciti e navigabili',async({page,context})=>{
   await page.route('**/api/matches*',async route=>{await new Promise(resolve=>setTimeout(resolve,500));await route.continue()});
   await page.goto('/matches');await expect(page.getByLabel('Caricamento')).toBeVisible();await expect(page.getByRole('heading',{name:'Partite'})).toBeVisible();
@@ -140,7 +171,7 @@ test('un aggiornamento pronto richiede consenso e conserva i dati locali',async(
 
 test('le rotte principali non hanno violazioni WCAG 2.2 AA automatiche',async({page},testInfo)=>{
   test.skip(testInfo.project.name!=='chromium-desktop','Audit automatico unico; le altre matrici verificano navigazione e layout');
-  for(const route of ['/','/matches?season=2025%2F26','/players','/seasons','/favorites','/status']){
+  for(const route of ['/','/matches?season=2025%2F26','/players','/seasons','/museum','/favorites','/status']){
     await page.goto(route);await expect(page.locator('h1')).toBeVisible();
     const results=await new AxeBuilder({page}).withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();
     expect(results.violations,`${route}: ${results.violations.map(item=>`${item.id} (${item.nodes.length})`).join(', ')}`).toEqual([]);

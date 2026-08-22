@@ -24,7 +24,7 @@ export default function Methodology(){
   return <>
     <PageTitle title="Fonti e metodologia" subtitle="Cosa copre l’archivio, come vengono scelti e corretti i dati e come leggere ogni indicatore tecnico."/>
     <nav aria-label="Sezioni della metodologia" className="card mb-5 flex flex-wrap gap-2 p-3 text-xs font-bold">
-      {[['coverage','Copertura'],['sources','Fonti'],['conflicts','Conflitti e correzioni'],['missing-data','N/D'],['detail-levels','Livelli partita'],['privacy','Privacy'],['formulas','Formule']].map(([id,label])=><a key={id} className="rounded-lg bg-zinc-950 px-3 py-2 text-zinc-300 hover:text-neroverde-300" href={`#${id}`}>{label}</a>)}
+      {[['coverage','Copertura'],['sources','Fonti'],['conflicts','Conflitti e correzioni'],['missing-data','N/D'],['detail-levels','Livelli partita'],['personal-museum','Museo privato'],['privacy','Privacy'],['formulas','Formule']].map(([id,label])=><a key={id} className="rounded-lg bg-zinc-950 px-3 py-2 text-zinc-300 hover:text-neroverde-300" href={`#${id}`}>{label}</a>)}
     </nav>
 
     <div className="grid gap-5 lg:grid-cols-2">
@@ -77,6 +77,13 @@ export default function Methodology(){
         <p className="mt-2 text-sm leading-6 text-zinc-400">Raccogliamo in forma minimizzata soltanto eccezioni, errori di caricamento route e Web Vitals campionati. La route è normalizzata e non include ricerca o query string; token, email, stack completi, indirizzi IP e dati personali non vengono conservati. Gli eventi scadono dopo 30 giorni.</p>
         <button className="btn-secondary mt-4" onClick={()=>{setTelemetryEnabled(!telemetryEnabled);setTelemetryState(!isTelemetryOptOut());}} aria-pressed={telemetryEnabled}>{telemetryEnabled?'Disattiva telemetria tecnica':'Attiva telemetria tecnica'}</button>
         <p className="mt-2 text-xs text-zinc-400">Stato: {telemetryEnabled?'attiva':'disattivata'}. Global Privacy Control e Do Not Track hanno sempre precedenza.</p>
+      </section>
+
+      <section id="personal-museum" className={`${sectionClass} lg:col-span-2`}>
+        <h2 className="font-bold">Museo personale e custodia locale</h2>
+        <p className="mt-2 text-sm leading-6 text-zinc-400">Emozioni, note, momenti preferiti e dedica del Museo Neroverde restano nella chiave versionata del browser e non vengono inviati ad API, database o telemetria. Il backup JSON è l’unico modo previsto per spostarli o recuperarli dopo la cancellazione dei dati del sito.</p>
+        <p className="mt-2 text-sm leading-6 text-zinc-400">L’importazione controlla formato e versione, unisce i duplicati per partita, giocatore o stagione e conserva la modifica più recente. Svuotare il museo non modifica preferiti, cache offline o archivio storico.</p>
+        <Link className="mt-4 inline-flex text-sm font-bold text-neroverde-300 hover:underline" to="/museum">Apri il mio museo →</Link>
       </section>
 
       <section id="formulas" className={`${sectionClass} lg:col-span-2`}>
