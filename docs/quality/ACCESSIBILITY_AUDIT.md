@@ -8,6 +8,8 @@ Playwright + axe-core blocca la CI sulle rotte Panoramica, Partite, Giocatori, S
 
 La Time Machine in Panoramica usa un `input[type=range]` con nome e valore stagionale accessibili, pulsanti precedente/successiva con stato disabilitato, aggiornamento `aria-live` non invasivo e un grafico SVG con `title`, `desc` e riepilogo testuale. Lo swipe è un'alternativa, non l'unico metodo di controllo. L'animazione della linea rispetta sia `prefers-reduced-motion` sia la preferenza applicativa.
 
+Match Cinema è un dialogo fullscreen con nome accessibile, focus intrappolato e ripristinato alla chiusura, `Escape`, frecce, barra spaziatrice e controlli equivalenti visibili. La riproduzione parte in pausa e si ferma quando la scheda è nascosta. La decorazione SVG è esclusa dall'albero accessibile, il racconto resta testuale e la riduzione del movimento elimina reveal e pulsazioni. L'E2E apre direttamente un capitolo `DETAILED`, esegue axe sul dialogo e controlla anche il fallback `BASIC` e l'assenza di overflow mobile.
+
 ## Verifica manuale richiesta a ogni modifica strutturale
 
 - tastiera: ordine logico, focus sempre visibile, nessun blocco e chiusura delle finestre con Escape;

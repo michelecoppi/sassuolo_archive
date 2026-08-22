@@ -22,3 +22,7 @@ Playwright verifica inoltre `/matches`, `/players`, il dettaglio stagione e il D
 ## Baseline frontend Time Machine
 
 Misurazione del 21 agosto 2026: la Sassuolo Time Machine è caricata separatamente dalla pagina Club in un chunk da **14,36 KiB** (**4,56 KiB gzip**) e disegna il percorso con SVG/CSS, senza una nuova dipendenza. Il JavaScript iniziale resta **273,3 KiB su 300 KiB**; il chunk massimo resta **362,5 KiB su 400 KiB**. `e2e/critical-flows.spec.ts` include selezione di stagioni con e senza dati e controllo dell'overflow mobile.
+
+## Baseline frontend Match Cinema
+
+Misurazione del 22 agosto 2026: Match Cinema è un secondo livello lazy del dettaglio partita e produce un chunk autonomo da **22,78 KiB** (**7,37 KiB gzip**). Campo, luci e texture sono SVG/CSS e non aggiungono dipendenze né richieste decorative. Il JavaScript iniziale resta **273,3 KiB su 300 KiB** e il chunk massimo resta Dashboard a **362,5 KiB su 400 KiB**. La matrice E2E copre un racconto `DETAILED`, fallback `BASIC`, collegamento diretto, tastiera, axe e overflow mobile.
