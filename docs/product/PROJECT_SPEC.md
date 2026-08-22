@@ -68,6 +68,8 @@ Le statistiche di dashboard, record, testa a testa e Hall of Fame vengono calcol
 
 La homepage usa `server/services/timeMachine.ts` come read model stagionale. Il servizio aggrega in una sola operazione `seasons`, `matches`, `player_seasons`, manifesto di copertura e cronologia del club; il componente React non ricalcola classifiche né inventa protagonisti. Le regole complete sono in [`TIME_MACHINE.md`](TIME_MACHINE.md).
 
+Il dettaglio partita carica `MatchCinema.tsx` soltanto su richiesta. `matchCinemaModel.ts` trasforma eventi ordinari e speciali già presenti in `/matches/:id` in capitoli deterministici: non chiama API aggiuntive, non inventa coordinate e non deduce i punteggi intermedi mancanti. Il capitolo attivo vive nella query `cinema`; il fallback delle gare `BASIC` contiene solo apertura e finale. Le regole complete sono in [`MATCH_CINEMA.md`](MATCH_CINEMA.md).
+
 ## 4. Modello dati essenziale
 
 - `teams`, `team_aliases`: nomi canonici e alias degli avversari.

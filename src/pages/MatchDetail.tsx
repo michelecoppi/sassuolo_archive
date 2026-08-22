@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { Activity, AlertTriangle, ArrowLeft, Clock3, ExternalLink, MapPin, RefreshCw, Shield, Users } from 'lucide-react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Activity, AlertTriangle, ArrowLeft, Clapperboard, Clock3, ExternalLink, MapPin, RefreshCw, Shield, Users } from 'lucide-react';
 import { api, post } from '../services/api';
 import { CompletenessBadge, Loading, PageTitle, RemoteImage, Score, SourceBadge, fmt } from '../components/Ui';
 import type { Match } from '../types';
 
-type EventRow={id:number;minute:number|null;extra_minute:number|null;team_name:string|null;player_id:number|null;player_name:string|null;assist_player_id:number|null;assist_name:string|null;type:string|null;detail:string|null;comments:string|null;verification_note?:string|null;home_score?:number|null;away_score?:number|null};
+type EventRow={id:number;minute:number|null;extra_minute:number|null;team_name:string|null;player_id:number|null;player_name:string|null;assist_player_id:number|null;assist_name:string|null;type:string|null;detail:string|null;comments:string|null;verification_note?:string|null;home_score?:number|null;away_score?:number|null;scoring_play?:number|boolean|null;is_own_goal?:number|boolean|null};
 type LineupPlayer={player?:{id?:string|number|null;localPlayerId?:number|null;name?:string;number?:number|null;pos?:string|null}};
 type Lineup={id:number;team_name:string|null;team_logo:string|null;formation:string|null;coach_name:string|null;startXI:LineupPlayer[];substitutes:LineupPlayer[]};
 type TeamStat={type:string;value:unknown};
@@ -25,9 +25,11 @@ function minuteLabel(event:EventRow){
   return event.extra_minute?`${event.minute}+${event.extra_minute}'`:`${event.minute}'`;
 }
 const specialEventLabels:Record<string,string>={POSTPONED:'Rinviata',KICKOFF_DELAYED:'Calcio d’inizio ritardato',SUSPENDED:'Sospesa',RESUMED:'Ripresa / completata',ABANDONED:'Abbandonata',CANCELLED:'Annullata',AWARDED:'Risultato a tavolino',DATE_CHANGED:'Data modificata',VENUE_CHANGED:'Sede modificata',OTHER:'Avvenimento particolare'};
+const MatchCinema=lazy(()=>import('../components/MatchCinema'));
 
 export default function MatchDetail(){
   const {id}=useParams();
+  const [searchParams,setSearchParams]=useSearchParams();
   const [data,setData]=useState<Payload|null>(null);
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState('');
@@ -47,15 +49,21 @@ export default function MatchDetail(){
     ].filter(row=>row.values.some(value=>value!=null));
   },[data]);
 
+  const cinemaChapter=searchParams.get('cinema');
+  const openCinema=()=>{const next=new URLSearchParams(searchParams);next.set('cinema','start');setSearchParams(next);};
+  const closeCinema=useCallback(()=>setSearchParams(current=>{const next=new URLSearchParams(current);next.delete('cinema');return next;},{replace:true}),[setSearchParams]);
+  const changeCinemaChapter=useCallback((chapter:string)=>setSearchParams(current=>{if(current.get('cinema')===chapter)return current;const next=new URLSearchParams(current);next.set('cinema',chapter);return next;},{replace:true}),[setSearchParams]);
+
   if(!data)return <Loading/>;
   const {match,details,modules}=data;
   const creditedSources=[...new Map(data.sources.filter(source=>source.source_url).map(source=>[`${source.source_provider??''}|${source.source_url}`,source])).values()];
   const syncFlags=details?[details.events_synced,details.lineups_synced,details.team_stats_synced,details.player_stats_synced,details.injuries_synced]:[];
   const syncProgress=syncFlags.some(value=>value!=null)?syncFlags.filter(Boolean).length:null;
+  const cinemaAvailable=(match.home_score!=null&&match.away_score!=null)||data.events.length>0||data.specialEvents.length>0;
   return <>
     <div className="mb-4 flex flex-wrap gap-2 text-xs text-zinc-400"><Link to="/matches" className="hover:text-neroverde-300">Partite</Link><span>/</span>{match.season&&<><Link to={`/seasons/${encodeURIComponent(match.season)}`} className="hover:text-neroverde-300">{match.season}</Link><span>/</span></>}<span>{match.home_team} – {match.away_team}</span></div>
     <div className="mb-4"><Link className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-white" to="/matches"><ArrowLeft className="h-4 w-4"/>Torna alle partite</Link></div>
-    <PageTitle title={`${match.home_team} vs ${match.away_team}`} subtitle={`${match.competition??'Competizione N/D'} · ${match.season??'Stagione N/D'} · ${details?.league_round??match.round??'Giornata N/D'}`} action={<button className="btn-secondary" disabled={busy} onClick={sync}><RefreshCw className={`h-4 w-4 ${busy?'animate-spin':''}`}/>{busy?'Aggiornamento…':'Aggiorna dettagli'}</button>}/>
+    <PageTitle title={`${match.home_team} vs ${match.away_team}`} subtitle={`${match.competition??'Competizione N/D'} · ${match.season??'Stagione N/D'} · ${details?.league_round??match.round??'Giornata N/D'}`} action={<div className="flex flex-wrap gap-2">{cinemaAvailable&&<button className="btn-primary" onClick={openCinema}><Clapperboard className="h-4 w-4"/>Rivivi il match</button>}<button className="btn-secondary" disabled={busy} onClick={sync}><RefreshCw className={`h-4 w-4 ${busy?'animate-spin':''}`}/>{busy?'Aggiornamento…':'Aggiorna dettagli'}</button></div>}/>
     <div className="mb-4 flex flex-wrap items-center gap-3"><CompletenessBadge level={match.completeness_level} prefix/>{syncProgress!=null&&<span className={`badge text-[10px] ${syncProgress===syncFlags.length?'text-neroverde-300':'text-amber-200'}`} title="Eventi, formazioni, statistiche squadra, statistiche giocatori e indisponibili">Sincronizzazione: {syncProgress}/{syncFlags.length} moduli</span>}<SourceBadge provider={match.source_provider} url={match.source_url} verifiedAt={match.last_verified_at}/></div>
     {message&&<div className="mb-5 rounded-xl border border-zinc-800 bg-zinc-900 p-3 text-sm text-zinc-300">{message}</div>}
 
@@ -82,6 +90,7 @@ export default function MatchDetail(){
 
     {creditedSources.length>0&&<section className="card mt-5 p-5"><h2 className="mb-3 text-lg font-bold">Fonti e crediti</h2><p className="mb-3 text-sm text-zinc-400">I dati di questa scheda mantengono il collegamento alla fonte originale e alla data di verifica.</p><div className="flex flex-wrap gap-2">{creditedSources.map(source=><a key={`${source.source_provider}-${source.source_url}`} className="inline-flex items-center gap-1 rounded-lg border border-zinc-800 px-3 py-2 text-sm font-semibold text-neroverde-300 hover:border-neroverde-500 hover:underline" href={source.source_url} target="_blank" rel="noreferrer"><ExternalLink className="h-3.5 w-3.5"/>{source.source_provider??'Fonte originale'} · verificata {String(source.verified_at).slice(0,10)}</a>)}</div></section>}
     {!modules.events&&!modules.lineups&&!modules.teamStats&&!modules.playerStats&&<div className="card p-5 text-sm text-zinc-400">Questa gara ha copertura <b className="text-white">{match.completeness_level}</b>: sono mostrati soltanto i dati effettivamente disponibili, senza sezioni vuote o valori ricostruiti.</div>}
+    {cinemaChapter&&cinemaAvailable&&<Suspense fallback={<div className="fixed inset-0 z-[100] grid place-items-center bg-black text-sm font-bold text-emerald-300" role="status">La sala si sta preparando…</div>}><MatchCinema match={match} details={details} events={data.events} specialEvents={data.specialEvents} lineups={data.lineups} teamStats={data.teamStats} initialChapter={cinemaChapter} onChapterChange={changeCinemaChapter} onClose={closeCinema}/></Suspense>}
   </>;
 }
 

@@ -1,6 +1,6 @@
 # Roadmap miglioramenti — Sassuolo History & Stats
 
-Ultimo riordino: 21 agosto 2026.
+Ultimo riordino: 22 agosto 2026.
 
 Questo documento è la fonte operativa per ciò che manca al progetto. Le voci non ancora concluse sono ordinate per priorità e area; quelle terminate sono raccolte in fondo per non confondere il lavoro futuro con quanto è già disponibile.
 
@@ -110,6 +110,8 @@ Le voci seguenti risultavano già completate al momento del riordino. Mantenerle
 ### Prodotto ed esperienza utente
 
 - [x] **WOW-01 — Trasformare la homepage in una Sassuolo Time Machine.** Il selettore 2007/08–stagione corrente riunisce riepilogo, protagonisti, migliore vittoria, percorso punti, milestone, copertura e fonti senza duplicare né inventare dati. La selezione è condivisibile nell'URL, usa controlli tastiera/touch, mantiene selezionabili le stagioni vuote, rispetta il movimento ridotto e carica il widget come chunk separato. **Completato: 2026-08-21 · Evidenza:** `server/services/timeMachine.ts`, `src/components/TimeMachine.tsx`, `docs/product/TIME_MACHINE.md`, `tests/time-machine.test.ts`, `e2e/critical-flows.spec.ts` · **Verifica:** TypeScript, 125/125 test e build con JavaScript iniziale 273,3/300 KiB; E2E desktop/mobile e WCAG affidati alla matrice CI per assenza dei binari Playwright nell'ambiente locale.
+
+- [x] **WOW-02 — Trasformare ogni partita in un Match Cinema.** Il dettaglio offre un racconto fullscreen a capitoli con campo vettoriale, tabellone, formazioni, statistiche, regia automatica e URL condivisibile; punteggi e azioni derivano solo dai dati presenti, mentre la copertura `BASIC` mostra un finale verificato senza ricostruzioni. Il player è lazy, responsive, navigabile da tastiera, compatibile con movimento ridotto e schermo intero nativo. **Completato: 2026-08-22 · Evidenza:** `src/components/MatchCinema.tsx`, `src/components/matchCinemaModel.ts`, `src/pages/MatchDetail.tsx`, `docs/product/MATCH_CINEMA.md`, `tests/match-cinema.test.ts`, `e2e/critical-flows.spec.ts` · **Verifica:** casi 3–1, punteggio mancante, pari minuto, recupero, supplementari, evento speciale e BASIC; TypeScript, test, build, budget bundle, E2E desktop/mobile e axe WCAG 2.2 AA.
 
 - [x] **POLISH-04 — Creare una pagina stato e changelog pubblico.** La pagina pubblica riunisce stato editoriale, versione/checksum, conteggi, copertura e cronologia filtrabile di release, fonti, correzioni e incidenti; il feed RSS usa URL assoluti configurati e supporta `ETag`. Il generatore aggiorna idempotentemente la voce della release e la CI blocca manifesti privi di data, sintesi, perimetro o link verificabile. **Completato: 2026-08-21 · Evidenza:** `server/services/publicStatus.ts`, `data/releases/changelog.json`, `src/pages/Status.tsx`, `scripts/generate-data-release.ts`, `docs/data/PUBLIC_CHANGELOG.md` · **Verifica:** contratto e API su casi validi/invalidi, incidenti aperti/risolti, XML e URL ostili, idempotenza e revalidazione; TypeScript, 122/122 test, build, budget bundle, secret scan e supply-chain verdi; E2E WCAG/mobile e smoke estesi nella CI della PR.
 

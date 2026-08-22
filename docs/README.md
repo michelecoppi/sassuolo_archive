@@ -8,6 +8,7 @@ Questo è il punto di ingresso unico per la documentazione del progetto. Il `REA
 - [Roadmap](product/ROADMAP.md) — priorità, criteri di accettazione e storico dei miglioramenti.
 - [Guida di stile](product/STYLE_GUIDE.md) — regole visuali, linguistiche e di interazione.
 - [Sassuolo Time Machine](product/TIME_MACHINE.md) — contratto dati, regole di calcolo e interazione della timeline stagionale in homepage.
+- [Match Cinema](product/MATCH_CINEMA.md) — racconto fullscreen delle partite, integrità dei punteggi, fallback BASIC e accessibilità del player.
 
 ## Architettura
 

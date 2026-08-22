@@ -144,6 +144,8 @@ I **Trasferimenti** sono filtrabili per stagione, sessione e tipo di movimento; 
 
 Il centro partita deriva il livello effettivo dai blocchi disponibili: `BASIC` limita la vista al risultato, `STANDARD` aggiunge metadati documentati, `DETAILED` indica almeno un blocco avanzato tra eventi, formazioni e statistiche. Intervallo, supplementari, rigori, arbitro, stadio e spettatori compaiono solo quando presenti; non vengono renderizzate sezioni vuote.
 
+Da ogni partita conclusa si può aprire **Match Cinema**, un racconto fullscreen a capitoli con campo vettoriale, tabellone, play/pausa, velocità, formazioni e statistiche quando disponibili. Il capitolo resta condivisibile nell'URL. I punteggi intermedi vengono usati soltanto se espliciti nei dati; per i match `BASIC` l'esperienza mostra apertura e finale verificato, dichiarando l'assenza della cronaca senza inventare azioni. Contratto e controlli sono descritti in [`docs/product/MATCH_CINEMA.md`](docs/product/MATCH_CINEMA.md).
+
 Le schede giocatore usano `player_seasons` come base canonica per totali generali e per competizione. Mostrano biografia, titolarità, minuti, gol, assist, disciplina, trasferimenti e provenienza; gli identificativi di fonte sono riuniti nello stesso profilo e gli eventuali conflitti d'identità aperti restano evidenziati.
 
 Records e Hall of Fame mostrano inoltre il perimetro effettivo del calcolo, la data dell'ultimo ricalcolo e, per ogni classifica, formula, spareggio e soglia minima. Queste regole sono centralizzate in `server/services/statDefinitions.ts`: una nuova metrica non va aggiunta soltanto al frontend, ma deve avere una definizione dichiarativa e test dello spareggio.

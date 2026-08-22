@@ -60,6 +60,48 @@ test('la Sassuolo Time Machine attraversa dati completi e stagioni ancora vuote'
   if(isMobile)expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBe(true);
 });
 
+test('Match Cinema rivive una cronaca reale, resta condivisibile e non sborda su mobile',async({page,isMobile},testInfo)=>{
+  await page.route('**/api/matches/1',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
+    match:{id:1,date:'2024-04-14T18:45:00Z',season:'2023/24',competition:'Serie A',round:'32',home_team:'Sassuolo',away_team:'Milan',home_score:3,away_score:1,completeness_level:'DETAILED',possession_home:43,possession_away:57,shots_home:15,shots_away:12,shots_on_target_home:7,shots_on_target_away:4,source_provider:'Fixture E2E'},
+    details:{status_long:'Match Finished',venue_name:'Mapei Stadium',venue_city:'Reggio Emilia',league_round:'Regular Season - 32',home_team_logo:null,away_team_logo:null,events_synced:1,lineups_synced:1,team_stats_synced:1,player_stats_synced:0,injuries_synced:0},
+    outcome:{halftime:'1-0',fulltime:'3-1',extraTime:null,penalties:null},
+    modules:{score:true,events:true,lineups:true,substitutions:true,teamStats:true,playerStats:false,injuries:false,specialEvents:false},
+    events:[
+      {id:101,minute:12,extra_minute:null,team_name:'Sassuolo',player_id:null,player_name:'Domenico Berardi',assist_player_id:null,assist_name:'Grégoire Defrel',type:'Goal',detail:'Normal Goal',comments:null,scoring_play:1,home_score:1,away_score:0,is_own_goal:0},
+      {id:102,minute:38,extra_minute:null,team_name:'Milan',player_id:null,player_name:'Rafael Leão',assist_player_id:null,assist_name:null,type:'Card',detail:'Yellow Card',comments:'Fallo tattico',scoring_play:0,home_score:null,away_score:null,is_own_goal:0},
+      {id:103,minute:51,extra_minute:null,team_name:'Milan',player_id:null,player_name:'Olivier Giroud',assist_player_id:null,assist_name:'Theo Hernández',type:'Goal',detail:'Normal Goal',comments:null,scoring_play:1,home_score:1,away_score:1,is_own_goal:0},
+      {id:104,minute:90,extra_minute:2,team_name:'Sassuolo',player_id:null,player_name:'Nedim Bajrami',assist_player_id:null,assist_name:null,type:'Goal',detail:'Normal Goal',comments:null,scoring_play:1,home_score:3,away_score:1,is_own_goal:0}
+    ],specialEvents:[],
+    lineups:[{id:1,team_name:'Sassuolo',team_logo:null,formation:'4-2-3-1',coach_name:'Davide Ballardini',startXI:[{player:{name:'Andrea Consigli',number:47,pos:'G'}},{player:{name:'Domenico Berardi',number:10,pos:'F'}}],substitutes:[]},{id:2,team_name:'Milan',team_logo:null,formation:'4-3-3',coach_name:'Stefano Pioli',startXI:[{player:{name:'Mike Maignan',number:16,pos:'G'}},{player:{name:'Rafael Leão',number:10,pos:'F'}}],substitutes:[]}],
+    teamStats:[{id:1,team_name:'Sassuolo',statistics:[{type:'Ball Possession',value:'43%'},{type:'Total Shots',value:15}]},{id:2,team_name:'Milan',statistics:[{type:'Ball Possession',value:'57%'},{type:'Total Shots',value:12}]}],
+    playerStats:[],injuries:[],sources:[]
+  })}));
+  await page.goto('/matches/1?cinema=event-102');
+  const cinema=page.getByRole('dialog',{name:'Match Cinema'});await expect(cinema).toBeVisible();
+  await expect(cinema.getByRole('heading',{name:'Cartellino giallo'})).toBeVisible();
+  await expect(cinema.getByText('1–0',{exact:true})).toBeVisible();
+  await page.keyboard.press('ArrowRight');
+  await expect(page).toHaveURL(/cinema=event-103/);await expect(cinema.getByRole('heading',{name:'Gol · Milan'})).toBeVisible();
+  await expect(cinema.getByText('1–1',{exact:true})).toBeVisible();
+  if(testInfo.project.name==='chromium-desktop'){
+    const results=await new AxeBuilder({page}).include('.match-cinema').withTags(['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']).analyze();
+    expect(results.violations,results.violations.map(item=>item.id).join(', ')).toEqual([]);
+  }
+  if(isMobile)expect(await page.evaluate(()=>document.documentElement.scrollWidth<=document.documentElement.clientWidth)).toBe(true);
+  await page.keyboard.press('Escape');await expect(cinema).toBeHidden();await expect(page).not.toHaveURL(/cinema=/);
+  await page.getByRole('button',{name:'Rivivi il match'}).click();await expect(page).toHaveURL(/cinema=start/);
+  await expect(page.getByRole('dialog',{name:'Match Cinema'})).toBeVisible();
+});
+
+test('Match Cinema BASIC mostra soltanto apertura e risultato verificato',async({page})=>{
+  await page.goto('/matches/1');await page.getByRole('button',{name:'Rivivi il match'}).click();
+  const cinema=page.getByRole('dialog',{name:'Match Cinema'});await expect(cinema).toBeVisible();
+  await expect(cinema.getByText('Edizione essenziale.')).toBeVisible();
+  await cinema.getByRole('button',{name:'Capitolo successivo'}).click();
+  await expect(cinema.getByRole('heading',{name:'Triplice fischio'})).toBeVisible();
+  await expect(cinema.getByText(/cronaca evento per evento non è disponibile/i)).toBeVisible();
+});
+
 test('stati lenti e offline restano espliciti e navigabili',async({page,context})=>{
   await page.route('**/api/matches*',async route=>{await new Promise(resolve=>setTimeout(resolve,500));await route.continue()});
   await page.goto('/matches');await expect(page.getByLabel('Caricamento')).toBeVisible();await expect(page.getByRole('heading',{name:'Partite'})).toBeVisible();
